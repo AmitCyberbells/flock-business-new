@@ -9,10 +9,21 @@ import 'package:flock/registration_screen.dart';
 import 'package:flock/staffManagement.dart';
 import 'package:flock/tutorial.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart'; // Import Provider
 import 'login_screen.dart';
+import 'checkIns.dart';
+import 'profile_provider.dart'; // Import your ProfileProvider
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        // Add your providers here
+        ChangeNotifierProvider(create: (_) => ProfileProvider()),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -28,20 +39,19 @@ class MyApp extends StatelessWidget {
       ),
       home: const LoginScreen(),
       routes: {
-      '/forgot-password': (context) => ForgotPasswordScreen(),
-      '/home': (context) => TabDashboard(),
-      '/EditProfile': (context) => EditProfileScreen(),
-      '/staffManage': (context) => StaffManagementScreen(),
-      '/changePassword': (context) => ChangePasswordScreen(),
-      '/openHours'  : (context) => OpenHoursScreen(),
-      '/feedback'  : (context) => ReportScreen(),
-      '/DeleteAccount'  : (context) => DeleteAccountScreen(),
-      '/tutorials'  : (context) => TutorialsScreen(),
-      '/Login'  : (context) => LoginScreen(),
-      '/tab_checkin': (context) => CheckInScreen(),
-      '/register': (context) => RegisterScreen(),
-
-    },
+        '/forgot-password': (context) => ForgotPasswordScreen(),
+        '/home': (context) => TabDashboard(),
+        '/EditProfile': (context) => const EditProfileScreen(),
+        '/staffManage': (context) => const StaffManagementScreen(),
+        '/changePassword': (context) => const ChangePasswordScreen(),
+        '/openHours': (context) => const OpenHoursScreen(),
+        '/feedback': (context) => const ReportScreen(),
+        '/DeleteAccount': (context) => const DeleteAccountScreen(),
+        '/tutorials': (context) => const TutorialsScreen(),
+        '/Login': (context) => const LoginScreen(),
+        '/tab_checkin': (context) => const CheckInsScreen(),
+        '/register': (context) => const RegisterScreen(),
+      },
     );
   }
 }

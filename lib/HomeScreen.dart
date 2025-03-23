@@ -3,23 +3,17 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flock/add_offer.dart';
-import 'package:flock/add_venue.dart';
-import 'package:flock/profile_screen.dart';
+import 'package:flock/add_venue.dart' as addVenue; // Alias for add_venue.dart
+import 'package:flock/profile_screen.dart' as profile hide TabEggScreen;
 import 'package:flock/send_notifications.dart';
-import 'package:flock/venue.dart';
+import 'package:flock/venue.dart' as venue; // Alias for venue.dart
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:permission_handler/permission_handler.dart';
-
-void main() {
-  runApp(MaterialApp(
-    debugShowCheckedModeBanner: false,
-    home: TabDashboard(),
-  ));
-}
+import 'package:flock/checkIns.dart';
 
 class TabDashboard extends StatefulWidget {
   @override
@@ -41,13 +35,6 @@ class _TabDashboardState extends State<TabDashboard> {
   List<dynamic> venueList = [];
 
   // Example list similar to hotelList in React code
-
-
-    //  Navigator.push(
-    //                context,
-    //                MaterialPageRoute(builder: (context) => CheckInsScreen()),
-    //              );
-
   List<Map<String, dynamic>> hotelList = [
     {
       'id': 1,
@@ -105,7 +92,6 @@ class _TabDashboardState extends State<TabDashboard> {
   @override
   void initState() {
     super.initState();
-    // Get the user ID (similar to AsyncStorage in React Native)
     getUserId();
   }
 
@@ -118,10 +104,8 @@ class _TabDashboardState extends State<TabDashboard> {
   Future<void> getUserId() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     userId = prefs.getString('userid') ?? '';
-    // You might call your permission manager here:
-    // UserPermissions.getAssignedPermissions(userId);
     dashboardApi();
-    getProfile();
+   
     getVenueList();
   }
 
@@ -139,7 +123,6 @@ class _TabDashboardState extends State<TabDashboard> {
 
   Future<void> dashboardApi() async {
     startLoader();
-    // Replace with your actual server URL and parameters.
     var url = Uri.parse("https://yourserver.com/dashboard");
     var request = http.MultipartRequest('POST', url);
     request.fields['user_id'] = userId;
@@ -157,44 +140,18 @@ class _TabDashboardState extends State<TabDashboard> {
         setState(() {
           averageFeathers = responseJson['averagefeather'] ?? '';
           totalFeathers = responseJson['totalfeathers'] ?? '';
-          todayFeathers = int.tryParse(responseJson['today_feathers'].toString()) ?? 0;
-          todayVenuePoints = int.tryParse(responseJson['today_venue_points'].toString()) ?? 0;
+          todayFeathers =
+              int.tryParse(responseJson['today_feathers'].toString()) ?? 0;
+          todayVenuePoints =
+              int.tryParse(responseJson['today_venue_points'].toString()) ?? 0;
 
           // Update hotelList values based on API response
-          hotelList[0]['points'] = (responseJson['checkin'] ?? '0') + ' Check Ins';
-          hotelList[1]['points'] = (responseJson['offers'] ?? '0') + ' Active offers';
-          hotelList[2]['points'] = (responseJson['countvenues'] ?? '0') + ' Venues';
-        });
-      } else {
-        Fluttertoast.showToast(msg: responseJson['message'] ?? 'Error');
-      }
-    } catch (e) {
-      setState(() {
-        loader = false;
-      });
-      Fluttertoast.showToast(msg: 'Error: $e');
-    }
-  }
-
-  Future<void> getProfile() async {
-    startLoader();
-    var url = Uri.parse("https://yourserver.com/getprofile");
-    var request = http.MultipartRequest('POST', url);
-    request.fields['user_id'] = userId;
-
-    try {
-      var response = await request.send();
-      var responseString = await response.stream.bytesToString();
-      var responseJson = json.decode(responseString);
-
-      setState(() {
-        loader = false;
-      });
-
-      if (responseJson != null && responseJson['status'] == 'success') {
-        setState(() {
-          firstName = responseJson['Userdetail']['first_name'] ?? '';
-          lastName = responseJson['Userdetail']['last_name'] ?? '';
+          hotelList[0]['points'] =
+              (responseJson['checkin'] ?? '0') + ' Check Ins';
+          hotelList[1]['points'] =
+              (responseJson['offers'] ?? '0') + ' Active offers';
+          hotelList[2]['points'] =
+              (responseJson['countvenues'] ?? '0') + ' Venues';
         });
       } else {
         Fluttertoast.showToast(msg: responseJson['message'] ?? 'Error');
@@ -365,12 +322,12 @@ class _TabDashboardState extends State<TabDashboard> {
         setState(() {
           selectedVenue = newValue!;
           // Find the venue id from venueList
-          var venue = venueList.firstWhere(
+          var venueItem = venueList.firstWhere(
             (element) => element['venue_name'] == selectedVenue,
             orElse: () => null,
           );
-          if (venue != null) {
-            selectedVenueId = venue['venue_id'];
+          if (venueItem != null) {
+            selectedVenueId = venueItem['venue_id'];
           }
         });
       },
@@ -383,25 +340,8 @@ class _TabDashboardState extends State<TabDashboard> {
     );
   }
 
-  // Widget venueWiseQRShow() {
-  //   if (!hasPermission('verify_voucher') || selectedVenueId == null) {
-  //     return SizedBox.shrink();
-  //   }
-  //   return Center(
-  //     child: Padding(
-  //       padding: EdgeInsets.only(bottom: Platform.isIOS ? 110 : 110),
-  //       child: QrImage(
-  //         data: "flockapp" + selectedVenueId.toString(),
-  //         size: 130.0,
-  //         backgroundColor: Colors.white,
-  //       ),
-  //     ),
-  //   );
-  // }
-
   @override
   Widget build(BuildContext context) {
-    // Define your design tokens (colors, fonts, etc.) similar to your Design and CSS files.
     final primaryColorOrange = Colors.deepOrange;
     final lightGrey = Colors.grey;
     final black = Colors.black;
@@ -544,7 +484,8 @@ class _TabDashboardState extends State<TabDashboard> {
                                 crossAxisCount: 2,
                                 mainAxisSpacing: 15,
                                 crossAxisSpacing: 10,
-                                childAspectRatio: Platform.isIOS ? 140 / 140 : 120 / 120,
+                                childAspectRatio:
+                                    Platform.isIOS ? 140 / 140 : 120 / 120,
                               ),
                               itemCount: hotelList.length,
                               itemBuilder: (context, index) {
@@ -627,7 +568,6 @@ class _TabDashboardState extends State<TabDashboard> {
                           ),
                           // Venue selector dropdown and QR code display
                           venueListDropDown(),
-                          // venueWiseQRShow(),
                         ],
                       ),
                     ),
@@ -646,17 +586,74 @@ class _TabDashboardState extends State<TabDashboard> {
             ),
         ],
       ),
-      // Integration of TabDashboardBottom at the bottom
-      bottomNavigationBar: TabDashboardBottom(),
+      // Updated footer using a FloatingActionButton and BottomAppBar
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          // Show modal bottom sheet with extra actions
+          showModalBottomSheet(
+            context: context,
+            builder: (BuildContext context) {
+              return Wrap(
+                children: [
+                ListTile(
+  leading: Icon(Icons.apartment, color: Colors.blue),
+  title: Text("Add Venues"),
+  onTap: () async {
+    Navigator.pop(context);
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => addVenue.AddEggScreen()),
+    );
+    if (result != null && result == true) {
+      // Refresh the venue list so the new venue appears
+      getVenueList();
+    }
+  },
+),
+
+                  ListTile(
+                    leading: Icon(Icons.percent, color: Colors.blue),
+                    title: Text("Add Offers"),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => AddOfferScreen()),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: Icon(Icons.notifications_active, color: Colors.blue),
+                    title: Text("Send Notification"),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => SendNotificationScreen()),
+                      );
+                    },
+                  ),
+                ],
+              );
+            },
+          );
+        },
+        backgroundColor: Colors.orange,
+        child: Image.asset(
+          'assets/bird.png',
+          fit: BoxFit.contain,
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: CustomBottomNavigationBar(),
     );
   }
 }
 
-// Define the TabDashboardBottom widget to be used as the bottom navigation bar.
-
-
-class TabDashboardBottom extends StatelessWidget {
-  const TabDashboardBottom({super.key});
+// Reusable updated bottom navigation bar widget using BottomAppBar
+class CustomBottomNavigationBar extends StatelessWidget {
+  const CustomBottomNavigationBar({super.key});
 
   void _navigateTo(BuildContext context, Widget page) {
     Navigator.push(
@@ -667,185 +664,40 @@ class TabDashboardBottom extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        Container(
-          height: 80,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.2),
-                blurRadius: 5,
-                spreadRadius: 1,
-                offset: const Offset(0, -2),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(
-                context,
-                icon: Icons.grid_view_rounded,
-                label: 'Dashboard',
-                isSelected: true,
-                destination: TabDashboard(),
-              ),
-              _buildNavItem(
-                context,
-                icon: Icons.apartment,
-                label: 'Venues',
-                isSelected: false,
-                destination: TabEggScreen(),
-              ),
-              const Expanded(child: SizedBox()), // Space for center icon
-              _buildNavItem(
-                context,
-                icon: Icons.login_outlined,
-                label: 'Check in',
-                isSelected: false,
-                destination: CheckInScreen(),
-              ),
-              _buildNavItem(
-                context,
-                icon: Icons.person,
-                label: 'My Profile',
-                isSelected: false,
-                destination: TabProfile(),
-              ),
-            ],
-          ),
-        ),
-        
-        // Centered circular bird icon (Non-clickable, can be wrapped with GestureDetector if needed)
-    // 1. Wrap your bird icon with a GestureDetector:
-GestureDetector(
-  onTapDown: (TapDownDetails details) {
-    final tapPosition = details.globalPosition;
-
-    // 2. Show the popup menu at the tap position:
-    showMenu<int>(
-      context: context,
-      position: RelativeRect.fromLTRB(
-        tapPosition.dx,
-        tapPosition.dy,
-        0,
-        0,
-      ),
-      items: [
-        PopupMenuItem<int>(
-          value: 0,
-          child: Row(
-            children: const [
-              Icon(Icons.apartment, color: Colors.blue),
-              SizedBox(width: 8),
-              Text("Add Venues"),
-            ],
-          ),
-        ),
-        PopupMenuItem<int>(
-          value: 1,
-          child: Row(
-            children: const [
-              Icon(Icons.percent, color: Colors.blue),
-              SizedBox(width: 8),
-              Text("Add Offers"),
-            ],
-          ),
-        ),
-        PopupMenuItem<int>(
-          value: 2,
-          child: Row(
-            children: const [
-              Icon(Icons.notifications_active, color: Colors.blue),
-              SizedBox(width: 8),
-              Text("Send Notification"),
-            ],
-          ),
-        ),
-      ],
-    ).then((selectedValue) {
-      // 3. Handle the selected option:
-      if (selectedValue == 0) {
-        // TODO: Navigate to Add Venues
-//AddEggScreen
-    Navigator.push(
-                   context,
-                   MaterialPageRoute(builder: (context) => AddEggScreen()),
-                 );
-
-
-
-
-      } else if (selectedValue == 1) {
-        // TODO: Navigate to Add Offers
-
-         Navigator.push(
-                   context,
-                   MaterialPageRoute(builder: (context) => AddOfferScreen()),
-                 );
-
-      } else if (selectedValue == 2) {
-        // TODO: Send Notification
-
-         Navigator.push(
-                   context,
-                   MaterialPageRoute(builder: (context) => SendNotificationScreen()),
-                 );
-      }
-    });
-  },
-
-
-  // 
-
-
-
-  child: Container(
-    // Your bird icon widget here
-    width: 50,
-    height: 50,
-    decoration: const BoxDecoration(
-      color: Colors.orange,
-      shape: BoxShape.circle,
-    ),
-    child: Image.asset(
-      'assets/bird.png',
-      fit: BoxFit.contain,
-    ),
-  ),
-),
-      ],
-    );
-  }
-
-  Widget _buildNavItem(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required bool isSelected,
-    required Widget destination,
-  }) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => _navigateTo(context, destination),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              color: isSelected ? Colors.orange : Colors.grey,
-              size: 28,
+    return BottomAppBar(
+      shape: CircularNotchedRectangle(),
+      notchMargin: 6.0,
+      child: Container(
+        height: 60,
+        padding: EdgeInsets.symmetric(horizontal: 8.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: <Widget>[
+            // Left side navigation items.
+            Row(
+              children: <Widget>[
+                IconButton(
+                  icon: Icon(Icons.grid_view_rounded, color: Colors.orange),
+                  onPressed: () => _navigateTo(context, TabDashboard()),
+                ),
+                IconButton(
+                  icon: Icon(Icons.apartment, color: Colors.grey),
+                  onPressed: () => _navigateTo(context, venue.TabEggScreen()),
+                ),
+              ],
             ),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                color: isSelected ? Colors.orange : Colors.grey,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              ),
+            // Right side navigation items.
+            Row(
+              children: <Widget>[
+                IconButton(
+                  icon: Icon(Icons.login_outlined, color: Colors.grey),
+                  onPressed: () => _navigateTo(context, CheckInsScreen()),
+                ),
+                IconButton(
+                  icon: Icon(Icons.person, color: Colors.grey),
+                  onPressed: () => _navigateTo(context, profile.TabProfile()),
+                ),
+              ],
             ),
           ],
         ),
@@ -855,30 +707,23 @@ GestureDetector(
 }
 
 // Dummy screens for navigation
-class DashboardScreen extends StatelessWidget {
+// class CheckInScreen extends StatelessWidget {
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(appBar: AppBar(title: Text("Check In")));
+//   }
+// }
+
+class AddOfferScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(appBar: AppBar(title: Text("Dashboard")));
+    return Scaffold(appBar: AppBar(title: Text("Add Offer")));
   }
 }
 
-class VenuesScreen extends StatelessWidget {
+class SendNotificationScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(appBar: AppBar(title: Text("Venues")));
-  }
-}
-
-class CheckInScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(appBar: AppBar(title: Text("Check In")));
-  }
-}
-
-class ProfileScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(appBar: AppBar(title: Text("My Profile")));
+    return Scaffold(appBar: AppBar(title: Text("Send Notification")));
   }
 }
