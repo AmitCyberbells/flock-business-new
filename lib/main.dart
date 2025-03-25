@@ -3,11 +3,13 @@ import 'package:flock/ForgotPasswordScreen.dart';
 import 'package:flock/HomeScreen.dart';
 import 'package:flock/changePassword.dart';
 import 'package:flock/editProfile.dart';
+import 'package:flock/faq.dart';
 import 'package:flock/feedback.dart';
 import 'package:flock/openHours.dart';
 import 'package:flock/registration_screen.dart';
 import 'package:flock/staffManagement.dart';
 import 'package:flock/tutorial.dart';
+import 'package:flock/venue.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart'; // Import Provider
 import 'login_screen.dart';
@@ -51,6 +53,8 @@ class MyApp extends StatelessWidget {
         '/Login': (context) => const LoginScreen(),
         '/tab_checkin': (context) => const CheckInsScreen(),
         '/register': (context) => const RegisterScreen(),
+        '/tab_egg':(context) => const TabEggScreen(),
+        '/faq': (context) =>  FaqScreen(),
       },
     );
   }

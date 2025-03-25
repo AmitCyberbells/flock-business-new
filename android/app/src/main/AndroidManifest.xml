@@ -3,10 +3,13 @@
 
     <!-- Permission for reading external storage -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <!-- For Android 13+ consider adding: -->
     <!-- <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/> -->
 
     <application
+    android:enableOnBackInvokedCallback="true"
         android:label="flock"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">

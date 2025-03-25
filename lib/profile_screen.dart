@@ -32,8 +32,7 @@ class _TabProfileState extends State<TabProfile> {
       setState(() {
         isLoading = true;
       });
-      // Simulate a network/API call delay if needed
-      await Future.delayed(const Duration(seconds: 2));
+    
       setState(() {
         // Retrieve stored profile details or use default values if not found
         firstName = prefs.getString('firstName') ?? 'John';

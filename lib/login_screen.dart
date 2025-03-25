@@ -43,46 +43,52 @@ class _LoginScreenState extends State<LoginScreen> {
         body: jsonEncode(body),
       );
 
-      if (response.statusCode == 200) {
-        final responseData = jsonDecode(response.body);
-        print("Login response: $responseData");
+    if (response.statusCode == 200) {
+  final responseData = jsonDecode(response.body);
+  print("Login response: $responseData");
 
-        if (responseData['message'] != null &&
-            responseData['message'].toString().toLowerCase().contains('success')) {
-          // Extract userId, email, and full name from the API response
-          String? userId;
-          String? userEmail;
-          String? fName;
-          String? lName;
-          if (responseData['data'] != null && responseData['data']['user'] != null) {
-            userId = responseData['data']['user']['id']?.toString();
-            userEmail = responseData['data']['user']['email']?.toString();
-            fName = responseData['data']['user']['first_name']?.toString();
-            lName = responseData['data']['user']['last_name']?.toString();
-          } else {
-            // Fallback extraction if needed
-            userId = responseData['userId']?.toString() ?? responseData['vendor_id']?.toString();
-          }
-          if (userId != null) {
-            SharedPreferences prefs = await SharedPreferences.getInstance();
-            await prefs.setString('userid', userId);
-            if (userEmail != null) {
-              await prefs.setString('email', userEmail);
-            }
-            // Store full name if available
-            if (fName != null && lName != null) {
-              await prefs.setString('firstName', fName);
-              await prefs.setString('lastName', lName);
-            }
-            print("Saved userId: $userId, email: $userEmail, full name: $fName $lName");
-          } else {
-            print("Warning: userId not found in response");
-          }
-          Navigator.pushNamed(context, '/home');
-        } else {
-          _showError(responseData['message'] ?? 'Login failed.');
-        }
-      } else {
+  if (responseData['message'] != null &&
+      responseData['message'].toString().toLowerCase().contains('success')) {
+    // Extract token from response
+    final token = responseData['data']['access_token'];
+    print("Token: $token");
+
+    // Extract other user details if needed
+    String? userId;
+    String? userEmail;
+    String? fName;
+    String? lName;
+    if (responseData['data'] != null && responseData['data']['user'] != null) {
+      userId = responseData['data']['user']['id']?.toString();
+      userEmail = responseData['data']['user']['email']?.toString();
+      fName = responseData['data']['user']['first_name']?.toString();
+      lName = responseData['data']['user']['last_name']?.toString();
+    } else {
+      userId = responseData['userId']?.toString() ?? responseData['vendor_id']?.toString();
+    }
+
+    // Store token and other user details in SharedPreferences
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('access_token', token);
+    if (userId != null) {
+      await prefs.setString('userid', userId);
+    }
+    if (userEmail != null) {
+      await prefs.setString('email', userEmail);
+    }
+    if (fName != null && lName != null) {
+      await prefs.setString('firstName', fName);
+      await prefs.setString('lastName', lName);
+    }
+    
+    print("Saved userId: $userId, email: $userEmail, full name: $fName $lName");
+
+    Navigator.pushNamed(context, '/home');
+  } else {
+    _showError(responseData['message'] ?? 'Login failed.');
+  }
+} 
+       else {
         _showError('Login failed with status: ${response.statusCode}.');
       }
     } catch (error) {

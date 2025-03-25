@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 class AddMemberScreen extends StatefulWidget {
-  const AddMemberScreen({Key? key}) : super(key: key);
+  final Map<String, String>? existingMember;
+  const AddMemberScreen({Key? key, this.existingMember}) : super(key: key);
 
   @override
   State<AddMemberScreen> createState() => _AddMemberScreenState();
@@ -18,21 +19,40 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  // Dummy lists for dropdowns
+  // Dummy lists for dropdowns.
   final List<String> _venues = ["Venue 1", "Venue 2", "Venue 3"];
   final List<String> _permissions = ["Admin", "Manager", "Viewer"];
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.existingMember != null) {
+      _firstNameController.text = widget.existingMember!['firstName'] ?? '';
+      _lastNameController.text = widget.existingMember!['lastName'] ?? '';
+      _emailController.text = widget.existingMember!['email'] ?? '';
+      _phoneController.text = widget.existingMember!['phone'] ?? '';
+      _selectedVenue = widget.existingMember!['venue'];
+      _selectedPermission = widget.existingMember!['permission'];
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+        child: SingleChildScrollView(
+          padding: EdgeInsets.only(
+            left: 16.0,
+            right: 16.0,
+            top: 8.0,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 16.0,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Top bar with back arrow and title
+              // Top bar with back arrow and title.
               Row(
                 children: [
                   InkWell(
@@ -40,9 +60,9 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
                     child: const Icon(Icons.arrow_back, color: Colors.black),
                   ),
                   const SizedBox(width: 16),
-                  const Text(
-                    "Add Member",
-                    style: TextStyle(
+                  Text(
+                    widget.existingMember == null ? "Add Member" : "Edit Member",
+                    style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w600,
                       color: Colors.black,
@@ -51,13 +71,11 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
                 ],
               ),
               const SizedBox(height: 20),
-
-              // Profile avatar with camera icon
+              // Profile avatar with camera icon.
               Center(
                 child: Stack(
                   clipBehavior: Clip.none,
                   children: [
-                    // Main avatar
                     CircleAvatar(
                       radius: 45,
                       backgroundColor: Colors.grey.shade200,
@@ -67,7 +85,6 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
                         color: Colors.grey,
                       ),
                     ),
-                    // Camera icon (positioned in top-right corner of the avatar)
                     Positioned(
                       top: -2,
                       right: -2,
@@ -82,7 +99,7 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
                           backgroundColor: Colors.orange,
                           child: IconButton(
                             onPressed: () {
-                              // Handle image selection or camera action here
+                              // Handle image selection or camera action here.
                             },
                             icon: const Icon(
                               Icons.camera_alt,
@@ -97,98 +114,75 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
                   ],
                 ),
               ),
-
               const SizedBox(height: 30),
-
-              // First Name
+              // First Name field.
               TextField(
                 controller: _firstNameController,
                 decoration: InputDecoration(
                   hintText: 'First Name',
                   hintStyle: const TextStyle(fontSize: 16),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
               ),
               const SizedBox(height: 15),
-
-              // Last Name
+              // Last Name field.
               TextField(
                 controller: _lastNameController,
                 decoration: InputDecoration(
                   hintText: 'Last Name',
                   hintStyle: const TextStyle(fontSize: 16),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
               ),
               const SizedBox(height: 15),
-
-              // Email
+              // Email field.
               TextField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
                   hintText: 'Enter email address',
                   hintStyle: const TextStyle(fontSize: 16),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
               ),
               const SizedBox(height: 15),
-
-              // Phone
+              // Phone field.
               TextField(
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
                 decoration: InputDecoration(
                   hintText: 'Enter phone number',
                   hintStyle: const TextStyle(fontSize: 16),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
               ),
               const SizedBox(height: 15),
-
-              // Password
+              // Password field (optional for edit).
               TextField(
                 controller: _passwordController,
                 obscureText: _obscurePassword,
                 decoration: InputDecoration(
                   hintText: 'Enter password',
                   hintStyle: const TextStyle(fontSize: 16),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscurePassword
-                          ? Icons.visibility_off
-                          : Icons.visibility,
+                      _obscurePassword ? Icons.visibility_off : Icons.visibility,
                       color: Colors.grey,
                     ),
                     onPressed: () {
@@ -200,8 +194,7 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
                 ),
               ),
               const SizedBox(height: 15),
-
-              // Assign venues dropdown
+              // Assign venues dropdown.
               DropdownButtonFormField<String>(
                 value: _selectedVenue,
                 items: _venues
@@ -218,18 +211,14 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
                 decoration: InputDecoration(
                   hintText: 'Assign venues',
                   hintStyle: const TextStyle(fontSize: 16),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
               ),
               const SizedBox(height: 15),
-
-              // Assign permissions dropdown
+              // Assign permissions dropdown.
               DropdownButtonFormField<String>(
                 value: _selectedPermission,
                 items: _permissions
@@ -246,24 +235,30 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
                 decoration: InputDecoration(
                   hintText: 'Assign permissions',
                   hintStyle: const TextStyle(fontSize: 16),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
               ),
               const SizedBox(height: 30),
-
-              // Submit button
+              // Submit button.
               SizedBox(
                 width: double.infinity,
                 height: 48,
                 child: ElevatedButton(
                   onPressed: () {
-                    // Handle "Submit" action here
+                    // Create a map of the staff member details.
+                    final newMember = {
+                      'firstName': _firstNameController.text,
+                      'lastName': _lastNameController.text,
+                      'email': _emailController.text,
+                      'phone': _phoneController.text,
+                      'venue': _selectedVenue ?? '',
+                      'permission': _selectedPermission ?? '',
+                    };
+                    // Return the new member details.
+                    Navigator.pop(context, newMember);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.orange,
@@ -287,6 +282,3 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
     );
   }
 }
-
-
-

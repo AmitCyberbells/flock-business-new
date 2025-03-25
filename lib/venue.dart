@@ -1,13 +1,13 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
+import 'package:flock/edit_venue.dart'; // Your updated EditVenueScreen
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-// For local data storage (replacing AsyncStorage)
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-// If you want an animated loader like in your RN code, you can use Lottie
-import 'package:lottie/lottie.dart';
 
-// Placeholder classes for your design tokens, images, server endpoints, etc.
+// Design tokens
 class Design {
   static const Color white = Colors.white;
   static const Color black = Colors.black;
@@ -24,51 +24,29 @@ class Design {
   static const double font20 = 20;
 }
 
+// Global images
 class GlobalImages {
   static const String back = 'assets/back.png';
   static const String location = 'assets/location.png';
-  static const String dateTime = 'assets/datetime.png';
-  static const String edit = 'assets/edit.png';
-  static const String delete = 'assets/delete.png';
-  static const String dropDown = 'assets/drop_down.png';
-  static const String dropUp = 'assets/drop_up.png';
 }
 
+// Server endpoints
 class Server {
-  static const String categoryList = 'https://example.com/categorylist';
-  static const String getProfile = 'https://example.com/getprofile';
-  static const String getVenueData = 'https://example.com/getvenuedata';
-  static const String removeVenue = 'https://example.com/removevenue';
-  static const String venueList = 'https://example.com/venuelist';
+  static const String categoryList = 'http://165.232.152.77/mobi/api/vendor/categories';
+  static const String getProfile = 'http://165.232.152.77/mobi/api/vendor/profile';
+  static const String getVenueData = 'http://165.232.152.77/mobi/api/vendor/venues';
+  static const String removeVenue = 'http://165.232.152.77/mobi/api/vendor/venues';
+  static const String updateVenue = 'http://165.232.152.77/mobi/api/vendor/venues';
+  static const String venueList = 'http://165.232.152.77/mobi/api/vendor/venues';
 }
 
-// Placeholder for your permission system
+// Permissions placeholder
 class UserPermissions {
-  static void getAssignedPermissions(String? userId) {
-    // Implement your permission logic
-  }
-
-  static bool hasPermission(String permission) {
-    // Return true/false based on real logic
-    return true;
-  }
+  static void getAssignedPermissions(String? userId) {}
+  static bool hasPermission(String permission) => true;
 }
 
-// Placeholder for your network request logic
-class ApiRequest {
-  static Future<void> postRequestWithoutToken(
-    String url,
-    Map<String, dynamic> data,
-    Function(dynamic response, dynamic error) callback,
-  ) async {
-    // Simulate a network call
-    await Future.delayed(const Duration(seconds: 2));
-    // Return a mock response
-    callback({'status': 'success'}, null);
-  }
-}
-
-// A basic "card" wrapper using Container + BoxShadow
+// Card wrapper widget
 Widget cardWrapper({
   required Widget child,
   double borderRadius = 15,
@@ -91,7 +69,6 @@ Widget cardWrapper({
   );
 }
 
-// Main screen replicating Tab_Egg
 class TabEggScreen extends StatefulWidget {
   const TabEggScreen({Key? key}) : super(key: key);
 
@@ -100,44 +77,34 @@ class TabEggScreen extends StatefulWidget {
 }
 
 class _TabEggScreenState extends State<TabEggScreen> {
-  // React Native states -> Flutter fields
   bool loader = false;
   bool dialogAlert = false;
-
-  // The ID of the venue to remove
   String removeVenueId = '';
-
-  // For greeting
   String greeting = '';
   String firstName = '';
   String lastName = '';
-
-  // For category list
   List<dynamic> categoryList = [];
-  int cardPosition = 0; // which category is selected
-
-  // For venue list
+  int cardPosition = 0;
   List<dynamic> allData = [];
-
-  // Timer for loader
   Timer? _timer;
+  Timer? _debounce;
 
   @override
   void initState() {
     super.initState();
     computeGreeting();
-    fetchUserId();
+    fetchInitialData();
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    _debounce?.cancel();
     super.dispose();
   }
 
   void computeGreeting() {
-    final now = DateTime.now();
-    final hour = now.hour;
+    final hour = DateTime.now().hour;
     if (hour < 12) {
       greeting = 'Good Morning';
     } else if (hour < 17) {
@@ -147,13 +114,14 @@ class _TabEggScreenState extends State<TabEggScreen> {
     }
   }
 
-  Future<void> fetchUserId() async {
+  Future<String> getToken() async {
     final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userid') ?? '';
-    // Load profile, category list, etc.
-    getProfile(userId);
-    UserPermissions.getAssignedPermissions(userId);
-    getCategoryList(userId);
+    return prefs.getString('access_token') ?? '';
+  }
+
+  Future<String> getUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('userid') ?? '';
   }
 
   void startLoader() {
@@ -164,171 +132,230 @@ class _TabEggScreenState extends State<TabEggScreen> {
     });
   }
 
-  void getProfile(String userId) {
-    startLoader();
-    final data = {'user_id': userId};
-
-    ApiRequest.postRequestWithoutToken(Server.getProfile, data,
-        (response, error) {
-      setState(() => loader = false);
-      if (response != null && response['status'] == 'success') {
-        // Mock: set firstName, lastName
-        setState(() {
-          firstName = 'John';
-          lastName = 'Doe';
-        });
+  Future<Map<String, dynamic>> makeApiRequest({
+    required String url,
+    required Map<String, String> headers,
+    Map<String, String>? queryParams,
+  }) async {
+    try {
+      final uri = Uri.parse(url).replace(queryParameters: queryParams);
+      final response = await http.get(uri, headers: headers).timeout(const Duration(seconds: 10));
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
       } else {
-        Fluttertoast.showToast(msg: 'Error fetching profile');
+        throw Exception('API Error ${response.statusCode}: ${response.body}');
       }
-    });
+    } catch (e) {
+      rethrow;
+    }
   }
 
-  void getCategoryList(String userId) {
-    startLoader();
-    ApiRequest.postRequestWithoutToken(Server.categoryList, {}, (res, err) {
-      setState(() => loader = false);
-      if (res != null && res['status'] == 'success') {
-        // Mock categories
-        setState(() {
-          categoryList = [
-            {
-              'id': '1',
-              'name': 'Bars',
-              'image':
-                  'https://cdn-icons-png.flaticon.com/512/2931/2931506.png'
-            },
-            {
-              'id': '2',
-              'name': 'Restaurants',
-              'image':
-                  'https://cdn-icons-png.flaticon.com/512/3075/3075937.png'
-            },
-            {
-              'id': '3',
-              'name': 'Cafes',
-              'image':
-                  'https://cdn-icons-png.flaticon.com/512/3075/3075925.png'
-            },
-          ];
-        });
-        if (categoryList.isNotEmpty) {
-          final categoryId = categoryList[cardPosition]['id'];
-          getVenueData(userId, categoryId);
-        }
-      } else {
-        Fluttertoast.showToast(msg: 'Error loading categories');
-      }
-    });
+  Future<void> fetchInitialData() async {
+    try {
+      final userId = await getUserId();
+      await Future.wait([getProfile(userId), getCategoryList(userId)]);
+    } catch (e) {
+      Fluttertoast.showToast(msg: 'Error initializing data: $e');
+    }
   }
 
-  void getVenueData(String userId, String categoryId) {
-    startLoader();
-    final data = {
-      'user_id': userId,
-      'cat_id': categoryId,
-      'user_type': 'vendor',
-    };
-    ApiRequest.postRequestWithoutToken(Server.getVenueData, data, (res, err) {
-      setState(() => loader = false);
-      if (res != null && res['status'] == 'success') {
-        // Mock list of venues
-        setState(() {
-          allData = [
-            {
-              'venue_id': '101',
-              'venue_name': 'Sample Venue A',
-              'image':
-                  'https://images.unsplash.com/photo-1566843976517-d51fe2c90f40',
-              'location': '123 Street, City',
-              'lat': '12.34',
-              'lon': '56.78',
-              'approval': '1',
-              'date': '2025-03-21',
-            },
-            {
-              'venue_id': '102',
-              'venue_name': 'Sample Venue B',
-              'image':
-                  'https://images.unsplash.com/photo-1551782450-17144c3fa673',
-              'location': '456 Road, City',
-              'lat': '23.45',
-              'lon': '67.89',
-              'approval': '0', // In Review
-              'date': '2025-03-20',
-            },
-          ];
-        });
-      } else {
-        Fluttertoast.showToast(msg: 'Error loading venues');
-      }
-    });
-  }
+  Future<void> getProfile(String userId) async {
+    setState(() => loader = true);
+    try {
+      final token = await getToken();
+      if (token.isEmpty) throw Exception('No authentication token');
 
-  // When tapping a category
-  void clickCategoryItem(dynamic item, int index) {
-    setState(() {
-      cardPosition = index;
-    });
-    final categoryId = item['id'];
-    // Get venue data again
-    SharedPreferences.getInstance().then((prefs) {
-      final userId = prefs.getString('userid') ?? '';
-      getVenueData(userId, categoryId);
-    });
-  }
+      final headers = {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      };
 
-  // Remove venue
-  void removeVenueBtn() {
-    startLoader();
-    final data = {'venue_id': removeVenueId};
-    ApiRequest.postRequestWithoutToken(Server.removeVenue, data, (res, err) {
+      final response = await makeApiRequest(url: Server.getProfile, headers: headers);
+
       setState(() {
         loader = false;
-        dialogAlert = false;
+        firstName = response['data']['first_name'] ?? '';
+        lastName = response['data']['last_name'] ?? '';
+        SharedPreferences.getInstance().then((prefs) {
+          prefs.setString('firstName', firstName);
+          prefs.setString('lastName', lastName);
+        });
       });
-      if (res != null && res['status'] == 'success') {
-        Fluttertoast.showToast(msg: 'Venue removed successfully');
-        // Refresh or remove from the allData list
+    } catch (e) {
+      setState(() => loader = false);
+      final prefs = await SharedPreferences.getInstance();
+      setState(() {
+        firstName = prefs.getString('firstName') ?? 'User';
+        lastName = prefs.getString('lastName') ?? '';
+      });
+    }
+  }
+
+  Future<void> getCategoryList(String userId) async {
+    setState(() => loader = true);
+    try {
+      final token = await getToken();
+      if (token.isEmpty) throw Exception('No authentication token');
+
+      final headers = {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      };
+
+      final response = await makeApiRequest(url: Server.categoryList, headers: headers);
+
+      setState(() {
+        categoryList = response['data'] ?? [];
+        loader = false;
+        if (categoryList.isNotEmpty) {
+          cardPosition = 0;
+          getVenueData(userId, categoryList[cardPosition]['id'].toString());
+        }
+      });
+    } catch (e) {
+      setState(() => loader = false);
+      Fluttertoast.showToast(msg: 'Failed to load categories: $e');
+    }
+  }
+
+  Future<void> getVenueData(String userId, String categoryId) async {
+    setState(() => loader = true);
+    try {
+      final token = await getToken();
+      if (token.isEmpty) throw Exception('No authentication token');
+
+      final headers = {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      };
+
+      final response = await makeApiRequest(
+        url: Server.getVenueData,
+        headers: headers,
+        queryParams: {'category_id': categoryId},
+      );
+
+      print('Venue response for category $categoryId: $response'); // Debug
+
+      setState(() {
+        allData = response['data'] ?? [];
+        loader = false;
+        if (allData.isEmpty) {
+          Fluttertoast.showToast(msg: 'No venues found for this category');
+        }
+      });
+    } catch (e) {
+      setState(() => loader = false);
+      Fluttertoast.showToast(msg: 'Failed to load venues: $e');
+      print('Venue fetch error: $e');
+    }
+  }
+
+  void clickCategoryItem(dynamic item, int index) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      setState(() {
+        cardPosition = index;
+        allData = [];
+      });
+      getUserId().then((uid) => getVenueData(uid, item['id'].toString()));
+    });
+  }
+
+  Future<void> removeVenueBtn() async {
+    setState(() => loader = true);
+    try {
+      final token = await getToken();
+      final headers = {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      };
+
+      final response = await http.post(
+        Uri.parse('${Server.removeVenue}/$removeVenueId'),
+        headers: headers,
+        body: jsonEncode({}),
+      );
+
+      dynamic responseData = response.body.isNotEmpty ? jsonDecode(response.body) : {};
+
+      if (response.statusCode == 200) {
         setState(() {
-          allData.removeWhere(
-              (element) => element['venue_id'] == removeVenueId);
+          allData.removeWhere((element) => element['id'].toString() == removeVenueId);
+          dialogAlert = false;
+          loader = false;
+        });
+        Fluttertoast.showToast(
+          msg: responseData['message'] ?? 'Venue removed successfully',
+          toastLength: Toast.LENGTH_LONG,
+        );
+        final userId = await getUserId();
+        if (categoryList.isNotEmpty) {
+          getVenueData(userId, categoryList[cardPosition]['id'].toString());
+        }
+      } else {
+        var errorMessage = responseData['message'] ?? 'Failed to remove venue (Status: ${response.statusCode})';
+        throw Exception(errorMessage);
+      }
+    } catch (e) {
+      setState(() => loader = false);
+      Fluttertoast.showToast(
+        msg: 'Failed to remove venue: ${e.toString()}',
+        toastLength: Toast.LENGTH_LONG,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+    }
+  }
+// ... (keep all the imports and other code the same until the editVenue method)
+void editVenue(Map<String, dynamic> item) {
+  if (!UserPermissions.hasPermission('edit_venue')) {
+    Fluttertoast.showToast(msg: "You don't have access to this feature!");
+    return;
+  }
+  final categoryId = item['category_id']?.toString() ?? categoryList[cardPosition]['id'].toString();
+
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => EditVenueScreen(
+        venueData: Map<String, dynamic>.from(item),
+        categoryId: categoryId,
+      ),
+    ),
+  ).then((updatedVenue) {
+    if (updatedVenue != null && updatedVenue is Map<String, dynamic>) {
+      final index = allData.indexWhere((v) => v['id']?.toString() == item['id']?.toString());
+      
+      if (index != -1) {
+        setState(() {
+          allData[index] = Map<String, dynamic>.from(allData[index])
+            ..addAll(updatedVenue);
         });
       } else {
-        Fluttertoast.showToast(msg: 'Error removing venue');
+        getUserId().then((uid) => getVenueData(uid, categoryId));
       }
-    });
-  }
-
-  // Edit venue
-  void editVenue(Map<String, dynamic> item) {
-    if (!UserPermissions.hasPermission('edit_venue')) {
-      Fluttertoast.showToast(msg: "You don't have access to this feature!");
-      return;
     }
-    // Navigate to "AddEgg" screen with item
-    Navigator.pushNamed(context, '/AddEgg', arguments: item);
-  }
+  });
+}
 
-  // Show QR code
+// ... (keep the rest of the file exactly the same)
   void qrCodeBtn(Map<String, dynamic> item) {
-    // Example route
-    Navigator.pushNamed(context, '/QRCodeScreen', arguments: {
-      'venueId': item['venue_id'],
-    });
+    Navigator.pushNamed(context, '/QRCodeScreen', arguments: {'venueId': item['id']});
   }
 
-  // Open location in maps
   void locationBtn(String lat, String lon, String label) {
     final latNum = double.tryParse(lat) ?? 0.0;
     final lonNum = double.tryParse(lon) ?? 0.0;
     final scheme = Platform.isIOS ? 'maps://?daddr=' : 'geo:';
     final uri = '$scheme$latNum,$lonNum';
-    // or use url_launcher
-    // For now, just show a toast
     Fluttertoast.showToast(msg: 'Open map for $label at ($lat, $lon)');
   }
 
-  // UI for category item (horizontal list)
   Widget buildCategoryItem(dynamic item, int index) {
     final isSelected = (cardPosition == index);
     final colors = ["#FBDFC3", "#CAD2F7", "#C3CFD6", "#FEF2BF"];
@@ -339,254 +366,34 @@ class _TabEggScreenState extends State<TabEggScreen> {
       child: Container(
         width: 75,
         margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
-        child: isSelected
-            ? cardWrapper(
-                borderRadius: 50,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    cardWrapper(
-                      borderRadius: 50,
-                      color: bgColor,
-                      elevation: 0,
-                      child: SizedBox(
-                        width: 50,
-                        height: 50,
-                        child: Image.network(
-                          item['image'],
-                          width: 25,
-                          height: 25,
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      item['name'],
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: Design.font11),
-                    ),
-                  ],
-                ),
-              )
-            : Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  cardWrapper(
-                    borderRadius: 50,
-                    color: bgColor,
-                    elevation: 5,
-                    child: SizedBox(
-                      width: 50,
-                      height: 50,
-                      child: Image.network(
-                        item['image'],
-                        width: 25,
-                        height: 25,
-                        fit: BoxFit.contain,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    item['name'],
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: Design.font11),
-                  ),
-                ],
-              ),
-      ),
-    );
-  }
-
-  // UI for a single venue (vertical list)
-  Widget buildVenueItem(Map<String, dynamic> item) {
-    return cardWrapper(
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // Venue image
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: Image.network(
-                item['image'],
-                width: 90,
-                height: 90,
-                fit: BoxFit.cover,
+            cardWrapper(
+              borderRadius: 50,
+              elevation: isSelected ? 0 : 5,
+              color: bgColor,
+              child: SizedBox(
+                width: 50,
+                height: 50,
+                child: Image.network(
+                  item['icon'] ?? 'https://picsum.photos/50',
+                  width: 25,
+                  height: 25,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) => const Icon(Icons.error),
+                ),
               ),
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Top row: venue name + QR code or (In Review)
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          item['venue_name'],
-                          style: const TextStyle(
-                            fontSize: Design.font17,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      if (item['approval'] == '0')
-                        Text(
-                          '(In Review)',
-                          style: TextStyle(
-                            fontSize: Design.font13,
-                            color: Design.darkPink,
-                          ),
-                        )
-                      else
-                        InkWell(
-                          onTap: () => qrCodeBtn(item),
-                          child: Text(
-                            'QR Code',
-                            style: TextStyle(
-                              fontSize: Design.font12,
-                              color: Colors.blue,
-                              decoration: TextDecoration.underline,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  // Location row
-                  Row(
-                    children: [
-                      Image.asset(
-                        GlobalImages.location,
-                        width: 12,
-                        height: 12,
-                        color: Design.lightGrey,
-                      ),
-                      const SizedBox(width: 5),
-                      Expanded(
-                        child: InkWell(
-                          onTap: () =>
-                              locationBtn(item['lat'], item['lon'], item['location']),
-                          child: Text(
-                            item['location'],
-                            style: TextStyle(
-                              fontSize: Design.font12,
-                              color: Design.lightGrey,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  // Date row
-                  Row(
-                    children: [
-                      Image.asset(
-                        GlobalImages.dateTime,
-                        width: 12,
-                        height: 12,
-                        color: Design.lightGrey,
-                      ),
-                      const SizedBox(width: 5),
-                      Text(
-                        item['date'] ?? '',
-                        style: TextStyle(
-                          fontSize: Design.font12,
-                          color: Design.lightGrey,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  // Buttons row: Edit Info / Remove
-                  Row(
-                    children: [
-                      Expanded(
-                        child: cardWrapper(
-                          borderRadius: 30,
-                          elevation: 2,
-                          child: InkWell(
-                            onTap: () => editVenue(item),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 6),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Image.asset(
-                                    GlobalImages.edit,
-                                    width: 18,
-                                    height: 18,
-                                    color: Design.lightBlue,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    'Edit Info',
-                                    style: TextStyle(
-                                      fontSize: Design.font13,
-                                      color: Design.lightBlue,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: cardWrapper(
-                          borderRadius: 30,
-                          elevation: 2,
-                          color: Design.lightPink,
-                          child: InkWell(
-                            onTap: () {
-                              if (!UserPermissions.hasPermission('remove_venue')) {
-                                Fluttertoast.showToast(
-                                  msg: "You don't have access to this feature!",
-                                );
-                                return;
-                              }
-                              setState(() {
-                                removeVenueId = item['venue_id'];
-                                dialogAlert = true;
-                              });
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 6),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Image.asset(
-                                    GlobalImages.delete,
-                                    width: 18,
-                                    height: 18,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    'Remove',
-                                    style: TextStyle(
-                                      fontSize: Design.font13,
-                                      color: Design.darkPink,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+            const SizedBox(height: 6),
+            SizedBox(
+              width: 75,
+              child: Text(
+                item['name'] ?? '',
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: Design.font11),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
@@ -595,7 +402,180 @@ class _TabEggScreenState extends State<TabEggScreen> {
     );
   }
 
-  // The main build
+  Widget buildVenueItem(Map<String, dynamic> item) {
+    return cardWrapper(
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Image.network(
+                  item['images'] != null && item['images'].isNotEmpty
+                      ? item['images'][0]['image']
+                      : 'https://picsum.photos/90',
+                  width: 90,
+                  height: 90,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    width: 90,
+                    height: 90,
+                    color: Colors.grey[300],
+                    child: const Icon(Icons.image_not_supported),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            item['name'] ?? 'No Name',
+                            style: const TextStyle(
+                              fontSize: Design.font17,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        if (item['approval'] == '0')
+                          Text(
+                            '(In Review)',
+                            style: TextStyle(
+                              fontSize: Design.font13,
+                              color: Design.darkPink,
+                            ),
+                          )
+                        else
+                          InkWell(
+                            onTap: () => qrCodeBtn(item),
+                            child: Padding(
+                              padding: const EdgeInsets.all(4.0),
+                              child: Text(
+                                'QR Code',
+                                style: TextStyle(
+                                  fontSize: Design.font12,
+                                  color: Colors.blue,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Image.asset(
+                          GlobalImages.location,
+                          width: 12,
+                          height: 12,
+                          color: Design.lightGrey,
+                        ),
+                        const SizedBox(width: 5),
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => locationBtn(
+                              item['lat']?.toString() ?? '0.0',
+                              item['lon']?.toString() ?? '0.0',
+                              item['location'] ?? 'Unknown',
+                            ),
+                            child: Text(
+                              item['location'] ?? 'No location',
+                              style: TextStyle(
+                                fontSize: Design.font12,
+                                color: Design.lightGrey,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: cardWrapper(
+                            borderRadius: 30,
+                            elevation: 2,
+                            child: InkWell(
+                              onTap: () => editVenue(item),
+                              child: const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                child: Text(
+                                  'Edit Info',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: Design.font13,
+                                    color: Design.lightBlue,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: cardWrapper(
+                            borderRadius: 30,
+                            elevation: 2,
+                            color: Design.lightPink,
+                            child: InkWell(
+                              onTap: () {
+                                if (!UserPermissions.hasPermission('remove_venue')) {
+                                  Fluttertoast.showToast(msg: "You don't have access to this feature!");
+                                  return;
+                                }
+                                setState(() {
+                                  removeVenueId = item['id'].toString();
+                                  dialogAlert = true;
+                                });
+                              },
+                              child: const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.delete, size: 18, color: Colors.red),
+                                    SizedBox(width: 6),
+                                    Text(
+                                      'Remove',
+                                      style: TextStyle(
+                                        fontSize: Design.font13,
+                                        color: Design.darkPink,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -605,33 +585,22 @@ class _TabEggScreenState extends State<TabEggScreen> {
           children: [
             Column(
               children: [
-                // Top Card with greeting + category list
                 cardWrapper(
                   borderRadius: 20,
                   elevation: 5,
                   child: Column(
                     children: [
-                      // If you want a back button only sometimes:
-                      // This checks some condition like your "value == egg"
-                      // For simplicity, let's always show the back arrow:
                       Row(
                         children: [
                           IconButton(
-                            icon: Image.asset(
-                              GlobalImages.back,
-                              width: 30,
-                              height: 30,
-                            ),
+                            icon: Image.asset(GlobalImages.back, width: 30, height: 30),
                             onPressed: () => Navigator.pop(context),
                           ),
                           const Expanded(
                             child: Center(
                               child: Text(
                                 "All Venues",
-                                style: TextStyle(
-                                  fontSize: Design.font20,
-                                  fontWeight: FontWeight.w500,
-                                ),
+                                style: TextStyle(fontSize: Design.font20, fontWeight: FontWeight.w500),
                               ),
                             ),
                           ),
@@ -646,18 +615,12 @@ class _TabEggScreenState extends State<TabEggScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    '$greeting,',
-                                    style: const TextStyle(
-                                      fontSize: Design.font20,
-                                    ),
-                                  ),
+                                  Text('$greeting,', style: const TextStyle(fontSize: Design.font20)),
                                   Text(
                                     '$firstName $lastName',
-                                    style: const TextStyle(
-                                      fontSize: Design.font20,
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                                    style: const TextStyle(fontSize: Design.font20, fontWeight: FontWeight.w600),
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
                                   ),
                                 ],
                               ),
@@ -665,83 +628,61 @@ class _TabEggScreenState extends State<TabEggScreen> {
                           ],
                         ),
                       ),
-                      // Horizontal category list
                       Container(
                         margin: const EdgeInsets.only(top: 8),
                         height: 130,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: categoryList.length,
-                          itemBuilder: (context, index) {
-                            final item = categoryList[index];
-                            return buildCategoryItem(item, index);
-                          },
-                        ),
+                        child: loader && categoryList.isEmpty
+                            ? const Center(child: CircularProgressIndicator())
+                            : categoryList.isEmpty
+                                ? const Center(child: Text('No Categories Found'))
+                                : ListView.builder(
+                                    scrollDirection: Axis.horizontal,
+                                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                                    itemCount: categoryList.length,
+                                    itemBuilder: (context, index) {
+                                      final item = categoryList[index];
+                                      return buildCategoryItem(item, index);
+                                    },
+                                  ),
                       ),
                     ],
                   ),
                 ),
-                // Venues list
                 Expanded(
-                  child: allData.isEmpty
-                      ? const Center(
-                          child: Text(
-                            'No Data Found...',
-                            style: TextStyle(
-                              fontSize: Design.font20,
-                              color: Design.lightGrey,
-                            ),
-                          ),
-                        )
-                      : Column(
-                          children: [
-                            Container(
-                              alignment: Alignment.centerLeft,
-                              padding: const EdgeInsets.only(
-                                  left: 16, top: 8, bottom: 4),
-                              child: const Text(
-                                'All Venues',
-                                style: TextStyle(
-                                  // fontSize: Design.font18,
-                                  fontWeight: FontWeight.w600,
+                  child: loader && allData.isEmpty
+                      ? const Center(child: CircularProgressIndicator())
+                      : allData.isEmpty
+                          ? Center(
+                              child: Text(
+                                'No Venues Found in ${categoryList.isNotEmpty ? categoryList[cardPosition]['name'] : 'Selected Category'}',
+                                style: const TextStyle(fontSize: Design.font20, color: Design.lightGrey),
+                              ),
+                            )
+                          : Column(
+                              children: [
+                                Container(
+                                  alignment: Alignment.centerLeft,
+                                  padding: const EdgeInsets.only(left: 16, top: 8, bottom: 4),
+                                  child: Text(
+                                    'Venues in ${categoryList[cardPosition]['name']}',
+                                    style: const TextStyle(fontWeight: FontWeight.w600),
+                                  ),
                                 ),
-                              ),
+                                Expanded(
+                                  child: ListView.builder(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    itemCount: allData.length,
+                                    itemBuilder: (context, index) {
+                                      final item = allData[index];
+                                      return buildVenueItem(item);
+                                    },
+                                  ),
+                                ),
+                              ],
                             ),
-                            Expanded(
-                              child: ListView.builder(
-                                padding: const EdgeInsets.only(bottom: 10),
-                                itemCount: allData.length,
-                                itemBuilder: (context, index) {
-                                  final item = allData[index];
-                                  return Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 4),
-                                    child: buildVenueItem(item),
-                                  );
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
                 ),
               ],
             ),
-
-            // Loader overlay
-            if (loader)
-              Container(
-                color: Colors.black12,
-                child: Center(
-                  // Example using Lottie asset
-                  child: SizedBox(
-                    width: 100,
-                    height: 100,
-                     child: Lottie.asset('assets/loader.json'), 
-                  ),
-                ),
-              ),
-
-            // Remove-venue confirmation dialog
             if (dialogAlert)
               Center(
                 child: Container(
@@ -758,10 +699,7 @@ class _TabEggScreenState extends State<TabEggScreen> {
                       const Text(
                         'Are you sure you want to Remove Venue?',
                         textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: Design.font15,
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: TextStyle(fontSize: Design.font15, fontWeight: FontWeight.w600),
                       ),
                       const SizedBox(height: 20),
                       Row(
@@ -769,16 +707,12 @@ class _TabEggScreenState extends State<TabEggScreen> {
                         children: [
                           ElevatedButton(
                             onPressed: removeVenueBtn,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Design.primaryColorOrange,
-                            ),
+                            style: ElevatedButton.styleFrom(backgroundColor: Design.primaryColorOrange),
                             child: const Text('Yes'),
                           ),
                           OutlinedButton(
                             onPressed: () => setState(() => dialogAlert = false),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: Design.primaryColorOrange,
-                            ),
+                            style: OutlinedButton.styleFrom(foregroundColor: Design.primaryColorOrange),
                             child: const Text('No'),
                           ),
                         ],
@@ -787,12 +721,11 @@ class _TabEggScreenState extends State<TabEggScreen> {
                   ),
                 ),
               ),
+            if (loader)
+              Container(color: Colors.black26, child: const Center(child: CircularProgressIndicator())),
           ],
         ),
       ),
     );
   }
 }
-
-
-

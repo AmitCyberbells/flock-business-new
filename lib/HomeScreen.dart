@@ -89,11 +89,12 @@ class _TabDashboardState extends State<TabDashboard> {
   Timer? _timer;
   String userId = '';
 
-  @override
-  void initState() {
-    super.initState();
-    getUserId();
-  }
+@override
+void initState() {
+  super.initState();
+  fetchName();
+}
+
 
   @override
   void dispose() {
@@ -101,13 +102,21 @@ class _TabDashboardState extends State<TabDashboard> {
     super.dispose();
   }
 
-  Future<void> getUserId() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    userId = prefs.getString('userid') ?? '';
-    dashboardApi();
+  // Future<void> getUserId() async {
+  //   SharedPreferences prefs = await SharedPreferences.getInstance();
+  //   userId = prefs.getString('userid') ?? '';
+  //   dashboardApi();
    
-    getVenueList();
-  }
+  //   getVenueList();
+  // }
+
+Future<void> fetchName() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  setState(() {
+    firstName = prefs.getString('firstName') ?? '';
+    lastName = prefs.getString('lastName') ?? '';
+  });
+}
 
   void startLoader() {
     setState(() {
@@ -225,47 +234,21 @@ class _TabDashboardState extends State<TabDashboard> {
     }
     String slug = item['slug'];
     if (slug == "offers") {
-      await getOfferApi();
+      Navigator.pushNamed(context, '/faq');
     } else if (slug == "check_ins") {
       Navigator.pushNamed(context, '/tab_checkin');
     } else if (slug == "feathers") {
       await totalFeatherApi();
-    } else if (slug == "venues") {
+    } 
+    else if (slug == "venues") {
       Navigator.pushNamed(context, '/tab_egg');
+      
     } else if (slug == "faq") {
       Navigator.pushNamed(context, '/faq');
     }
   }
 
-  Future<void> getOfferApi() async {
-    startLoader();
-    var url = Uri.parse("https://yourserver.com/getOffer");
-    var request = http.MultipartRequest('POST', url);
-    request.fields['user_id'] = userId;
-
-    try {
-      var response = await request.send();
-      var responseString = await response.stream.bytesToString();
-      var responseJson = json.decode(responseString);
-
-      setState(() {
-        loader = false;
-      });
-
-      if (responseJson != null && responseJson['status'] == 'success') {
-        Navigator.pushNamed(context, '/offers', arguments: {
-          'Offers': responseJson['Offers'],
-        });
-      } else {
-        Fluttertoast.showToast(msg: responseJson['message'] ?? 'Error');
-      }
-    } catch (e) {
-      setState(() {
-        loader = false;
-      });
-      Fluttertoast.showToast(msg: 'Error: $e');
-    }
-  }
+ 
 
   Future<void> totalFeatherApi() async {
     startLoader();
@@ -714,12 +697,12 @@ class CustomBottomNavigationBar extends StatelessWidget {
 //   }
 // }
 
-class AddOfferScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(appBar: AppBar(title: Text("Add Offer")));
-  }
-}
+// class AddOfferScreen extends StatelessWidget {
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(appBar: AppBar(title: Text("Add Offer")));
+//   }
+// }
 
 class SendNotificationScreen extends StatelessWidget {
   @override

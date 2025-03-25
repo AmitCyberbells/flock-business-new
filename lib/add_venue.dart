@@ -56,41 +56,32 @@ class AddEggScreen extends StatefulWidget {
 }
 
 class _AddEggScreenState extends State<AddEggScreen> {
-  // State variables
   bool loader = false;
-  bool dialogAlert = false;         
-  bool confirmPopup = false;        
-  bool confirmPaymentTerms = false; 
+  bool dialogAlert = false;
+  bool confirmPopup = false;
+  bool confirmPaymentTerms = false;
 
-  // Venue details
   String name = '';
   String suburb = '';
-  String location = ''; 
+  String location = '';
   String notice = '';
   String description = '';
 
-  // Category
-  bool nameofeggStatus = false;     
+  bool nameofeggStatus = false;
   String nameofegg = '';
   String catId = '';
 
-  // Amenities
-  bool reportStatus = false;        
-  List<dynamic> allAmenities = [];  
-  List<String> arrOfAmenities = []; 
+  bool reportStatus = false;
+  List<dynamic> allAmenities = [];
+  List<String> arrOfAmenities = [];
 
-  // Categories list
   List<dynamic> allCategory = [];
-
-  // Tags
   List<dynamic> tags = [];
   List<String> selectedTags = [];
 
-  // Photos
   final ImagePicker _picker = ImagePicker();
   List<XFile> photos = [];
 
-  // For API
   String userId = "";
   double lat = 0.0;
   double lng = 0.0;
@@ -98,7 +89,6 @@ class _AddEggScreenState extends State<AddEggScreen> {
   @override
   void initState() {
     super.initState();
-
     if (widget.allCategory != null) {
       allCategory = widget.allCategory!;
     }
@@ -108,10 +98,14 @@ class _AddEggScreenState extends State<AddEggScreen> {
     if (widget.allDetail != null) {
       populateExistingVenue(widget.allDetail);
     }
-
     getUserId();
     getVenueTags();
     getCategoriesAmenties();
+  }
+
+  Future<String> getToken() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString('access_token') ?? '';
   }
 
   Future<void> getUserId() async {
@@ -121,69 +115,60 @@ class _AddEggScreenState extends State<AddEggScreen> {
     });
   }
 
-  // Get Tags from API or dummy data for testing
   Future<void> getVenueTags() async {
-    // Uncomment below to fetch from API:
-    /*
     try {
-      final response = await http.get(Uri.parse(Server.tags));
+      final token = await getToken();
+      final response = await http.get(
+        Uri.parse(Server.tags),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
       if (response.statusCode == 200) {
         final tagsJson = jsonDecode(response.body);
         setState(() {
-          tags = tagsJson;
+          tags = tagsJson['data']; // Access the 'data' key from API response
         });
       } else {
-        Fluttertoast.showToast(msg: "Failed to load tags");
+        Fluttertoast.showToast(msg: "Failed to load tags: ${response.statusCode}");
       }
     } catch (e) {
       Fluttertoast.showToast(msg: "Error fetching tags: $e");
     }
-    */
-    // Dummy data for testing:
-    setState(() {
-      tags = [
-        {'id': 1, 'name': 'Live Music'},
-        {'id': 2, 'name': 'Rooftop'},
-        {'id': 3, 'name': 'Kid Friendly'},
-        {'id': 4, 'name': 'Outdoor Seating'},
-      ];
-    });
   }
 
-  // Get Categories and Amenities from API or dummy data for testing
   Future<void> getCategoriesAmenties() async {
-    // Uncomment below to fetch from API:
-    /*
     try {
-      final categoriesResponse = await http.get(Uri.parse(Server.categoryList));
-      final amenitiesResponse = await http.get(Uri.parse(Server.amenities));
-      if (categoriesResponse.statusCode == 200 && amenitiesResponse.statusCode == 200) {
+      final token = await getToken();
+      final headers = {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      };
+
+      final categoriesResponse = await http.get(Uri.parse(Server.categoryList), headers: headers);
+      final amenitiesResponse = await http.get(Uri.parse(Server.amenities), headers: headers);
+
+      if (categoriesResponse.statusCode == 200) {
         final categoriesJson = jsonDecode(categoriesResponse.body);
-        final amenitiesJson = jsonDecode(amenitiesResponse.body);
         setState(() {
-          allCategory = categoriesJson;
-          allAmenities = amenitiesJson;
+          allCategory = categoriesJson['data']; // Access the 'data' key
         });
       } else {
-        Fluttertoast.showToast(msg: "Failed to load categories/amenities");
+        Fluttertoast.showToast(msg: "Failed to load categories: ${categoriesResponse.statusCode}");
+      }
+
+      if (amenitiesResponse.statusCode == 200) {
+        final amenitiesJson = jsonDecode(amenitiesResponse.body);
+        setState(() {
+          allAmenities = amenitiesJson['data']; // Access the 'data' key
+        });
+      } else {
+        Fluttertoast.showToast(msg: "Failed to load amenities: ${amenitiesResponse.statusCode}");
       }
     } catch (e) {
-      Fluttertoast.showToast(msg: "Error: $e");
+      Fluttertoast.showToast(msg: "Error fetching categories/amenities: $e");
     }
-    */
-    // Dummy data for testing:
-    setState(() {
-      allCategory = [
-        {'id': '1', 'name': 'Bar'},
-        {'id': '2', 'name': 'Restaurant'},
-        {'id': '3', 'name': 'Cafe'},
-      ];
-      allAmenities = [
-        {'id': '101', 'name': 'WiFi'},
-        {'id': '102', 'name': 'Parking'},
-        {'id': '103', 'name': 'Pet Friendly'},
-      ];
-    });
   }
 
   void populateExistingVenue(dynamic detail) {
@@ -195,14 +180,13 @@ class _AddEggScreenState extends State<AddEggScreen> {
       lng = double.tryParse('${detail['lon']}') ?? 0.0;
       notice = detail['important_notice'] ?? '';
       description = detail['description'] ?? '';
-      catId = detail['cat_id'] ?? '';
-      nameofegg = ''; // Update when category list is available.
+      catId = detail['cat_id']?.toString() ?? '';
+      nameofegg = ''; // Will be set when categories load
       final aList = detail['amenties'] as List<dynamic>? ?? [];
-      arrOfAmenities = aList.map((e) => e['name'].toString()).toList();
+      arrOfAmenities = aList.map((e) => e['id'].toString()).toList();
     });
   }
 
-  // For multi-select tags
   void handleTagChange(List<dynamic> selectedValues) {
     if (selectedValues.length > 5) {
       Fluttertoast.showToast(msg: "You can select up to 5 tags!");
@@ -213,54 +197,47 @@ class _AddEggScreenState extends State<AddEggScreen> {
     });
   }
 
-  // Toggle category dropdown
   void toggleNameOfEggStatus() {
     setState(() {
       nameofeggStatus = !nameofeggStatus;
     });
   }
 
-  // Select category
   void selectCategory(Map<String, dynamic> item) {
     setState(() {
       nameofegg = item['name'];
-      catId = item['id'];
+      catId = item['id'].toString();
       nameofeggStatus = false;
     });
   }
 
-  // Toggle amenities dropdown
   void toggleReportStatus() {
     setState(() {
       reportStatus = !reportStatus;
     });
   }
 
-  // Select an amenity
   void selectAmenity(Map<String, dynamic> item) {
-    final name = item['name'];
-    if (!arrOfAmenities.contains(name)) {
+    final id = item['id'].toString();
+    if (!arrOfAmenities.contains(id)) {
       setState(() {
-        arrOfAmenities.add(name);
+        arrOfAmenities.add(id);
       });
     }
   }
 
-  // Remove an amenity
   void removeAmenity(String item) {
     setState(() {
       arrOfAmenities.remove(item);
     });
   }
 
-  // Show image selection dialog
   void showImageDialog() {
     setState(() {
       dialogAlert = true;
     });
   }
 
-  // Pick image from camera
   Future<void> pickFromCamera() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.camera);
     if (image != null) {
@@ -273,7 +250,6 @@ class _AddEggScreenState extends State<AddEggScreen> {
     });
   }
 
-  // Pick image from gallery
   Future<void> pickFromGallery() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
@@ -286,14 +262,12 @@ class _AddEggScreenState extends State<AddEggScreen> {
     });
   }
 
-  // Remove image
   void removePhoto(int index) {
     setState(() {
       photos.removeAt(index);
     });
   }
 
-  // Show a dialog to manually enter location
   void showLocationDialog() {
     TextEditingController locController = TextEditingController(text: location);
     showDialog(
@@ -309,9 +283,7 @@ class _AddEggScreenState extends State<AddEggScreen> {
           ),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
+              onPressed: () => Navigator.pop(context),
               child: const Text("Cancel"),
             ),
             ElevatedButton(
@@ -329,7 +301,6 @@ class _AddEggScreenState extends State<AddEggScreen> {
     );
   }
 
-  // When "Continue" is pressed, validate input and call the API to store the venue.
   void updateBtn() {
     if (name.isEmpty) {
       Fluttertoast.showToast(msg: "Enter Venue Name");
@@ -362,61 +333,92 @@ class _AddEggScreenState extends State<AddEggScreen> {
     addVenueApi();
   }
 
-  // API call to store venue using multipart POST
   Future<void> addVenueApi() async {
-    setState(() {
-      loader = true;
-    });
-
+    setState(() => loader = true);
     try {
-      var uri = Uri.parse(Server.venues);
-      var request = http.MultipartRequest('POST', uri);
+      final token = await getToken();
+      final uri = Uri.parse(Server.venues);
+      final request = http.MultipartRequest('POST', uri);
 
-      // Add text fields
-      request.fields['user_id'] = userId;
-      request.fields['venue_name'] = name;
+      request.headers['Authorization'] = 'Bearer $token';
+      request.headers['Accept'] = 'application/json';
+
+      request.fields['name'] = name;
+      request.fields['category_id'] = catId;
       request.fields['suburb'] = suburb;
       request.fields['location'] = location;
-      request.fields['important_notice'] = notice;
+      request.fields['lat'] = lat.toString();
+      request.fields['lon'] = lng.toString();
       request.fields['description'] = description;
-      request.fields['cat_id'] = catId;
-      // Convert amenities and tags to comma-separated strings
-      request.fields['amenities'] = arrOfAmenities.join(',');
-      request.fields['tags'] = selectedTags.join(',');
+      request.fields['important_notice'] = notice;
 
-      // Add image files
+      for (var tagId in selectedTags) {
+        request.fields['tag_ids[]'] = tagId;
+      }
+
+      for (var amenityId in arrOfAmenities) {
+        request.fields['amenity_ids[]'] = amenityId;
+      }
+
+      print('Request Fields: ${request.fields}');
+
       for (var photo in photos) {
-        var fileStream = http.ByteStream(Stream.castFrom(photo.openRead()));
-        var length = await photo.length();
-        var multipartFile = http.MultipartFile('photos[]', fileStream, length, filename: photo.name);
+        final fileStream = http.ByteStream(photo.openRead());
+        final length = await photo.length();
+        final multipartFile = http.MultipartFile(
+          'photos[]',
+          fileStream,
+          length,
+          filename: photo.name,
+        );
         request.files.add(multipartFile);
       }
 
-      // Send request
-      var response = await request.send();
-      if (response.statusCode == 200) {
-        var responseString = await response.stream.bytesToString();
-        var responseJson = jsonDecode(responseString);
-        Fluttertoast.showToast(msg: responseJson['message'] ?? "Venue added successfully");
+      final response = await request.send();
+      final responseString = await response.stream.bytesToString();
+      print('Response: $responseString');
+
+      _handleResponseStatus(response, responseString);
+    } catch (e) {
+      setState(() => loader = false);
+      Fluttertoast.showToast(msg: "An error occurred: $e");
+      print('Exception: $e');
+    }
+  }
+
+  void _handleResponseStatus(http.StreamedResponse response, String responseString) {
+    // If the HTTP status code is less than 300, consider it a success.
+    if (response.statusCode < 300) {
+      final responseJson = jsonDecode(responseString);
+      Fluttertoast.showToast(
+        msg: responseJson['message'] ?? "Venue added successfully",
+      );
+      setState(() {
+        loader = false;
+        confirmPopup = true;
+      });
+    } else {
+      // For status codes 300 and above, treat it as an error.
+      final responseJson = jsonDecode(responseString);
+      // Check if the backend updated the internal status from error to 1.
+      if (responseJson['status'] != null && responseJson['status'] == 1) {
+        Fluttertoast.showToast(
+          msg: responseJson['message'] ?? "Venue status updated to success.",
+        );
         setState(() {
           loader = false;
           confirmPopup = true;
         });
       } else {
-        Fluttertoast.showToast(msg: "Error: ${response.statusCode}");
-        setState(() {
-          loader = false;
-        });
+        Fluttertoast.showToast(
+          msg: "Error: ${response.statusCode} - ${responseJson['message'] ?? 'Something went wrong.'}",
+        );
+        print('Error Response: $responseString');
+        setState(() => loader = false);
       }
-    } catch (e) {
-      setState(() {
-        loader = false;
-      });
-      Fluttertoast.showToast(msg: "An error occurred: $e");
     }
   }
 
-  // Closes the success popup and returns a result.
   void onDonePressed() {
     setState(() {
       confirmPopup = false;
@@ -434,7 +436,6 @@ class _AddEggScreenState extends State<AddEggScreen> {
           SafeArea(
             child: Column(
               children: [
-                // Header row
                 Padding(
                   padding: const EdgeInsets.only(top: 20, left: 10, right: 10, bottom: 10),
                   child: Row(
@@ -468,8 +469,6 @@ class _AddEggScreenState extends State<AddEggScreen> {
                             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                           ),
                           const SizedBox(height: 20),
-
-                          // Venue Name
                           const Text('Name of Venue', style: TextStyle(fontSize: 16)),
                           const SizedBox(height: 8),
                           Container(
@@ -487,8 +486,6 @@ class _AddEggScreenState extends State<AddEggScreen> {
                             ),
                           ),
                           const SizedBox(height: 20),
-
-                          // Category
                           const Text('Category', style: TextStyle(fontSize: 16)),
                           const SizedBox(height: 8),
                           Container(
@@ -530,8 +527,6 @@ class _AddEggScreenState extends State<AddEggScreen> {
                               ),
                             ),
                           const SizedBox(height: 20),
-
-                          // Tags
                           const Text('Tags', style: TextStyle(fontSize: 16)),
                           const SizedBox(height: 8),
                           MultiSelectDialogField(
@@ -542,9 +537,7 @@ class _AddEggScreenState extends State<AddEggScreen> {
                             selectedColor: Design.primaryColorOrange,
                             selectedItemsTextStyle: const TextStyle(color: Colors.white),
                             listType: MultiSelectListType.LIST,
-                            onConfirm: (values) {
-                              handleTagChange(values);
-                            },
+                            onConfirm: handleTagChange,
                             buttonText: const Text("Select Tags"),
                             initialValue: selectedTags
                                 .map((e) => int.tryParse(e))
@@ -552,8 +545,6 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                 .toList(),
                           ),
                           const SizedBox(height: 20),
-
-                          // Suburb
                           const Text('Suburb', style: TextStyle(fontSize: 16)),
                           const SizedBox(height: 8),
                           Container(
@@ -571,8 +562,6 @@ class _AddEggScreenState extends State<AddEggScreen> {
                             ),
                           ),
                           const SizedBox(height: 20),
-
-                          // Location
                           const Text('Location', style: TextStyle(fontSize: 16)),
                           const SizedBox(height: 8),
                           TextField(
@@ -590,8 +579,6 @@ class _AddEggScreenState extends State<AddEggScreen> {
                             ),
                           ),
                           const SizedBox(height: 20),
-
-                          // Amenities
                           const Text('Type of Amenities', style: TextStyle(fontSize: 16)),
                           const SizedBox(height: 8),
                           Container(
@@ -632,19 +619,21 @@ class _AddEggScreenState extends State<AddEggScreen> {
                           Wrap(
                             spacing: 10,
                             runSpacing: 10,
-                            children: arrOfAmenities.map((item) {
+                            children: arrOfAmenities.map((amenityId) {
+                              final amenity = allAmenities.firstWhere(
+                                (a) => a['id'].toString() == amenityId,
+                                orElse: () => {'name': 'Unknown'},
+                              );
                               return Chip(
-                                label: Text(item),
+                                label: Text(amenity['name']),
                                 backgroundColor: Design.primaryColorOrange,
                                 labelStyle: const TextStyle(color: Colors.white),
                                 deleteIcon: const Icon(Icons.close, color: Colors.white, size: 18),
-                                onDeleted: () => removeAmenity(item),
+                                onDeleted: () => removeAmenity(amenityId),
                               );
                             }).toList(),
                           ),
                           const SizedBox(height: 20),
-
-                          // Notice
                           const Text('Notice', style: TextStyle(fontSize: 16)),
                           const SizedBox(height: 8),
                           Container(
@@ -662,8 +651,6 @@ class _AddEggScreenState extends State<AddEggScreen> {
                             ),
                           ),
                           const SizedBox(height: 20),
-
-                          // Description
                           const Text('Description', style: TextStyle(fontSize: 16)),
                           const SizedBox(height: 8),
                           Container(
@@ -682,8 +669,6 @@ class _AddEggScreenState extends State<AddEggScreen> {
                             ),
                           ),
                           const SizedBox(height: 20),
-
-                          // Upload Pictures
                           const Text('Upload Pictures', style: TextStyle(fontSize: 16)),
                           const SizedBox(height: 8),
                           Row(
@@ -737,40 +722,39 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                             ),
                                           ],
                                         ),
-                                        // Uncomment below to display the image from file:
-                                        // child: Stack(
-                                        //   children: [
-                                        //     ClipRRect(
-                                        //       borderRadius: BorderRadius.circular(5),
-                                        //       child: Image.file(
-                                        //         File(photo.path),
-                                        //         fit: BoxFit.cover,
-                                        //         width: 90,
-                                        //         height: 90,
-                                        //       ),
-                                        //     ),
-                                        //     Positioned(
-                                        //       top: 2,
-                                        //       right: 2,
-                                        //       child: InkWell(
-                                        //         onTap: () => removePhoto(index),
-                                        //         child: Container(
-                                        //           width: 24,
-                                        //           height: 24,
-                                        //           decoration: const BoxDecoration(
-                                        //             shape: BoxShape.circle,
-                                        //             color: Colors.black54,
-                                        //           ),
-                                        //           child: const Icon(
-                                        //             Icons.close,
-                                        //             color: Colors.white,
-                                        //             size: 18,
-                                        //           ),
-                                        //         ),
-                                        //       ),
-                                        //     ),
-                                        //   ],
-                                        // ),
+                                        child: Stack(
+                                          children: [
+                                            ClipRRect(
+                                              borderRadius: BorderRadius.circular(5),
+                                              child: Image.file(
+                                                File(photo.path),
+                                                fit: BoxFit.cover,
+                                                width: 90,
+                                                height: 90,
+                                              ),
+                                            ),
+                                            Positioned(
+                                              top: 2,
+                                              right: 2,
+                                              child: InkWell(
+                                                onTap: () => removePhoto(index),
+                                                child: Container(
+                                                  width: 24,
+                                                  height: 24,
+                                                  decoration: const BoxDecoration(
+                                                    shape: BoxShape.circle,
+                                                    color: Colors.black54,
+                                                  ),
+                                                  child: const Icon(
+                                                    Icons.close,
+                                                    color: Colors.white,
+                                                    size: 18,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       );
                                     },
                                   ),
