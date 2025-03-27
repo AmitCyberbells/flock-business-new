@@ -20,11 +20,13 @@ class _FaqScreenState extends State<FaqScreen> {
     fetchFaqs();
   }
 
+  // Retrieve the token stored during login
   Future<String?> getToken() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.getString('token');
+    return prefs.getString('access_token');
   }
 
+  // Fetch FAQs from the API with authentication
   Future<void> fetchFaqs() async {
     setState(() {
       isLoading = true;
@@ -33,6 +35,7 @@ class _FaqScreenState extends State<FaqScreen> {
 
     String? token = await getToken();
     if (token == null || token.isEmpty) {
+      // If token is missing, redirect to login
       Navigator.pushReplacementNamed(context, '/login');
       return;
     }
@@ -50,6 +53,7 @@ class _FaqScreenState extends State<FaqScreen> {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+        // Check if API responded with a success status and has data
         if (data['status'] == 'success' && data['data'] != null) {
           setState(() {
             faqList = List.from(data['data']);
@@ -75,6 +79,7 @@ class _FaqScreenState extends State<FaqScreen> {
     });
   }
 
+  // Toggle the expanded/collapsed state for an FAQ item
   void toggleFaq(int id) {
     setState(() {
       activeFaq = activeFaq == id ? -1 : id;
@@ -89,7 +94,10 @@ class _FaqScreenState extends State<FaqScreen> {
           icon: Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text('FAQs', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+        title: Text(
+          'FAQs',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+        ),
         centerTitle: true,
       ),
       body: Padding(
@@ -97,65 +105,102 @@ class _FaqScreenState extends State<FaqScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Top Questions', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+            Text(
+              'Top Questions',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+            ),
             SizedBox(height: 15),
             Expanded(
               child: isLoading
                   ? Center(child: CircularProgressIndicator())
                   : errorMessage.isNotEmpty
-                      ? Center(child: Text(errorMessage, style: TextStyle(color: Colors.red, fontSize: 16)))
+                      ? Center(
+                          child: Text(
+                            errorMessage,
+                            style: TextStyle(color: Colors.red, fontSize: 16),
+                          ),
+                        )
                       : faqList.isNotEmpty
                           ? ListView.builder(
                               itemCount: faqList.length,
                               itemBuilder: (context, index) {
                                 final item = faqList[index];
-                                return Column(
-                                  children: [
-                                    GestureDetector(
-                                      onTap: () => toggleFaq(item['id']),
-                                      child: Container(
-                                        padding: EdgeInsets.symmetric(vertical: 15, horizontal: 20),
-                                        decoration: BoxDecoration(
-                                          color: Colors.purple.shade100,
-                                          borderRadius: BorderRadius.circular(10),
-                                        ),
-                                        child: Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Expanded(
-                                              child: Text(
-                                                item['question'],
-                                                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w500),
+                                final isActive = (activeFaq == item['id']);
+                                return Container(
+                                  margin: const EdgeInsets.only(bottom: 10),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(10),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.3),
+                                        spreadRadius: 1,
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      GestureDetector(
+                                        onTap: () => toggleFaq(item['id']),
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 15, vertical: 15),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  item['question'] ?? '',
+                                                  style: const TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
                                               ),
-                                            ),
-                                            Icon(
-                                              activeFaq == item['id']
-                                                  ? Icons.keyboard_arrow_up
-                                                  : Icons.keyboard_arrow_down,
-                                              size: 20,
-                                            ),
-                                          ],
+                                              Icon(
+                                                isActive
+                                                    ? Icons.keyboard_arrow_up
+                                                    : Icons.keyboard_arrow_down,
+                                                size: 24,
+                                              ),
+                                            ],
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                    if (activeFaq == item['id'])
-                                      Container(
-                                        padding: EdgeInsets.all(15),
-                                        margin: EdgeInsets.only(top: 5, bottom: 10),
-                                        decoration: BoxDecoration(
-                                          color: Colors.grey.shade200,
-                                          borderRadius: BorderRadius.circular(10),
+                                      if (isActive)
+                                        Container(
+                                          width: double.infinity,
+                                          padding: const EdgeInsets.all(15),
+                                          decoration: BoxDecoration(
+                                            color: Colors.grey.shade100,
+                                            borderRadius:
+                                                const BorderRadius.only(
+                                              bottomLeft: Radius.circular(10),
+                                              bottomRight: Radius.circular(10),
+                                            ),
+                                          ),
+                                          child: Text(
+                                            item['answer'] ?? '',
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              height: 1.4,
+                                            ),
+                                          ),
                                         ),
-                                        child: Text(
-                                          item['answer'],
-                                          style: TextStyle(fontSize: 15),
-                                        ),
-                                      ),
-                                  ],
+                                    ],
+                                  ),
                                 );
                               },
                             )
-                          : Center(child: Text('No record found!', style: TextStyle(fontSize: 16))),
+                          : Center(
+                              child: Text(
+                                'No record found!',
+                                style: TextStyle(fontSize: 16),
+                              ),
+                            ),
             ),
           ],
         ),

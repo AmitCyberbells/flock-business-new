@@ -1,4 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ReportScreen extends StatefulWidget {
   const ReportScreen({Key? key}) : super(key: key);
@@ -13,14 +16,134 @@ class _ReportScreenState extends State<ReportScreen> {
 
   final TextEditingController _descriptionController = TextEditingController();
 
-  // Example items for dropdowns
-  final List<String> _venues = ["Venue 1", "Venue 2", "Venue 3"];
-  final List<String> _reportTypes = ["Type A", "Type B", "Type C"];
+  // These lists will be populated from the APIs
+  List<String> _venues = [];
+  List<String> _reportTypes = [];
+
+  // Basic error message handling (optional)
+  String _errorMessage = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchVenues();
+    _fetchReportTypes();
+  }
+
+  /// Retrieve the token from SharedPreferences
+  Future<String?> _getToken() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString('access_token');
+  }
+
+  /// Fetch the list of venues from the API
+  Future<void> _fetchVenues() async {
+    final token = await _getToken();
+    if (token == null || token.isEmpty) {
+      setState(() {
+        _errorMessage = 'No token found. Please login again.';
+      });
+      return;
+    }
+
+    final url = Uri.parse('http://165.232.152.77/mobi/api/vendor/venues');
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['status'] == 'success' && data['data'] != null) {
+          final List<dynamic> venueData = data['data'];
+          setState(() {
+            // Convert each object into a string (e.g. the "name" field)
+            _venues = venueData
+                .map((venue) => venue['name'].toString())
+                .toList();
+          });
+        } else {
+          setState(() {
+            _errorMessage = data['message'] ?? 'Failed to load venues.';
+          });
+        }
+      } else {
+        setState(() {
+          _errorMessage = 'Error ${response.statusCode} loading venues.';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Network error: $e';
+      });
+    }
+  }
+
+  /// Fetch the list of report types from the API
+  Future<void> _fetchReportTypes() async {
+    final token = await _getToken();
+    if (token == null || token.isEmpty) {
+      setState(() {
+        _errorMessage = 'No token found. Please login again.';
+      });
+      return;
+    }
+
+    final url = Uri.parse('http://165.232.152.77/mobi/api/vendor/report-types');
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['status'] == 'success' && data['data'] != null) {
+          final List<dynamic> reportTypeData = data['data'];
+          setState(() {
+            // Convert each object into the "label" string
+            _reportTypes = reportTypeData
+                .map((rt) => rt['label'].toString())
+                .toList();
+          });
+        } else {
+          setState(() {
+            _errorMessage = data['message'] ?? 'Failed to load report types.';
+          });
+        }
+      } else {
+        setState(() {
+          _errorMessage = 'Error ${response.statusCode} loading report types.';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Network error: $e';
+      });
+    }
+  }
+
+  /// Handle form submission
+  void _submitReport() {
+    // For demonstration, just print the chosen values
+    print('Venue: $_selectedVenue');
+    print('Report Type: $_selectedReportType');
+    print('Description: ${_descriptionController.text}');
+
+    // TODO: Submit these values to your API as needed
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, // Matches the screenshot
+      backgroundColor: Colors.white, // Matches your screenshot
       body: SafeArea(
         child: SingleChildScrollView(
           // Ensures screen is scrollable if content grows
@@ -151,14 +274,22 @@ class _ReportScreenState extends State<ReportScreen> {
                 ),
                 const SizedBox(height: 24),
 
+                // Show any error messages from the fetch calls
+                if (_errorMessage.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Text(
+                      _errorMessage,
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  ),
+
                 // Submit button
                 SizedBox(
                   width: double.infinity,
                   height: 48,
                   child: ElevatedButton(
-                    onPressed: () {
-                      // Handle form submission here
-                    },
+                    onPressed: _submitReport,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.orange,
                       shape: RoundedRectangleBorder(
@@ -183,6 +314,3 @@ class _ReportScreenState extends State<ReportScreen> {
     );
   }
 }
-
-
-

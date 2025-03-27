@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({Key? key}) : super(key: key);
@@ -23,6 +24,12 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   final TextEditingController _confirmPasswordController =
       TextEditingController();
 
+  /// Retrieve the stored token from SharedPreferences
+  Future<String?> _getToken() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString('access_token');
+  }
+
   Future<void> _changePassword() async {
     final String currentPassword = _currentPasswordController.text.trim();
     final String newPassword = _newPasswordController.text.trim();
@@ -35,32 +42,46 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       return;
     }
     if (newPassword != confirmPassword) {
-      Fluttertoast.showToast(msg: "New password and confirm password do not match");
+      Fluttertoast.showToast(
+          msg: "New password and confirm password do not match");
       return;
     }
 
-    final url = Uri.parse("http://165.232.152.77/mobi/api/vendor/reset-password");
+    final String urlString =
+        "http://165.232.152.77/mobi/api/vendor/profile/change-password";
     final payload = {
-      "current_password": currentPassword,
-      "new_password": newPassword,
-      "confirm_password": confirmPassword,
+      "old_password": currentPassword,
+      "password": newPassword,
+      "password_confirmation": confirmPassword,
     };
+
+    // Retrieve token for authenticated request
+    final token = await _getToken();
+    if (token == null || token.isEmpty) {
+      Fluttertoast.showToast(msg: "No token found. Please login again.");
+      return;
+    }
 
     try {
       final response = await http.post(
-        url,
-        headers: {"Content-Type": "application/json"},
+        Uri.parse(urlString),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
+        },
         body: jsonEncode(payload),
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        // Adjust the success condition if your API uses a different format
         if (data['message'] != null &&
             data['message'].toString().toLowerCase().contains("success")) {
           Fluttertoast.showToast(msg: "Password changed successfully");
           Navigator.pop(context);
         } else {
-          Fluttertoast.showToast(msg: data['message'] ?? "Failed to change password");
+          Fluttertoast.showToast(
+              msg: data['message'] ?? "Failed to change password");
         }
       } else {
         Fluttertoast.showToast(msg: "Error: ${response.statusCode}");

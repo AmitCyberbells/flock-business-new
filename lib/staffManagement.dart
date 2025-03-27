@@ -1,7 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'addStaffMember.dart';
+import 'addStaffMember.dart'; // Ensure this path is correct
 
 class StaffManagementScreen extends StatefulWidget {
   const StaffManagementScreen({Key? key}) : super(key: key);
@@ -11,65 +12,184 @@ class StaffManagementScreen extends StatefulWidget {
 }
 
 class _StaffManagementScreenState extends State<StaffManagementScreen> {
+  /// List of staff members.
   List<Map<String, String>> staffMembers = [];
+  String? _authToken;
 
   @override
   void initState() {
     super.initState();
-    loadStaffMembers();
+    _loadTokenAndFetchStaff();
   }
 
-  // Reload staff members every time the widget is reinserted in the tree.
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    loadStaffMembers();
-  }
-
-  Future<void> loadStaffMembers() async {
+  /// Load the access token from SharedPreferences and fetch staff members.
+  Future<void> _loadTokenAndFetchStaff() async {
     final prefs = await SharedPreferences.getInstance();
-    final staffJson = prefs.getString('staffMembers') ?? '[]';
-    final List<dynamic> staffList = json.decode(staffJson);
-    setState(() {
-      staffMembers = List<Map<String, String>>.from(staffList);
-    });
+    _authToken = prefs.getString('access_token');
+    if (_authToken == null) {
+      debugPrint("No token found in SharedPreferences.");
+      return;
+    }
+    await fetchStaffMembers();
   }
 
-  Future<void> saveStaffMembers() async {
-    final prefs = await SharedPreferences.getInstance();
-    final String staffJson = json.encode(staffMembers);
-    await prefs.setString('staffMembers', staffJson);
-  }
-
-  Future<void> addOrUpdateMember({Map<String, String>? member, int? index}) async {
-    // Navigate to AddMemberScreen and wait for result.
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => AddMemberScreen(
-          existingMember: member,
+  /// Fetch staff members from the API.
+  Future<void> fetchStaffMembers() async {
+    try {
+      final dio = Dio();
+      final response = await dio.get(
+        'http://165.232.152.77/mobi/api/vendor/teams',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $_authToken',
+            'Accept': 'application/json',
+          },
         ),
-      ),
-    );
-    if (result != null && result is Map<String, String>) {
-      setState(() {
-        if (index != null) {
-          // Update the existing member.
-          staffMembers[index] = result;
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data != null && data['data'] != null) {
+          final List<dynamic> rawList = data['data'];
+          final List<Map<String, String>> loadedStaff = rawList
+              .map<Map<String, String>>((item) {
+                return {
+                  "id": item["id"]?.toString() ?? '',
+                  "firstName": item["first_name"] ?? '',
+                  "lastName": item["last_name"] ?? '',
+                  "email": item["email"] ?? '',
+                  "phone": item["contact"] ?? '',
+                  "createdAt": item["created_at"] ?? '',
+                };
+              })
+              .toList();
+
+          setState(() {
+            staffMembers = loadedStaff;
+          });
         } else {
-          // Add new member.
-          staffMembers.add(result);
+          debugPrint("No 'data' field found in the response.");
         }
-      });
-      await saveStaffMembers();
+      } else {
+        debugPrint("Request failed with status: ${response.statusCode}");
+      }
+    } catch (e) {
+      debugPrint("Exception while fetching staff members: $e");
     }
   }
 
+  /// Fetch a single team member's details by ID.
+  Future<Map<String, String>?> fetchTeamMember(String memberId) async {
+    try {
+      final dio = Dio();
+      final response = await dio.get(
+        'http://165.232.152.77/mobi/api/vendor/teams/$memberId',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $_authToken',
+            'Accept': 'application/json',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data['data'];
+        if (data != null) {
+          return {
+            "id": data["id"]?.toString() ?? '',
+            "firstName": data["first_name"] ?? '',
+            "lastName": data["last_name"] ?? '',
+            "email": data["email"] ?? '',
+            "phone": data["contact"] ?? '',
+            "venue": data["venue_ids"]?.join(',') ?? '',
+            "permission": data["permission_ids"]?.join(',') ?? '',
+          };
+        } else {
+          debugPrint("No 'data' field found in the response for team member.");
+          return null;
+        }
+      } else {
+        debugPrint("Request failed with status: ${response.statusCode}");
+        return null;
+      }
+    } catch (e) {
+      debugPrint("Exception while fetching team member: $e");
+      return null;
+    }
+  }
+
+  /// Navigate to AddMemberScreen and refresh the list upon success.
+  Future<void> addOrUpdateMember({Map<String, String>? member, int? index}) async {
+    Map<String, String>? memberData = member;
+
+    // If editing, fetch the latest member data from the API
+    if (member != null && member["id"] != null) {
+      memberData = await fetchTeamMember(member["id"]!);
+      if (memberData == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Failed to fetch member details.")),
+        );
+        return;
+      }
+    }
+
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddMemberScreen(existingMember: memberData),
+      ),
+    );
+
+    // If the AddMemberScreen returned a successful result, refetch the list.
+    if (result != null && result == true) {
+      await fetchStaffMembers();
+    }
+  }
+
+  /// Delete a member from the server and locally.
   Future<void> deleteMember(int index) async {
-    setState(() {
-      staffMembers.removeAt(index);
-    });
-    await saveStaffMembers();
+    final memberId = staffMembers[index]["id"];
+    if (memberId == null || memberId.isEmpty) {
+      debugPrint("Cannot delete member: ID is missing.");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Cannot delete member: ID is missing.")),
+      );
+      return;
+    }
+
+    try {
+      final dio = Dio();
+      final response = await dio.delete(
+        'http://165.232.152.77/mobi/api/vendor/teams/$memberId',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $_authToken',
+            'Accept': 'application/json',
+          },
+          validateStatus: (status) => status! < 500, // Accept status codes less than 500
+        ),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        setState(() {
+          staffMembers.removeAt(index);
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Member deleted successfully!")),
+        );
+      } else {
+        final errorMessage = response.data['message'] ?? 'Unknown error';
+        debugPrint("Delete request failed with status: ${response.statusCode}, message: $errorMessage");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to delete member: $errorMessage")),
+        );
+      }
+    } catch (e) {
+      debugPrint("Exception while deleting staff member: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error deleting member: $e")),
+      );
+    }
   }
 
   @override
@@ -89,7 +209,6 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: Column(
-                    // If there are members, space the list and bottom evenly; otherwise, show a message.
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       // Top bar with back arrow, title, and "Add Member" button.
@@ -132,7 +251,7 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                           ],
                         ),
                       ),
-                      // Middle area: display staff members list or a "No Member Found..." message.
+                      // Display staff members or a "No Member Found" message.
                       staffMembers.isEmpty
                           ? Center(
                               child: Text(
@@ -150,26 +269,38 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                               itemBuilder: (context, index) {
                                 final member = staffMembers[index];
                                 return Card(
+                                  elevation: 2,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
                                   child: ListTile(
                                     title: Text(
                                       '${member["firstName"]} ${member["lastName"]}',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 16,
+                                      ),
                                     ),
                                     subtitle: Text(
-                                      '${member["email"]}\n${member["phone"]}',
+                                      member["createdAt"] ?? '',
+                                      style: TextStyle(
+                                        color: Colors.grey.shade600,
+                                        fontSize: 14,
+                                      ),
                                     ),
                                     trailing: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        // Edit (pencil) icon.
+                                        // Edit icon.
                                         IconButton(
-                                          icon: const Icon(Icons.edit, color: Colors.blue),
+                                          icon: const Icon(Icons.edit, color: Colors.black, size: 20),
                                           onPressed: () {
                                             addOrUpdateMember(member: member, index: index);
                                           },
                                         ),
                                         // Delete icon.
                                         IconButton(
-                                          icon: const Icon(Icons.delete, color: Colors.red),
+                                          icon: const Icon(Icons.close, color: Colors.orange, size: 20),
                                           onPressed: () {
                                             deleteMember(index);
                                           },
@@ -180,7 +311,7 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                                 );
                               },
                             ),
-                      // Bottom bubble: "No record found!" message if list is empty.
+                      // Bottom bubble for empty list.
                       staffMembers.isEmpty
                           ? Padding(
                               padding: const EdgeInsets.only(bottom: 16.0),

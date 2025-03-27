@@ -1,9 +1,12 @@
-import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:io';
+import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:image_picker/image_picker.dart'; // For picking images
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
+// Basic design tokens
 class Design {
   static const Color white = Colors.white;
   static const Color darkPink = Color(0xFFD81B60);
@@ -15,13 +18,14 @@ class Design {
   static const double font20 = 20;
 }
 
+// Your server constants
 class Server {
   static const String updateVenue = 'http://165.232.152.77/mobi/api/vendor/venues';
 }
 
 class EditVenueScreen extends StatefulWidget {
-  final Map<String, dynamic> venueData;
-  final String categoryId;
+  final Map<String, dynamic> venueData; // The existing venue info
+  final String categoryId;              // Category ID for the venue
 
   const EditVenueScreen({
     Key? key,
@@ -40,21 +44,40 @@ class _EditVenueScreenState extends State<EditVenueScreen> {
   late TextEditingController _locationController;
   late TextEditingController _latController;
   late TextEditingController _lonController;
+  late TextEditingController _noticeController;
   late TextEditingController _featherPointsController;
   late TextEditingController _venuePointsController;
+
+  final ImagePicker _picker = ImagePicker();
+  XFile? _selectedImage;
+
+  List<int> selectedTagIds = [];
+  List<int> selectedAmenityIds = [];
+
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.venueData['name']?.toString() ?? '');
-    _suburbController = TextEditingController(text: widget.venueData['suburb']?.toString() ?? '');
-    _descriptionController = TextEditingController(text: widget.venueData['description']?.toString() ?? '');
-    _locationController = TextEditingController(text: widget.venueData['location']?.toString() ?? '');
-    _latController = TextEditingController(text: widget.venueData['lat']?.toString() ?? '');
-    _lonController = TextEditingController(text: widget.venueData['lon']?.toString() ?? '');
-    _featherPointsController = TextEditingController(text: widget.venueData['feather_points']?.toString() ?? '');
-    _venuePointsController = TextEditingController(text: widget.venueData['venue_points']?.toString() ?? '');
+
+    try {
+      _nameController = TextEditingController(text: widget.venueData['name']?.toString() ?? '');
+      _suburbController = TextEditingController(text: widget.venueData['suburb']?.toString() ?? '');
+      _descriptionController = TextEditingController(text: widget.venueData['description']?.toString() ?? '');
+      _locationController = TextEditingController(text: widget.venueData['location']?.toString() ?? '');
+      _latController = TextEditingController(text: widget.venueData['lat']?.toString() ?? '');
+      _lonController = TextEditingController(text: widget.venueData['lon']?.toString() ?? '');
+      _noticeController = TextEditingController(text: widget.venueData['notice']?.toString() ?? '');
+      _featherPointsController = TextEditingController(text: widget.venueData['feather_points']?.toString() ?? '');
+      _venuePointsController = TextEditingController(text: widget.venueData['venue_points']?.toString() ?? '');
+    } catch (e) {
+      Fluttertoast.showToast(
+        msg: 'Error initializing venue data: ${e.toString()}',
+        toastLength: Toast.LENGTH_LONG,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+    }
   }
 
   @override
@@ -65,17 +88,85 @@ class _EditVenueScreenState extends State<EditVenueScreen> {
     _locationController.dispose();
     _latController.dispose();
     _lonController.dispose();
+    _noticeController.dispose();
     _featherPointsController.dispose();
     _venuePointsController.dispose();
     super.dispose();
   }
 
   Future<String> _getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('access_token') ?? '';
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString('access_token') ?? '';
+    } catch (e) {
+      throw Exception('Failed to retrieve token: ${e.toString()}');
+    }
+  }
+
+  Future<void> _pickImageFromGallery() async {
+    try {
+      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+      if (image != null) {
+        setState(() => _selectedImage = image);
+      }
+    } catch (e) {
+      Fluttertoast.showToast(
+        msg: 'Error picking image from gallery: ${e.toString()}',
+        toastLength: Toast.LENGTH_LONG,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+    }
+  }
+
+  Future<void> _pickImageFromCamera() async {
+    try {
+      final XFile? image = await _picker.pickImage(source: ImageSource.camera);
+      if (image != null) {
+        setState(() => _selectedImage = image);
+      }
+    } catch (e) {
+      Fluttertoast.showToast(
+        msg: 'Error taking photo: ${e.toString()}',
+        toastLength: Toast.LENGTH_LONG,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+    }
+  }
+
+  void _showImagePickerSheet() {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) {
+        return SafeArea(
+          child: Wrap(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Pick from Gallery'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _pickImageFromGallery();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Take a Photo'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _pickImageFromCamera();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _updateVenue() async {
+    // Basic validation
     if (_nameController.text.isEmpty ||
         _descriptionController.text.isEmpty ||
         _locationController.text.isEmpty ||
@@ -90,61 +181,112 @@ class _EditVenueScreenState extends State<EditVenueScreen> {
       return;
     }
 
+    // Validate latitude and longitude
+    if (double.tryParse(_latController.text) == null || double.tryParse(_lonController.text) == null) {
+      Fluttertoast.showToast(
+        msg: 'Invalid latitude or longitude',
+        toastLength: Toast.LENGTH_LONG,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
 
     try {
       final token = await _getToken();
-      if (token.isEmpty) throw Exception('No authentication token');
+      if (token.isEmpty) {
+        throw Exception('No authentication token found');
+      }
 
-      final headers = {
-        'Authorization': 'Bearer $token',
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      };
+      final venueId = widget.venueData['id']?.toString() ?? '';
+      if (venueId.isEmpty) {
+        throw Exception('No venue ID found');
+      }
 
-      final body = jsonEncode({
-        'id': widget.venueData['id']?.toString(),
-        'name': _nameController.text,
-        'suburb': _suburbController.text,
-        'description': _descriptionController.text,
-        'location': _locationController.text,
-        'lat': _latController.text,
-        'lon': _lonController.text,
-        'feather_points': _featherPointsController.text,
-        'venue_points': _venuePointsController.text,
-        'category_id': widget.categoryId,
-      });
+      final url = Uri.parse('${Server.updateVenue}/$venueId');
+      final request = http.MultipartRequest('POST', url);
 
-      final response = await http.post(
-        Uri.parse('${Server.updateVenue}/${widget.venueData['id']}'),
-        headers: headers,
-        body: body,
-      );
+      request.headers['Authorization'] = 'Bearer $token';
+      request.headers['Accept'] = 'application/json';
 
-      final responseData = json.decode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
+      request.fields['name'] = _nameController.text;
+      request.fields['suburb'] = _suburbController.text;
+      request.fields['description'] = _descriptionController.text;
+      request.fields['location'] = _locationController.text;
+      request.fields['lat'] = _latController.text;
+      request.fields['lon'] = _lonController.text;
+      request.fields['notice'] = _noticeController.text;
+      request.fields['feather_points'] = _featherPointsController.text;
+      request.fields['venue_points'] = _venuePointsController.text;
+      request.fields['category_id'] = widget.categoryId;
+      request.fields['id'] = venueId;
 
-      if (response.statusCode == 200) {
-        // Create a properly typed map for the updated venue
-        final updatedVenue = Map<String, dynamic>.from(widget.venueData)
-          ..addAll({
-            'name': _nameController.text,
-            'suburb': _suburbController.text,
-            'description': _descriptionController.text,
-            'location': _locationController.text,
-            'lat': _latController.text,
-            'lon': _lonController.text,
-            'feather_points': _featherPointsController.text,
-            'venue_points': _venuePointsController.text,
-            'category_id': widget.categoryId,
-          });
+      for (final tagId in selectedTagIds) {
+        request.fields['tag_ids[]'] = tagId.toString();
+      }
+      for (final amId in selectedAmenityIds) {
+        request.fields['amenity_ids[]'] = amId.toString();
+      }
 
-        Navigator.pop(context, updatedVenue);
-        Fluttertoast.showToast(msg: 'Venue updated successfully');
-      } else {
-        throw Exception(responseData['message'] ?? 'Failed to update venue');
+      if (_selectedImage != null) {
+        try {
+          final fileStream = http.ByteStream(_selectedImage!.openRead());
+          final length = await _selectedImage!.length();
+          final multipartFile = http.MultipartFile(
+            'images[]',
+            fileStream,
+            length,
+            filename: _selectedImage!.name,
+          );
+          request.files.add(multipartFile);
+        } catch (e) {
+          throw Exception('Failed to process image: ${e.toString()}');
+        }
+      }
+
+      final response = await request.send();
+      final responseString = await response.stream.bytesToString();
+
+      try {
+        final responseData = json.decode(responseString) as Map<String, dynamic>;
+        if (response.statusCode >= 200 && response.statusCode < 300) {
+          final updatedVenue = Map<String, dynamic>.from(widget.venueData)
+            ..addAll({
+              'name': _nameController.text,
+              'suburb': _suburbController.text,
+              'description': _descriptionController.text,
+              'location': _locationController.text,
+              'lat': _latController.text,
+              'lon': _lonController.text,
+              'notice': _noticeController.text,
+              'feather_points': _featherPointsController.text,
+              'venue_points': _venuePointsController.text,
+              'category_id': widget.categoryId,
+            });
+
+          Navigator.pop(context, updatedVenue);
+          Fluttertoast.showToast(
+            msg: responseData['message'] ?? 'Venue updated successfully',
+            toastLength: Toast.LENGTH_LONG,
+            backgroundColor: Colors.green,
+            textColor: Colors.white,
+          );
+        } else {
+          final errorMsg = responseData['message'] ?? 'Failed to update venue';
+          throw Exception(errorMsg);
+        }
+      } catch (e) {
+        throw Exception('Failed to parse server response: ${e.toString()}');
       }
     } catch (e) {
-      Fluttertoast.showToast(msg: 'Error: ${e.toString()}');
+      Fluttertoast.showToast(
+        msg: 'Error updating venue: ${e.toString()}',
+        toastLength: Toast.LENGTH_LONG,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
     } finally {
       setState(() => _isLoading = false);
     }
@@ -152,6 +294,15 @@ class _EditVenueScreenState extends State<EditVenueScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final selectedImageWidget = _selectedImage != null
+        ? Image.file(
+            File(_selectedImage!.path),
+            width: 80,
+            height: 80,
+            fit: BoxFit.cover,
+          )
+        : const SizedBox();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Edit Venue'),
@@ -164,13 +315,13 @@ class _EditVenueScreenState extends State<EditVenueScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Venue ID: ${widget.venueData['id']}',
-                  style: const TextStyle(
-                    fontSize: Design.font15,
-                    color: Design.lightGrey,
-                  ),
-                ),
+                // Text(
+                //   'Venue ID: ${widget.venueData['id']}',
+                //   style: const TextStyle(
+                //     fontSize: Design.font15,
+                //     color: Design.lightGrey,
+                //   ),
+                // ),
                 const SizedBox(height: 20),
                 TextField(
                   controller: _nameController,
@@ -231,6 +382,14 @@ class _EditVenueScreenState extends State<EditVenueScreen> {
                   ],
                 ),
                 const SizedBox(height: 16),
+                TextField(
+                  controller: _noticeController,
+                  decoration: const InputDecoration(
+                    labelText: 'Notice',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 16),
                 Row(
                   children: [
                     Expanded(
@@ -257,6 +416,20 @@ class _EditVenueScreenState extends State<EditVenueScreen> {
                   ],
                 ),
                 const SizedBox(height: 24),
+                Row(
+                  children: [
+                    ElevatedButton(
+                      onPressed: _showImagePickerSheet,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Design.primaryColorOrange,
+                      ),
+                      child: const Text("Pick Image"),
+                    ),
+                    const SizedBox(width: 16),
+                    selectedImageWidget,
+                  ],
+                ),
+                const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -275,7 +448,10 @@ class _EditVenueScreenState extends State<EditVenueScreen> {
             ),
           ),
           if (_isLoading)
-            const Center(child: CircularProgressIndicator()),
+            Container(
+              color: Colors.black12,
+              child: const Center(child: CircularProgressIndicator()),
+            ),
         ],
       ),
     );

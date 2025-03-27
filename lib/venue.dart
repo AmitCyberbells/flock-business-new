@@ -1,10 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'package:flock/edit_venue.dart'; // Your updated EditVenueScreen
+import 'package:flock/edit_venue.dart'; // This file should contain your EditVenueScreen implementation.
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // Design tokens
@@ -46,7 +47,7 @@ class UserPermissions {
   static bool hasPermission(String permission) => true;
 }
 
-// Card wrapper widget
+// Reusable card wrapper widget
 Widget cardWrapper({
   required Widget child,
   double borderRadius = 15,
@@ -139,7 +140,8 @@ class _TabEggScreenState extends State<TabEggScreen> {
   }) async {
     try {
       final uri = Uri.parse(url).replace(queryParameters: queryParams);
-      final response = await http.get(uri, headers: headers).timeout(const Duration(seconds: 10));
+      final response =
+          await http.get(uri, headers: headers).timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
@@ -275,17 +277,19 @@ class _TabEggScreenState extends State<TabEggScreen> {
         'Content-Type': 'application/json',
       };
 
-      final response = await http.post(
+      // Use DELETE method
+      final response = await http.delete(
         Uri.parse('${Server.removeVenue}/$removeVenueId'),
         headers: headers,
-        body: jsonEncode({}),
       );
 
-      dynamic responseData = response.body.isNotEmpty ? jsonDecode(response.body) : {};
+      final responseData =
+          response.body.isNotEmpty ? jsonDecode(response.body) : {};
 
       if (response.statusCode == 200) {
         setState(() {
-          allData.removeWhere((element) => element['id'].toString() == removeVenueId);
+          allData.removeWhere(
+              (element) => element['id'].toString() == removeVenueId);
           dialogAlert = false;
           loader = false;
         });
@@ -298,7 +302,8 @@ class _TabEggScreenState extends State<TabEggScreen> {
           getVenueData(userId, categoryList[cardPosition]['id'].toString());
         }
       } else {
-        var errorMessage = responseData['message'] ?? 'Failed to remove venue (Status: ${response.statusCode})';
+        var errorMessage = responseData['message'] ??
+            'Failed to remove venue (Status: ${response.statusCode})';
         throw Exception(errorMessage);
       }
     } catch (e) {
@@ -311,41 +316,65 @@ class _TabEggScreenState extends State<TabEggScreen> {
       );
     }
   }
-// ... (keep all the imports and other code the same until the editVenue method)
-void editVenue(Map<String, dynamic> item) {
-  if (!UserPermissions.hasPermission('edit_venue')) {
-    Fluttertoast.showToast(msg: "You don't have access to this feature!");
-    return;
-  }
-  final categoryId = item['category_id']?.toString() ?? categoryList[cardPosition]['id'].toString();
 
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => EditVenueScreen(
-        venueData: Map<String, dynamic>.from(item),
-        categoryId: categoryId,
-      ),
-    ),
-  ).then((updatedVenue) {
-    if (updatedVenue != null && updatedVenue is Map<String, dynamic>) {
-      final index = allData.indexWhere((v) => v['id']?.toString() == item['id']?.toString());
-      
-      if (index != -1) {
-        setState(() {
-          allData[index] = Map<String, dynamic>.from(allData[index])
-            ..addAll(updatedVenue);
-        });
-      } else {
-        getUserId().then((uid) => getVenueData(uid, categoryId));
-      }
+  void editVenue(Map<String, dynamic> item) {
+    if (!UserPermissions.hasPermission('edit_venue')) {
+      Fluttertoast.showToast(msg: "You don't have access to this feature!");
+      return;
     }
-  });
-}
+    final categoryId = item['category_id']?.toString() ?? categoryList[cardPosition]['id'].toString();
 
-// ... (keep the rest of the file exactly the same)
+    // Navigate to the EditVenueScreen.
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditVenueScreen(
+          venueData: Map<String, dynamic>.from(item),
+          categoryId: categoryId,
+        ),
+      ),
+    ).then((updatedVenue) {
+      if (updatedVenue != null && updatedVenue is Map<String, dynamic>) {
+        final index = allData.indexWhere((v) => v['id']?.toString() == item['id']?.toString());
+        if (index != -1) {
+          setState(() {
+            allData[index] = Map<String, dynamic>.from(allData[index])
+              ..addAll(updatedVenue);
+          });
+        } else {
+          getUserId().then((uid) => getVenueData(uid, categoryId));
+        }
+      }
+    });
+  }
+
+  // Updated qrCodeBtn using QrImageView for QR code display.
   void qrCodeBtn(Map<String, dynamic> item) {
-    Navigator.pushNamed(context, '/QRCodeScreen', arguments: {'venueId': item['id']});
+    final String qrData = item['qrData'] ?? item['id'].toString();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("QR Code"),
+          content: SizedBox(
+            width: 200,
+            height: 200,
+            child: QrImageView(
+              data: qrData,
+              version: QrVersions.auto,
+              size: 200.0,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text("Close"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void locationBtn(String lat, String lon, String label) {

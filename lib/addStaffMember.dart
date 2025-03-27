@@ -1,4 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path/path.dart' as p;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:multi_select_flutter/multi_select_flutter.dart';
 
 class AddMemberScreen extends StatefulWidget {
   final Map<String, String>? existingMember;
@@ -10,8 +16,8 @@ class AddMemberScreen extends StatefulWidget {
 
 class _AddMemberScreenState extends State<AddMemberScreen> {
   bool _obscurePassword = true;
-  String? _selectedVenue;
-  String? _selectedPermission;
+  List<String> _selectedVenues = [];
+  List<String> _selectedPermissions = [];
 
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
@@ -19,9 +25,10 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  // Dummy lists for dropdowns.
-  final List<String> _venues = ["Venue 1", "Venue 2", "Venue 3"];
-  final List<String> _permissions = ["Admin", "Manager", "Viewer"];
+  List<dynamic> _venueList = [];
+  List<dynamic> _permissionList = [];
+  File? _pickedImage;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -31,8 +38,152 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
       _lastNameController.text = widget.existingMember!['lastName'] ?? '';
       _emailController.text = widget.existingMember!['email'] ?? '';
       _phoneController.text = widget.existingMember!['phone'] ?? '';
-      _selectedVenue = widget.existingMember!['venue'];
-      _selectedPermission = widget.existingMember!['permission'];
+      _selectedVenues = widget.existingMember!['venue']?.split(',') ?? [];
+      _selectedPermissions = widget.existingMember!['permission']?.split(',') ?? [];
+    }
+    fetchDropdownData();
+  }
+
+  Future<void> fetchDropdownData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('access_token') ?? '';
+    final dio = Dio();
+
+    try {
+      final venueResponse = await dio.get(
+        'http://165.232.152.77/mobi/api/vendor/venues',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Accept': 'application/json',
+          },
+        ),
+      );
+      if (venueResponse.statusCode == 200) {
+        setState(() {
+          _venueList = venueResponse.data['data'] ?? [];
+        });
+      }
+    } catch (e) {
+      _showError('Error fetching venues: $e');
+    }
+
+    try {
+      final permissionResponse = await dio.get(
+        'http://165.232.152.77/mobi/api/vendor/permissions',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Accept': 'application/json',
+          },
+        ),
+      );
+      if (permissionResponse.statusCode == 200) {
+        setState(() {
+          _permissionList = permissionResponse.data['data'] ?? [];
+        });
+      }
+    } catch (e) {
+      _showError('Error fetching permissions: $e');
+    }
+  }
+
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _pickedImage = File(pickedFile.path);
+      });
+    }
+  }
+
+  Future<void> _submitForm() async {
+    if (_firstNameController.text.isEmpty ||
+        _emailController.text.isEmpty ||
+        (_passwordController.text.isEmpty && widget.existingMember == null)) {
+      _showError('Please fill in all required fields');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('access_token') ?? '';
+
+      // Construct the map separately
+      Map<String, dynamic> formDataMap = {
+        "first_name": _firstNameController.text,
+        "last_name": _lastNameController.text,
+        "email": _emailController.text,
+        if (_passwordController.text.isNotEmpty) "password": _passwordController.text,
+        "contact": _phoneController.text,
+      };
+
+      // Add permission_ids as an array
+      for (var i = 0; i < _selectedPermissions.length; i++) {
+        formDataMap["permission_ids[$i]"] = _selectedPermissions[i];
+      }
+
+      // Add venue_ids as an array
+      for (var i = 0; i < _selectedVenues.length; i++) {
+        formDataMap["venue_ids[$i]"] = _selectedVenues[i];
+      }
+
+      // Add image if available
+      if (_pickedImage != null) {
+        formDataMap["image"] = await MultipartFile.fromFile(
+          _pickedImage!.path,
+          filename: p.basename(_pickedImage!.path),
+        );
+      }
+
+      // Create FormData from the map
+      FormData formData = FormData.fromMap(formDataMap);
+
+      final dio = Dio();
+      final String url = widget.existingMember != null && widget.existingMember!['id'] != null
+          ? "http://165.232.152.77/mobi/api/vendor/teams/${widget.existingMember!['id']}"
+          : "http://165.232.152.77/mobi/api/vendor/teams";
+
+      final response = await dio.post(
+        url,
+        data: formData,
+        options: Options(
+          headers: {
+            "Authorization": "Bearer $token",
+            "Accept": "application/json",
+          },
+          validateStatus: (status) => status! < 500,
+        ),
+      );
+
+      setState(() => _isLoading = false);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(widget.existingMember != null ? "Member updated successfully!" : "Member added successfully!")),
+          );
+          Navigator.pop(context, true);
+        }
+      } else {
+        final errorMessage = response.data['message'] ?? 'Unknown error';
+        final errors = response.data['errors']?.toString() ?? 'No details provided';
+        _showError('Failed to save member: $errorMessage\nDetails: $errors');
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      _showError('Error saving member: $e');
+    }
+  }
+
+  void _showError(String message) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
     }
   }
 
@@ -42,243 +193,202 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
       resizeToAvoidBottomInset: true,
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.only(
-            left: 16.0,
-            right: 16.0,
-            top: 8.0,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 16.0,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Top bar with back arrow and title.
-              Row(
+        child: Stack(
+          children: [
+            SingleChildScrollView(
+              padding: EdgeInsets.only(
+                left: 16.0,
+                right: 16.0,
+                top: 8.0,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 16.0,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  InkWell(
-                    onTap: () => Navigator.of(context).pop(),
-                    child: const Icon(Icons.arrow_back, color: Colors.black),
+                  Row(
+                    children: [
+                      InkWell(
+                        onTap: () => Navigator.of(context).pop(),
+                        child: const Icon(Icons.arrow_back, color: Colors.black),
+                      ),
+                      const SizedBox(width: 16),
+                      Text(
+                        widget.existingMember == null ? "Add Member" : "Edit Member",
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 16),
-                  Text(
-                    widget.existingMember == null ? "Add Member" : "Edit Member",
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
+                  const SizedBox(height: 20),
+                  Center(
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        CircleAvatar(
+                          radius: 45,
+                          backgroundColor: Colors.grey.shade200,
+                          backgroundImage: _pickedImage != null ? FileImage(_pickedImage!) : null,
+                          child: _pickedImage == null
+                              ? const Icon(Icons.person, size: 50, color: Colors.grey)
+                              : null,
+                        ),
+                        Positioned(
+                          top: -2,
+                          right: -2,
+                          child: CircleAvatar(
+                            radius: 16,
+                            backgroundColor: Colors.orange,
+                            child: IconButton(
+                              onPressed: _pickImage,
+                              icon: const Icon(Icons.camera_alt, size: 16, color: Colors.white),
+                              padding: EdgeInsets.zero,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 30),
+                  TextField(
+                    controller: _firstNameController,
+                    decoration: InputDecoration(
+                      hintText: 'First Name *',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  TextField(
+                    controller: _lastNameController,
+                    decoration: InputDecoration(
+                      hintText: 'Last Name',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  TextField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: InputDecoration(
+                      hintText: 'Email *',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  TextField(
+                    controller: _phoneController,
+                    keyboardType: TextInputType.phone,
+                    decoration: InputDecoration(
+                      hintText: 'Phone Number',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  TextField(
+                    controller: _passwordController,
+                    obscureText: _obscurePassword,
+                    decoration: InputDecoration(
+                      hintText: widget.existingMember == null ? 'Password *' : 'Password (optional)',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                          color: Colors.grey,
+                        ),
+                        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: MultiSelectDialogField(
+                      items: _venueList.map((venue) {
+                        return MultiSelectItem<String>(venue["id"].toString(), venue["name"].toString());
+                      }).toList(),
+                      initialValue: _selectedVenues,
+                      onConfirm: (values) {
+                        setState(() {
+                          _selectedVenues = values.cast<String>(); // Cast List<dynamic> to List<String>
+                        });
+                      },
+                      chipDisplay: MultiSelectChipDisplay(
+                        chipColor: Colors.orange,
+                        textStyle: const TextStyle(color: Colors.white),
+                      ),
+                      buttonText: const Text("Assign venues"),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: MultiSelectDialogField(
+                      items: _permissionList.map((permission) {
+                        return MultiSelectItem<String>(permission["id"].toString(), permission["name"].toString());
+                      }).toList(),
+                      initialValue: _selectedPermissions,
+                      onConfirm: (values) {
+                        setState(() {
+                          _selectedPermissions = values.cast<String>(); // Cast List<dynamic> to List<String>
+                        });
+                      },
+                      chipDisplay: MultiSelectChipDisplay(
+                        chipColor: Colors.orange,
+                        textStyle: const TextStyle(color: Colors.white),
+                      ),
+                      buttonText: const Text("Assign permissions"),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 30),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _submitForm,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      child: _isLoading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text('Submit', style: TextStyle(color: Colors.white, fontSize: 16)),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
-              // Profile avatar with camera icon.
-              Center(
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    CircleAvatar(
-                      radius: 45,
-                      backgroundColor: Colors.grey.shade200,
-                      child: const Icon(
-                        Icons.person,
-                        size: 50,
-                        color: Colors.grey,
-                      ),
-                    ),
-                    Positioned(
-                      top: -2,
-                      right: -2,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.grey.shade300),
-                        ),
-                        child: CircleAvatar(
-                          radius: 16,
-                          backgroundColor: Colors.orange,
-                          child: IconButton(
-                            onPressed: () {
-                              // Handle image selection or camera action here.
-                            },
-                            icon: const Icon(
-                              Icons.camera_alt,
-                              size: 16,
-                              color: Colors.white,
-                            ),
-                            padding: EdgeInsets.zero,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 30),
-              // First Name field.
-              TextField(
-                controller: _firstNameController,
-                decoration: InputDecoration(
-                  hintText: 'First Name',
-                  hintStyle: const TextStyle(fontSize: 16),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 15),
-              // Last Name field.
-              TextField(
-                controller: _lastNameController,
-                decoration: InputDecoration(
-                  hintText: 'Last Name',
-                  hintStyle: const TextStyle(fontSize: 16),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 15),
-              // Email field.
-              TextField(
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
-                decoration: InputDecoration(
-                  hintText: 'Enter email address',
-                  hintStyle: const TextStyle(fontSize: 16),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 15),
-              // Phone field.
-              TextField(
-                controller: _phoneController,
-                keyboardType: TextInputType.phone,
-                decoration: InputDecoration(
-                  hintText: 'Enter phone number',
-                  hintStyle: const TextStyle(fontSize: 16),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 15),
-              // Password field (optional for edit).
-              TextField(
-                controller: _passwordController,
-                obscureText: _obscurePassword,
-                decoration: InputDecoration(
-                  hintText: 'Enter password',
-                  hintStyle: const TextStyle(fontSize: 16),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                      color: Colors.grey,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _obscurePassword = !_obscurePassword;
-                      });
-                    },
-                  ),
-                ),
-              ),
-              const SizedBox(height: 15),
-              // Assign venues dropdown.
-              DropdownButtonFormField<String>(
-                value: _selectedVenue,
-                items: _venues
-                    .map((venue) => DropdownMenuItem(
-                          value: venue,
-                          child: Text(venue),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedVenue = value;
-                  });
-                },
-                decoration: InputDecoration(
-                  hintText: 'Assign venues',
-                  hintStyle: const TextStyle(fontSize: 16),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 15),
-              // Assign permissions dropdown.
-              DropdownButtonFormField<String>(
-                value: _selectedPermission,
-                items: _permissions
-                    .map((permission) => DropdownMenuItem(
-                          value: permission,
-                          child: Text(permission),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedPermission = value;
-                  });
-                },
-                decoration: InputDecoration(
-                  hintText: 'Assign permissions',
-                  hintStyle: const TextStyle(fontSize: 16),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 30),
-              // Submit button.
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: () {
-                    // Create a map of the staff member details.
-                    final newMember = {
-                      'firstName': _firstNameController.text,
-                      'lastName': _lastNameController.text,
-                      'email': _emailController.text,
-                      'phone': _phoneController.text,
-                      'venue': _selectedVenue ?? '',
-                      'permission': _selectedPermission ?? '',
-                    };
-                    // Return the new member details.
-                    Navigator.pop(context, newMember);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: const Text(
-                    'Submit',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 }

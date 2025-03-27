@@ -5,6 +5,8 @@ import 'package:flock/changePassword.dart';
 import 'package:flock/editProfile.dart';
 import 'package:flock/faq.dart';
 import 'package:flock/feedback.dart';
+import 'package:flock/history.dart';
+import 'package:flock/offers.dart';
 import 'package:flock/openHours.dart';
 import 'package:flock/registration_screen.dart';
 import 'package:flock/staffManagement.dart';
@@ -55,6 +57,8 @@ class MyApp extends StatelessWidget {
         '/register': (context) => const RegisterScreen(),
         '/tab_egg':(context) => const TabEggScreen(),
         '/faq': (context) =>  FaqScreen(),
+        '/offers': (context) => const OffersScreen(),
+        '/HistoryScreen':(context) => const CheckinHistoryScreen(),
       },
     );
   }
