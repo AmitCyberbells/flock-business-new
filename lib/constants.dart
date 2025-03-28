@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AppConstants {
+
   // Reusable InputDecoration for TextFields
   static final InputDecoration textFieldDecoration = InputDecoration(
     hintStyle: TextStyle(color: Colors.grey),
@@ -10,9 +11,10 @@ class AppConstants {
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.all(Radius.circular(8.0)), // Rounded corners
       borderSide: BorderSide(
-        color: Colors.grey,
+        color: Colors.grey.shade200,
         width: 1,
       ),
+      
     ),
 
     // Border when focused
@@ -27,23 +29,23 @@ class AppConstants {
     // Border when there's an error
     errorBorder: OutlineInputBorder(
       borderRadius: BorderRadius.all(Radius.circular(8.0)),
-      borderSide: BorderSide(color: Colors.red, width: 2),
+      borderSide: BorderSide(color: Colors.red, width: 1),
     ),
 
     // Border when focused and error occurs
     focusedErrorBorder: OutlineInputBorder(
       borderRadius: BorderRadius.all(Radius.circular(8.0)),
-      borderSide: BorderSide(color: Colors.red, width: 2),
+      borderSide: BorderSide(color: Colors.red, width: 1),
     ),
   );
 
   // BoxDecoration with BoxShadow to be used in a Container wrapping the TextField
   static final BoxDecoration textFieldBoxDecoration = BoxDecoration(
-    borderRadius: BorderRadius.circular(8.0),
+    borderRadius: BorderRadius.all(Radius.circular(8.0)),
     boxShadow: [
       BoxShadow(
-        color: Colors.black.withOpacity(0.1), // Shadow color
-        spreadRadius: 1, 
+        color: Colors.red,
+        spreadRadius: 2, 
         blurRadius: 5, 
         offset: Offset(0, 3), // Shadow position
       ),
@@ -57,7 +59,7 @@ class AppConstants {
     backgroundColor: const Color.fromRGBO(255, 130, 16, 1), // Button color
     padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 50),
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(15), // Rounded corners
+      borderRadius: BorderRadius.circular(10), // Rounded corners
     ),
   );
 
