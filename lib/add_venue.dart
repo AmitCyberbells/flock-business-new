@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:http/http.dart' as http;
+import 'package:url_launcher/url_launcher.dart'; // Added for URL launching
 
 // -------------- NEW IMPORTS FOR LOCATION & MAP --------------
 import 'package:geolocator/geolocator.dart';
@@ -19,6 +20,8 @@ class Design {
   static const Color black = Colors.black;
   static const Color white = Colors.white;
   static const Color lightPurple = Color(0xFFF0F0F5);
+  static const Color blue = Colors.blue; // Added for link color
+  static const double font14 = 14; // Added for dialog
   static const double font15 = 15;
   static const double font16 = 16;
   static const double font18 = 18;
@@ -64,6 +67,7 @@ class _AddEggScreenState extends State<AddEggScreen> {
   bool loader = false;
   bool dialogAlert = false; // For image dialog
   bool confirmPopup = false; // For confirmation after submission
+  bool showVenueDialog = false; // New state for "How do I list a venue?" dialog
 
   // ---------- TEXT CONTROLLERS (Fix reverse typing) ----------
   late TextEditingController nameController;
@@ -127,6 +131,13 @@ class _AddEggScreenState extends State<AddEggScreen> {
     getUserId();
     getVenueTags();
     getCategoriesAmenties();
+
+    // Show the "How do I list a venue?" dialog on screen entry
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      setState(() {
+        showVenueDialog = true;
+      });
+    });
   }
 
   @override
@@ -209,31 +220,25 @@ class _AddEggScreenState extends State<AddEggScreen> {
 
   // Populate from existing venue (Edit scenario)
   void populateExistingVenue(dynamic detail) {
-    // Strings
     final existingName = detail['venue_name'] ?? '';
     final existingSuburb = detail['suburb'] ?? '';
     final existingLocation = detail['location'] ?? '';
     final existingNotice = detail['important_notice'] ?? '';
     final existingDescription = detail['description'] ?? '';
 
-    // Controllers
     nameController.text = existingName;
     suburbController.text = existingSuburb;
     noticeController.text = existingNotice;
     descriptionController.text = existingDescription;
 
-    // Category
     catId = detail['cat_id']?.toString() ?? '';
-    nameofegg = ''; // We will set once categories load (matching catId)
+    nameofegg = '';
 
-    // Coordinates
     lat = double.tryParse('${detail['lat']}') ?? 0.0;
     lng = double.tryParse('${detail['lon']}') ?? 0.0;
 
-    // Location text
     location = existingLocation;
 
-    // Amenities
     final aList = detail['amenties'] as List<dynamic>? ?? [];
     arrOfAmenities = aList.map((e) => e['id'].toString()).toList();
   }
@@ -324,8 +329,6 @@ class _AddEggScreenState extends State<AddEggScreen> {
   }
 
   // -------------- LOCATION PICKING LOGIC --------------
-
-  /// Show a bottom sheet with three options: use current location, pick from map, or enter manually.
   void pickLocation() {
     showModalBottomSheet(
       context: context,
@@ -340,28 +343,6 @@ class _AddEggScreenState extends State<AddEggScreen> {
                 await useCurrentLocation();
               },
             ),
-            // ListTile(
-            //   leading: const Icon(Icons.map),
-            //   title: const Text("Pick from Map"),
-            //   onTap: () async {
-            //     Navigator.pop(context);
-            //     final LatLng? result = await Navigator.push(
-            //       context,
-            //       MaterialPageRoute(
-            //         builder: (context) => LocationPickerScreen(
-            //           initialPosition: LatLng(lat, lng),
-            //         ),
-            //       ),
-            //     );
-            //     if (result != null) {
-            //       setState(() {
-            //         lat = result.latitude;
-            //         lng = result.longitude;
-            //         location = "Picked from Map ($lat, $lng)";
-            //       });
-            //     }
-            //   },
-            // ),
             ListTile(
               leading: const Icon(Icons.edit_location_alt),
               title: const Text("Enter Manually"),
@@ -376,7 +357,6 @@ class _AddEggScreenState extends State<AddEggScreen> {
     );
   }
 
-  /// Use Geolocator to get current device location
   Future<void> useCurrentLocation() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
@@ -398,7 +378,6 @@ class _AddEggScreenState extends State<AddEggScreen> {
       return;
     }
 
-    // Permissions are granted; get location
     final position = await Geolocator.getCurrentPosition(
       desiredAccuracy: LocationAccuracy.high,
     );
@@ -409,7 +388,6 @@ class _AddEggScreenState extends State<AddEggScreen> {
     });
   }
 
-  /// Let user type in a location manually (address or coordinate)
   void showManualLocationDialog() {
     final locController = TextEditingController(text: location);
     final latController = TextEditingController(text: lat.toString());
@@ -517,17 +495,14 @@ class _AddEggScreenState extends State<AddEggScreen> {
       request.fields['description'] = descriptionController.text;
       request.fields['important_notice'] = noticeController.text;
 
-      // Attach tags
       for (var tagId in selectedTags) {
         request.fields['tag_ids[]'] = tagId;
       }
 
-      // Attach amenities
       for (var amenityId in arrOfAmenities) {
         request.fields['amenity_ids[]'] = amenityId;
       }
 
-      // Attach images
       for (var photo in photos) {
         final fileStream = http.ByteStream(photo.openRead());
         final length = await photo.length();
@@ -587,6 +562,15 @@ class _AddEggScreenState extends State<AddEggScreen> {
     Navigator.pop(context, true);
   }
 
+  // Method to launch URL
+  Future<void> _launchURL(String url) async {
+    if (await canLaunchUrl(Uri.parse(url))) {
+      await launchUrl(Uri.parse(url));
+    } else {
+      Fluttertoast.showToast(msg: "Could not launch $url");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final deviceWidth = MediaQuery.of(context).size.width;
@@ -597,7 +581,6 @@ class _AddEggScreenState extends State<AddEggScreen> {
           SafeArea(
             child: Column(
               children: [
-                // Top bar
                 Padding(
                   padding: const EdgeInsets.only(top: 20, left: 10, right: 10, bottom: 10),
                   child: Row(
@@ -618,7 +601,6 @@ class _AddEggScreenState extends State<AddEggScreen> {
                     ],
                   ),
                 ),
-                // Body
                 Expanded(
                   child: SingleChildScrollView(
                     child: Padding(
@@ -632,7 +614,6 @@ class _AddEggScreenState extends State<AddEggScreen> {
                             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                           ),
                           const SizedBox(height: 20),
-                          // 1) Venue Name
                           const Text('Name of Venue', style: TextStyle(fontSize: 16)),
                           const SizedBox(height: 8),
                           Container(
@@ -650,7 +631,6 @@ class _AddEggScreenState extends State<AddEggScreen> {
                             ),
                           ),
                           const SizedBox(height: 20),
-                          // 2) Category
                           const Text('Category', style: TextStyle(fontSize: 16)),
                           const SizedBox(height: 8),
                           Container(
@@ -692,7 +672,6 @@ class _AddEggScreenState extends State<AddEggScreen> {
                               ),
                             ),
                           const SizedBox(height: 20),
-                          // 3) Tags
                           const Text('Tags', style: TextStyle(fontSize: 16)),
                           const SizedBox(height: 8),
                           MultiSelectDialogField(
@@ -711,7 +690,6 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                 .toList(),
                           ),
                           const SizedBox(height: 20),
-                          // 4) Suburb
                           const Text('Suburb', style: TextStyle(fontSize: 16)),
                           const SizedBox(height: 8),
                           Container(
@@ -729,7 +707,6 @@ class _AddEggScreenState extends State<AddEggScreen> {
                             ),
                           ),
                           const SizedBox(height: 20),
-                          // 5) Location
                           const Text('Location', style: TextStyle(fontSize: 16)),
                           const SizedBox(height: 8),
                           Container(
@@ -748,7 +725,6 @@ class _AddEggScreenState extends State<AddEggScreen> {
                             ),
                           ),
                           const SizedBox(height: 20),
-                          // 6) Amenities
                           const Text('Type of Amenities', style: TextStyle(fontSize: 16)),
                           const SizedBox(height: 8),
                           Container(
@@ -804,7 +780,6 @@ class _AddEggScreenState extends State<AddEggScreen> {
                             }).toList(),
                           ),
                           const SizedBox(height: 20),
-                          // 7) Notice
                           const Text('Notice', style: TextStyle(fontSize: 16)),
                           const SizedBox(height: 8),
                           Container(
@@ -822,7 +797,6 @@ class _AddEggScreenState extends State<AddEggScreen> {
                             ),
                           ),
                           const SizedBox(height: 20),
-                          // 8) Description
                           const Text('Description', style: TextStyle(fontSize: 16)),
                           const SizedBox(height: 8),
                           Container(
@@ -841,7 +815,6 @@ class _AddEggScreenState extends State<AddEggScreen> {
                             ),
                           ),
                           const SizedBox(height: 20),
-                          // 9) Photos
                           const Text('Upload Pictures', style: TextStyle(fontSize: 16)),
                           const SizedBox(height: 8),
                           Row(
@@ -936,7 +909,6 @@ class _AddEggScreenState extends State<AddEggScreen> {
                             ],
                           ),
                           const SizedBox(height: 40),
-                          // 10) Submit Button
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
@@ -960,13 +932,11 @@ class _AddEggScreenState extends State<AddEggScreen> {
               ],
             ),
           ),
-          // Loader overlay
           if (loader)
             Container(
               color: Colors.black12,
               child: const Center(child: CircularProgressIndicator()),
             ),
-          // Dialog for picking images
           if (dialogAlert)
             Center(
               child: Container(
@@ -1018,7 +988,6 @@ class _AddEggScreenState extends State<AddEggScreen> {
                 ),
               ),
             ),
-          // Confirmation popup
           if (confirmPopup)
             Positioned.fill(
               child: Container(
@@ -1062,19 +1031,108 @@ class _AddEggScreenState extends State<AddEggScreen> {
                 ),
               ),
             ),
+          // "How do I list a venue?" Dialog
+          if (showVenueDialog)
+            Center(
+              child: Container(
+                width: deviceWidth - 30,
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                decoration: BoxDecoration(
+                  color: Design.white,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: const [
+                    BoxShadow(color: Colors.black26, blurRadius: 8),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const Text(
+                      "How do I list a venue?",
+                      style: TextStyle(
+                        fontSize: Design.font18,
+                        fontWeight: FontWeight.w500,
+                        color: Design.black,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 10),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        "Users that subscribe their venues to Flock can manage them here in the app.",
+                        style: TextStyle(
+                          fontSize: Design.font14,
+                          color: Design.black,
+                        ),
+                        textAlign: TextAlign.left,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        "For more information visit here",
+                        style: TextStyle(
+                          fontSize: Design.font14,
+                          color: Design.black,
+                        ),
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () => _launchURL('https://getflock.io/business/'),
+                      child: const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          "https://getflock.io/business/",
+                          style: TextStyle(
+                            fontSize: Design.font14,
+                            color: Design.blue,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          showVenueDialog = false; // Close dialog
+                        });
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 10,
+                          horizontal: 20,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Design.white,
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: const Text(
+                          "Got it!",
+                          style: TextStyle(
+                            color: Design.primaryColorOrange,
+                            fontSize: Design.font15,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );
   }
 }
 
-// ----------------------------------------------------
 // Minimal Location Picker Screen using Google Maps
-// ----------------------------------------------------
 class LocationPickerScreen extends StatefulWidget {
   final LatLng initialPosition;
-  const LocationPickerScreen({Key? key, required this.initialPosition})
-      : super(key: key);
+  const LocationPickerScreen({Key? key, required this.initialPosition}) : super(key: key);
 
   @override
   State<LocationPickerScreen> createState() => _LocationPickerScreenState();
@@ -1087,9 +1145,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
   @override
   void initState() {
     super.initState();
-    // If initialPosition is not (0,0), use it
-    if (widget.initialPosition.latitude != 0.0 &&
-        widget.initialPosition.longitude != 0.0) {
+    if (widget.initialPosition.latitude != 0.0 && widget.initialPosition.longitude != 0.0) {
       pickedPosition = widget.initialPosition;
     }
   }

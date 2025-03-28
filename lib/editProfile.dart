@@ -18,15 +18,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController lastNameController;
   late TextEditingController emailController;
 
-  // Profile picture path: can be a URL (if from server) or a local file path
   String profilePic = "";
-  bool _isUpdating = false; // Loader state
+  bool _isUpdating = false;
   String _errorMessage = '';
+  File? _selectedImage; // To store the selected image file
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Retrieve the passed profile data from arguments (if any).
     final args =
         ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>? ??
             {};
@@ -44,25 +43,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.dispose();
   }
 
-  /// Retrieve the token from SharedPreferences
   Future<String?> _getToken() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return prefs.getString('access_token');
   }
 
-  /// Opens the gallery and lets the user pick an image.
   Future<void> _selectImage() async {
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
       setState(() {
-        // Save the file path so we can show it in the avatar.
-        profilePic = image.path;
+        _selectedImage = File(image.path);
       });
     }
   }
 
-  /// Update profile via API (multipart/form-data).
   Future<void> _updateProfile() async {
     final firstName = firstNameController.text.trim();
     final lastName = lastNameController.text.trim();
@@ -90,30 +85,33 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final url = Uri.parse("http://165.232.152.77/mobi/api/vendor/profile/update");
 
     try {
-      // Use MultipartRequest to handle file upload (profile image)
       final request = http.MultipartRequest('POST', url);
       request.headers['Authorization'] = 'Bearer $token';
-      // If your server expects 'application/json' for non-file fields,
-      // you can leave out the 'Content-Type' here. It's automatically set for multipart.
-      // For extra safety, you can do:
-      // request.headers['Content-Type'] = 'multipart/form-data';
 
-      // Add text fields. Adjust field names as needed by your backend.
+      // Add text fields as per the API requirements
       request.fields['first_name'] = firstName;
       request.fields['last_name'] = lastName;
       request.fields['email'] = email;
+      // Add other fields required by the API (as per Postman screenshot)
+      request.fields['address'] = ''; // Add actual value if available
+      request.fields['lat'] = ''; // Add actual value if available
+      request.fields['lon'] = ''; // Add actual value if available
+      request.fields['contact'] = ''; // Add actual value if available
+      request.fields['dob'] = ''; // Add actual value if available
+      request.fields['gender'] = ''; // Add actual value if available
+      request.fields['zipcode'] = ''; // Add actual value if available
+      request.fields['business_name'] = ''; // Add actual value if available
 
-      // If profilePic is a local path (not an HTTP URL), upload the file.
-      if (profilePic.isNotEmpty && !profilePic.startsWith('http')) {
+      // If an image was selected, upload it
+      if (_selectedImage != null) {
         request.files.add(
           await http.MultipartFile.fromPath(
-            'profile_image', // Adjust if your backend uses a different key
-            profilePic,
+            'image', // Changed to match the API's expected field name
+            _selectedImage!.path,
           ),
         );
       }
 
-      // Send the request
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
 
@@ -123,25 +121,28 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        // Check success condition based on your API
+        print("Profile Update Response: $data"); // Log the response for debugging
         if (data['status'] == 'success') {
           Fluttertoast.showToast(msg: data['message'] ?? 'Profile updated!');
-          // Optionally save updated data locally
-          // e.g., store new name/email in SharedPreferences
+
+          // Update profilePic with the new image URL from the API response
+          String newProfilePic = data['data']?['image']?.toString() ?? profilePic;
+
+          // Save updated data in SharedPreferences
           SharedPreferences prefs = await SharedPreferences.getInstance();
           await prefs.setString('firstName', firstName);
           await prefs.setString('lastName', lastName);
           await prefs.setString('email', email);
-          // If you want to store the new server image path, parse data['profile_image'] or similar
-          // For demonstration, we just store the local or old path:
-          await prefs.setString('profilePic', profilePic);
+          await prefs.setString('profilePic', newProfilePic);
 
-          // Return to previous screen with updated data
+          print("Stored in SharedPreferences - First Name: $firstName, Last Name: $lastName, Email: $email, Profile Pic: $newProfilePic");
+
+          // Return updated data to the previous screen
           Navigator.pop(context, {
             'firstName': firstName,
             'lastName': lastName,
             'email': email,
-            'profilePic': profilePic,
+            'profilePic': newProfilePic,
           });
         } else {
           setState(() {
@@ -165,38 +166,40 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      // Screen background.
-      backgroundColor: Colors.white,
-      body: Stack(
-        children: [
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: Colors.white,
+    body: Stack(
+      children: [
+        SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Back arrow and title.
                   Row(
                     children: [
                       InkWell(
                         onTap: () => Navigator.of(context).pop(),
-                        child: const Icon(Icons.arrow_back, color: Colors.black),
+                        child: const Icon(Icons.arrow_back, color: Colors.blue),
                       ),
-                      const SizedBox(width: 16),
-                      const Text(
-                        "Edit Profile",
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black,
+                      Expanded(
+                        child: Center(
+                          child: const Text(
+                            "Edit Profile",
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black,
+                            ),
+                          ),
                         ),
                       ),
+                      const SizedBox(width: 24), // To balance the back arrow
                     ],
                   ),
                   const SizedBox(height: 20),
-                  // Profile avatar with camera icon.
                   Center(
                     child: Stack(
                       clipBehavior: Clip.none,
@@ -204,12 +207,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         CircleAvatar(
                           radius: 50,
                           backgroundColor: Colors.grey.shade200,
-                          backgroundImage: profilePic.isNotEmpty
-                              ? (profilePic.startsWith('http')
+                          backgroundImage: _selectedImage != null
+                              ? FileImage(_selectedImage!)
+                              : (profilePic.isNotEmpty && profilePic.startsWith('http')
                                   ? NetworkImage(profilePic)
-                                  : FileImage(File(profilePic)) as ImageProvider)
-                              : null,
-                          child: profilePic.isEmpty
+                                  : null),
+                          child: (profilePic.isEmpty && _selectedImage == null)
                               ? const Icon(
                                   Icons.person,
                                   size: 60,
@@ -218,8 +221,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               : null,
                         ),
                         Positioned(
-                          top: -2,
-                          right: -2,
+                          bottom: 0,
+                          right: 0,
                           child: Container(
                             decoration: BoxDecoration(
                               color: Colors.white,
@@ -245,71 +248,160 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 30),
-                  // First Name field.
-                  TextField(
-                    controller: firstNameController,
-                    decoration: InputDecoration(
-                      labelText: 'First Name',
-                      contentPadding:
-                          const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+                  // First Name and Last Name in a Row
+                  Row(
+                    children: [
+                      // First Name TextField
+                      Expanded(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.2),
+                                spreadRadius: 2,
+                                blurRadius: 5,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: TextField(
+                            controller: firstNameController,
+                            decoration: InputDecoration(
+                              hintText: 'First Name',
+                              hintStyle: TextStyle(color: Colors.grey.shade400),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: BorderSide.none,
+                              ),
+                              filled: true,
+                              fillColor: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10), // Space between First Name and Last Name
+                      // Last Name TextField
+                      Expanded(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.2),
+                                spreadRadius: 2,
+                                blurRadius: 5,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: TextField(
+                            controller: lastNameController,
+                            decoration: InputDecoration(
+                              hintText: 'Last Name',
+                              hintStyle: TextStyle(color: Colors.grey.shade400),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: BorderSide.none,
+                              ),
+                              filled: true,
+                              fillColor: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  // Email TextField
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.2),
+                          spreadRadius: 2,
+                          blurRadius: 5,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: TextField(
+                      controller: emailController,
+                      decoration: InputDecoration(
+                        hintText: 'Email',
+                        hintStyle: TextStyle(color: Colors.grey.shade400),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide.none,
+                        ),
+                        filled: true,
+                        fillColor: Colors.white,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 15),
-                  // Last Name field.
-                  TextField(
-                    controller: lastNameController,
-                    decoration: InputDecoration(
-                      labelText: 'Last Name',
-                      contentPadding:
-                          const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+                  const SizedBox(height: 10),
+                  // Password TextField
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.2),
+                          spreadRadius: 2,
+                          blurRadius: 5,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: TextField(
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        hintText: 'Password',
+                        hintStyle: TextStyle(color: Colors.grey.shade400),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide.none,
+                        ),
+                        filled: true,
+                        fillColor: Colors.white,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 15),
-                  // Email field.
-                  TextField(
-                    controller: emailController,
-                    decoration: InputDecoration(
-                      labelText: 'Email',
-                      contentPadding:
-                          const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-
-                  // Error message (if any)
+                  const SizedBox(height: 30),
                   if (_errorMessage.isNotEmpty)
-                    Text(
-                      _errorMessage,
-                      style: const TextStyle(color: Colors.red),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Text(
+                        _errorMessage,
+                        style: const TextStyle(color: Colors.red),
+                      ),
                     ),
-
-                  const Spacer(),
-                  // Update button.
                   SizedBox(
                     width: double.infinity,
                     height: 48,
                     child: ElevatedButton(
                       onPressed: _updateProfile,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.orange,
+                        backgroundColor: const Color.fromRGBO(255, 130, 16, 1), // Orange color
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(10),
                         ),
                       ),
                       child: const Text(
-                        'Update',
+                        'UPDATE',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 16,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
@@ -319,16 +411,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
             ),
           ),
-          // Loading overlay
-          if (_isUpdating)
-            Container(
-              color: Colors.white54,
-              child: const Center(
-                child: CircularProgressIndicator(),
-              ),
+        ),
+        if (_isUpdating)
+          Container(
+            color: Colors.white54,
+            child: const Center(
+              child: CircularProgressIndicator(),
             ),
-        ],
-      ),
-    );
-  }
+          ),
+      ],
+    ),
+  );
+}
 }

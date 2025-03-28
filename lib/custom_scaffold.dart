@@ -1,15 +1,12 @@
-import 'package:flock/HomeScreen.dart';
+import 'package:flutter/material.dart';
 import 'package:flock/add_offer.dart';
 import 'package:flock/send_notifications.dart';
-
-import 'package:flutter/material.dart';
-
 import 'package:flock/add_venue.dart' as addVenue;
-import 'package:flock/checkIns.dart';
-import 'package:flock/profile_screen.dart' as profile;
 import 'package:flock/venue.dart' as venue;
+import 'package:flock/checkIns.dart';
+import 'package:flock/profile_screen.dart' as profile hide TabEggScreen;
+import 'package:flock/HomeScreen.dart';
 
-// Reusable bottom navigation bar widget.
 class CustomScaffold extends StatelessWidget {
   final Widget body;
   final int currentIndex;
@@ -19,37 +16,23 @@ class CustomScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      
-          body: Stack(
-      children: [
-        // Background Image
-        Positioned.fill(
-          child: Image.asset(
-            'assets/bottom_nav.png', // Your background image
-            fit: BoxFit.cover, // Ensures the image covers the entire screen
-          ),
-        ),
-        // Main content
-        body,
-      ],
-          ),
+      backgroundColor: Colors.white,
+      body: body,
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.orange,
         onPressed: () {
           showModalBottomSheet(
             context: context,
-            backgroundColor: Colors.transparent, // No background color for the bottom sheet
+            backgroundColor: Colors.transparent,
             builder: (BuildContext context) {
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Row for Add Venues and Add Offers
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        // Add Venues Button
                         Expanded(
                           child: _buildActionButton(
                             context: context,
@@ -59,7 +42,7 @@ class CustomScaffold extends StatelessWidget {
                             textColor: Colors.blue[900]!,
                             onTap: () async {
                               Navigator.pop(context);
-                              final result = await Navigator.push(
+                              await Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                     builder: (context) => addVenue.AddEggScreen()),
@@ -68,7 +51,6 @@ class CustomScaffold extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 10),
-                        // Add Offers Button
                         Expanded(
                           child: _buildActionButton(
                             context: context,
@@ -76,7 +58,7 @@ class CustomScaffold extends StatelessWidget {
                             label: "Add Offers",
                             iconColor: Colors.blue,
                             textColor: Colors.blue[900]!,
-                            borderColor: Colors.blue, // Add a border to differentiate
+                            borderColor: Colors.blue,
                             onTap: () {
                               Navigator.pop(context);
                               Navigator.push(
@@ -89,28 +71,26 @@ class CustomScaffold extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 10),
-                    // Send Notification Button (full width)
-                  Padding(
-  padding: const EdgeInsets.only(bottom: 28.0), // Adjust as needed
-  child: _buildActionButton(
-    context: context,
-    icon: Icons.notifications,
-    label: "Send Notification",
-    iconColor: Colors.blue,
-    textColor: Colors.blue[900]!,
-    backgroundColor: Colors.white.withOpacity(0.9),
-    onTap: () {
-      Navigator.pop(context);
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => SendNotificationScreen(),
-        ),
-      );
-    },
-  ),
-),
-
+                    Padding(
+                      padding: const EdgeInsets.only(top: 28.0),
+                      child: _buildActionButton(
+                        context: context,
+                        icon: Icons.notifications,
+                        label: "Send Notification",
+                        iconColor: Colors.blue,
+                        textColor: Colors.blue[900]!,
+                        backgroundColor: Colors.white.withOpacity(0.9),
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => SendNotificationScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
                   ],
                 ),
               );
@@ -129,7 +109,6 @@ class CustomScaffold extends StatelessWidget {
     );
   }
 
-  // Helper method to build each action button
   Widget _buildActionButton({
     required BuildContext context,
     required IconData icon,
@@ -160,11 +139,7 @@ class CustomScaffold extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(
-              icon,
-              color: iconColor,
-              size: 24,
-            ),
+            Icon(icon, color: iconColor, size: 24),
             const SizedBox(width: 16),
             Expanded(
               child: Text(
@@ -175,6 +150,122 @@ class CustomScaffold extends StatelessWidget {
                   fontWeight: FontWeight.w500,
                 ),
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class CustomBottomBar extends StatelessWidget {
+  final int currentIndex;
+  const CustomBottomBar({Key? key, required this.currentIndex}) : super(key: key);
+
+  void _onItemTapped(BuildContext context, int index) {
+    switch (index) {
+      case 0:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => TabDashboard()),
+        );
+        break;
+      case 1:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => venue.TabEggScreen()),
+        );
+        break;
+      case 2:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const CheckInsScreen()),
+        );
+        break;
+      case 3:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => profile.TabProfile()),
+        );
+        break;
+    }
+  }
+
+  Widget _buildNavItem(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required int index,
+    required Color color,
+  }) {
+    final bool isActive = (currentIndex == index);
+    final Color activeColor = Colors.orange;
+    final Color inactiveColor = color;
+    
+    return InkWell(
+      onTap: () => _onItemTapped(context, index),
+      child: SizedBox(
+        width: 60,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+Icon(icon, color: isActive ? activeColor : inactiveColor, size: 30),
+            Text(
+              label,
+              style: TextStyle(
+                color: isActive ? activeColor : inactiveColor,
+                fontSize: 10,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const Color iconTextColor = Color.fromRGBO(204, 204, 204, 1);
+
+    return BottomAppBar(
+      shape: const CircularNotchedRectangle(),
+      notchMargin: 6.0,
+      color: Colors.white,
+      elevation: 8.0,
+      child: SizedBox(
+        height: 60,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: <Widget>[
+            _buildNavItem(
+              context,
+              icon: Icons.grid_view_rounded,
+              label: "Dashboard",
+              index: 0,
+              color: iconTextColor,
+              
+            ),
+            _buildNavItem(
+              context,
+              icon: Icons.apartment,
+              label: "Venues",
+              index: 1,
+              color: iconTextColor,
+            ),
+            const SizedBox(width: 50), // Space for FAB notch
+            _buildNavItem(
+              context,
+              icon: Icons.login_outlined,
+              label: "Check In",
+              index: 2,
+              color: iconTextColor,
+            ),
+            _buildNavItem(
+              context,
+              icon: Icons.person,
+              label: "My Profile",
+              index: 3,
+              color: iconTextColor,
             ),
           ],
         ),

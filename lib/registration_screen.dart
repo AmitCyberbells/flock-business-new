@@ -2,10 +2,12 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/gestures.dart';
 import 'otp_verification_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
+
   @override
   _RegisterScreenState createState() => _RegisterScreenState();
 }
@@ -23,6 +25,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _passwordController = TextEditingController();
 
   final String _signupUrl = 'http://165.232.152.77/mobi/api/vendor/signup';
+  final String _termsUrl = 'http://165.232.152.77/mobi/api/vendor/terms';
 
   @override
   void dispose() {
@@ -34,88 +37,173 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _passwordController.dispose();
     super.dispose();
   }
-  Future<void> _register() async {
-  final String firstName = _firstNameController.text.trim();
-  final String lastName = _lastNameController.text.trim();
-  final String dob = _dobController.text.trim();
-  final String email = _emailController.text.trim();
-  final String phone = _phoneController.text.trim();
-  final String password = _passwordController.text;
 
-  if (firstName.isEmpty ||
-      lastName.isEmpty ||
-      dob.isEmpty ||
-      email.isEmpty ||
-      phone.isEmpty ||
-      password.isEmpty) {
-    _showError('Please fill in all the fields.');
-    return;
-  }
-  if (!isChecked) {
-    _showError('You must agree to the Terms and Conditions.');
-    return;
+  /// Retrieve token stored during login (if any)
+  Future<String?> _getToken() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString('access_token');
   }
 
-  try {
-    final Map<String, dynamic> body = {
-      'first_name': firstName,
-      'last_name': lastName,
-      'dob': dob,
-      'email': email,
-      'phone': phone,
-      'password': password,
-    };
+  /// Fetch Terms and Conditions from the API
+  Future<void> _fetchTermsAndConditions() async {
+    String? token = await _getToken();
 
-    final response = await http.post(
-      Uri.parse(_signupUrl),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(body),
+    try {
+      final response = await http.get(
+        Uri.parse(_termsUrl),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+      );
+
+      // Log the raw response for debugging
+      print("Terms API Response Status: ${response.statusCode}");
+      print("Terms API Response Body: ${response.body}");
+
+      if (response.statusCode == 200) {
+        // Check if the response body is empty
+        if (response.body.isEmpty) {
+          _showError('Terms and Conditions are not available.');
+          return;
+        }
+
+        // Try to parse the response as JSON
+        try {
+          final responseData = jsonDecode(response.body);
+          // Assuming the terms are in responseData['data']['terms']
+          String terms = responseData['data']?['terms']?.toString() ??
+              responseData['terms']?.toString() ??
+              'No terms available.';
+          _showTermsDialog(terms);
+        } catch (e) {
+          // If JSON parsing fails, treat the response as plain text
+          print("JSON Parsing Error: $e");
+          _showTermsDialog(response.body); // Fallback to raw response body
+        }
+      } else {
+        _showError('Error ${response.statusCode}: Unable to fetch terms.');
+      }
+    } catch (error) {
+      _showError('Network error: $error');
+    }
+  }
+
+  /// Show Terms and Conditions in a dialog
+  void _showTermsDialog(String terms) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Terms and Conditions'),
+        content: SingleChildScrollView(
+          child: Text(terms),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Show Date Picker for DOB
+  Future<void> _selectDate() async {
+    DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
     );
 
-    if (response.statusCode == 200) {
-      final responseData = jsonDecode(response.body);
-      print("Registration response: $responseData");
-
-      if (responseData['status'] == 'success') {
-        // Store full name and email in SharedPreferences
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.setString('firstName', firstName);
-        await prefs.setString('lastName', lastName);
-        await prefs.setString('email', email);
-
-        // Show success popup and navigate to OTP screen
-        showDialog(
-          context: context,
-          builder: (_) => AlertDialog(
-            title: const Text('Success'),
-            content: const Text('OTP sent successfully.'),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context); // Dismiss the popup
-                  Navigator.push( // Navigate to OTP screen
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => OtpVerificationScreen(email: email),
-                    ),
-                  );
-                },
-                child: const Text('OK'),
-              ),
-            ],
-          ),
-        );
-      } else {
-        _showError(responseData['message'] ?? 'Registration failed.');
-      }
-    } else {
-      _showError('Registration failed with status: ${response.statusCode}.');
+    if (pickedDate != null) {
+      setState(() {
+        _dobController.text = "${pickedDate.toLocal()}".split(' ')[0]; // Format: YYYY-MM-DD
+      });
     }
-  } catch (error) {
-    _showError('An error occurred. Please try again.');
-    print("Error during registration: $error");
   }
-}
+
+  Future<void> _register() async {
+    final String firstName = _firstNameController.text.trim();
+    final String lastName = _lastNameController.text.trim();
+    final String dob = _dobController.text.trim();
+    final String email = _emailController.text.trim();
+    final String phone = _phoneController.text.trim();
+    final String password = _passwordController.text;
+
+    if (firstName.isEmpty ||
+        lastName.isEmpty ||
+        dob.isEmpty ||
+        email.isEmpty ||
+        phone.isEmpty ||
+        password.isEmpty) {
+      _showError('Please fill in all the fields.');
+      return;
+    }
+    if (!isChecked) {
+      _showError('You must agree to the Terms and Conditions.');
+      return;
+    }
+
+    try {
+      final Map<String, dynamic> body = {
+        'first_name': firstName,
+        'last_name': lastName,
+        'dob': dob,
+        'email': email,
+        'phone': phone,
+        'password': password,
+      };
+
+      final response = await http.post(
+        Uri.parse(_signupUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        print("Registration response: $responseData");
+
+        if (responseData['status'] == 'success') {
+          SharedPreferences prefs = await SharedPreferences.getInstance();
+          await prefs.setString('firstName', firstName);
+          await prefs.setString('lastName', lastName);
+          await prefs.setString('email', email);
+
+          showDialog(
+            context: context,
+            builder: (_) => AlertDialog(
+              title: const Text('Success'),
+              content: const Text('OTP sent successfully.'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => OtpVerificationScreen(email: email),
+                      ),
+                    );
+                  },
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+          );
+        } else {
+          _showError(responseData['message'] ?? 'Registration failed.');
+        }
+      } else {
+        _showError('Registration failed with status: ${response.statusCode}.');
+      }
+    } catch (error) {
+      _showError('An error occurred. Please try again.');
+      print("Error during registration: $error");
+    }
+  }
 
   void _showError(String message) {
     showDialog(
@@ -136,8 +224,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: Container(
-        // Full screen background image
         width: MediaQuery.of(context).size.width,
         height: MediaQuery.of(context).size.height,
         decoration: const BoxDecoration(
@@ -153,7 +241,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Back button
                 Align(
                   alignment: Alignment.topLeft,
                   child: IconButton(
@@ -164,7 +251,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                // Logo with transparent background
                 Container(
                   color: Colors.transparent,
                   child: Image.asset('assets/business_logo.png',
@@ -172,7 +258,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 10),
                 const SizedBox(height: 30),
-                // Register Header
                 const Text(
                   'Register',
                   style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
@@ -182,45 +267,44 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   style: TextStyle(fontSize: 16, color: Colors.black54),
                 ),
                 const SizedBox(height: 20),
-                // First and Last Name Fields
                 Row(
                   children: [
-                    // First Name
                     Expanded(
                       child: Container(
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(15),
+                          borderRadius: BorderRadius.circular(10),
                           boxShadow: const [
                             BoxShadow(
                               color: Colors.black26,
-                              blurRadius: 5.0,
+                              blurRadius: 2.0,
                               offset: Offset(0, 2),
                             ),
                           ],
                         ),
                         child: TextField(
+
                           controller: _firstNameController,
                           decoration: const InputDecoration(
                             hintText: 'First Name',
+                            fillColor: Colors.grey,
                             border: InputBorder.none,
-                            contentPadding:
-                                EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                                             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+
                           ),
                         ),
                       ),
                     ),
                     const SizedBox(width: 10),
-                    // Last Name
                     Expanded(
                       child: Container(
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(15),
+                          borderRadius: BorderRadius.circular(10),
                           boxShadow: const [
                             BoxShadow(
                               color: Colors.black26,
-                              blurRadius: 5.0,
+                              blurRadius: 2.0,
                               offset: Offset(0, 2),
                             ),
                           ],
@@ -231,49 +315,50 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             hintText: 'Last Name',
                             border: InputBorder.none,
                             contentPadding:
-                                EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                                EdgeInsets.symmetric(horizontal: 16, vertical: 2),
                           ),
                         ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 15),
-                // Date of Birth Field
+                const SizedBox(height: 25),
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(15),
+                    borderRadius: BorderRadius.circular(10),
                     boxShadow: const [
                       BoxShadow(
                         color: Colors.black26,
-                        blurRadius: 5.0,
+                        blurRadius: 2.0,
                         offset: Offset(0, 2),
                       ),
                     ],
                   ),
                   child: TextField(
                     controller: _dobController,
-                    decoration: const InputDecoration(
+                    readOnly: true,
+                    decoration: InputDecoration(
                       hintText: 'Date of Birth',
                       border: InputBorder.none,
                       contentPadding:
-                          EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                      suffixIcon:
-                          Icon(Icons.calendar_today, color: Colors.grey),
+                          const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      suffixIcon: IconButton(
+                        icon: const Icon(Icons.calendar_today, color: Colors.grey),
+                        onPressed: _selectDate,
+                      ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 15),
-                // Email Field
+                const SizedBox(height: 25),
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(15),
+                    borderRadius: BorderRadius.circular(10),
                     boxShadow: const [
                       BoxShadow(
                         color: Colors.black26,
-                        blurRadius: 5.0,
+                        blurRadius: 2.0,
                         offset: Offset(0, 2),
                       ),
                     ],
@@ -283,21 +368,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     decoration: const InputDecoration(
                       hintText: 'Enter email address',
                       border: InputBorder.none,
-                      contentPadding:
-                          EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
                     ),
                   ),
                 ),
-                const SizedBox(height: 15),
-                // Phone Number Field
+                const SizedBox(height: 25),
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(15),
+                    borderRadius: BorderRadius.circular(10),
                     boxShadow: const [
                       BoxShadow(
                         color: Colors.black26,
-                        blurRadius: 5.0,
+                        blurRadius: 2.0,
+                        
                         offset: Offset(0, 2),
                       ),
                     ],
@@ -307,22 +391,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     decoration: const InputDecoration(
                       hintText: 'Enter phone number',
                       border: InputBorder.none,
-                      contentPadding:
-                          EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+
                     ),
                   ),
                 ),
-                const SizedBox(height: 15),
-                // Password Field
+                const SizedBox(height: 25),
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(15),
+                    borderRadius: BorderRadius.circular(10),
                     boxShadow: const [
                       BoxShadow(
                         color: Colors.black26,
-                        blurRadius: 5.0,
-                        offset: Offset(0, 2),
+                        blurRadius: 2.0,
+                        offset: Offset(0, 1),
                       ),
                     ],
                   ),
@@ -333,7 +416,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       hintText: 'Enter password',
                       border: InputBorder.none,
                       contentPadding:
-                          const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                          const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscureText
@@ -350,8 +433,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 15),
-                // Terms and Conditions Checkbox
+                const SizedBox(height: 25),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -381,11 +463,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             TextSpan(
                               text: 'Terms and Conditions',
                               style: const TextStyle(color: Colors.orange),
+                              recognizer: TapGestureRecognizer()
+                                ..onTap = () {
+                                  _fetchTermsAndConditions();
+                                },
                             ),
                             const TextSpan(text: ' as set out by the '),
                             TextSpan(
                               text: 'User Agreement.',
                               style: const TextStyle(color: Colors.orange),
+                              recognizer: TapGestureRecognizer()
+                                ..onTap = () {
+                                  _fetchTermsAndConditions();
+                                },
                             ),
                           ],
                         ),
@@ -394,7 +484,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ],
                 ),
                 const SizedBox(height: 30),
-                // Continue Button
                 SizedBox(
                   width: double.infinity,
                   height: 50,
@@ -402,7 +491,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.orange,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
+                        borderRadius: BorderRadius.circular(10),
                       ),
                       elevation: 0,
                     ),
@@ -414,7 +503,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                // Login Link
                 TextButton(
                   onPressed: () {
                     Navigator.pop(context);

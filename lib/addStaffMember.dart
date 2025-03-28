@@ -16,6 +16,7 @@ class AddMemberScreen extends StatefulWidget {
 
 class _AddMemberScreenState extends State<AddMemberScreen> {
   bool _obscurePassword = true;
+  bool _obscureText = true;
   List<String> _selectedVenues = [];
   List<String> _selectedPermissions = [];
 
@@ -112,7 +113,6 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('access_token') ?? '';
 
-      // Construct the map separately
       Map<String, dynamic> formDataMap = {
         "first_name": _firstNameController.text,
         "last_name": _lastNameController.text,
@@ -121,17 +121,14 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
         "contact": _phoneController.text,
       };
 
-      // Add permission_ids as an array
       for (var i = 0; i < _selectedPermissions.length; i++) {
         formDataMap["permission_ids[$i]"] = _selectedPermissions[i];
       }
 
-      // Add venue_ids as an array
       for (var i = 0; i < _selectedVenues.length; i++) {
         formDataMap["venue_ids[$i]"] = _selectedVenues[i];
       }
 
-      // Add image if available
       if (_pickedImage != null) {
         formDataMap["image"] = await MultipartFile.fromFile(
           _pickedImage!.path,
@@ -139,7 +136,6 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
         );
       }
 
-      // Create FormData from the map
       FormData formData = FormData.fromMap(formDataMap);
 
       final dio = Dio();
@@ -190,191 +186,302 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: true,
       backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Stack(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Text(
+          'Add Member',
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0,
+      ),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            SingleChildScrollView(
-              padding: EdgeInsets.only(
-                left: 16.0,
-                right: 16.0,
-                top: 8.0,
-                bottom: MediaQuery.of(context).viewInsets.bottom + 16.0,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            Center(
+              child: Stack(
+                clipBehavior: Clip.none,
                 children: [
-                  Row(
-                    children: [
-                      InkWell(
-                        onTap: () => Navigator.of(context).pop(),
-                        child: const Icon(Icons.arrow_back, color: Colors.black),
+                  CircleAvatar(
+                    radius: 50,
+                    backgroundColor: Colors.grey[300],
+                    backgroundImage: _pickedImage != null ? FileImage(_pickedImage!) : null,
+                    child: _pickedImage == null
+                        ? Icon(Icons.person, size: 60, color: Colors.grey)
+                        : null,
+                  ),
+                  Positioned(
+                    bottom: -10,
+                    right: -10,
+                    child: CircleAvatar(
+                      radius: 18,
+                      backgroundColor: Colors.orange,
+                      child: IconButton(
+                        icon: Icon(Icons.camera_alt, color: Colors.white, size: 18),
+                        onPressed: _pickImage,
+                        padding: EdgeInsets.zero,
                       ),
-                      const SizedBox(width: 16),
-                      Text(
-                        widget.existingMember == null ? "Add Member" : "Edit Member",
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  Center(
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        CircleAvatar(
-                          radius: 45,
-                          backgroundColor: Colors.grey.shade200,
-                          backgroundImage: _pickedImage != null ? FileImage(_pickedImage!) : null,
-                          child: _pickedImage == null
-                              ? const Icon(Icons.person, size: 50, color: Colors.grey)
-                              : null,
-                        ),
-                        Positioned(
-                          top: -2,
-                          right: -2,
-                          child: CircleAvatar(
-                            radius: 16,
-                            backgroundColor: Colors.orange,
-                            child: IconButton(
-                              onPressed: _pickImage,
-                              icon: const Icon(Icons.camera_alt, size: 16, color: Colors.white),
-                              padding: EdgeInsets.zero,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 30),
-                  TextField(
-                    controller: _firstNameController,
-                    decoration: InputDecoration(
-                      hintText: 'First Name *',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-                  TextField(
-                    controller: _lastNameController,
-                    decoration: InputDecoration(
-                      hintText: 'Last Name',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-                  TextField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: InputDecoration(
-                      hintText: 'Email *',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-                  TextField(
-                    controller: _phoneController,
-                    keyboardType: TextInputType.phone,
-                    decoration: InputDecoration(
-                      hintText: 'Phone Number',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-                  TextField(
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    decoration: InputDecoration(
-                      hintText: widget.existingMember == null ? 'Password *' : 'Password (optional)',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                          color: Colors.grey,
-                        ),
-                        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: MultiSelectDialogField(
-                      items: _venueList.map((venue) {
-                        return MultiSelectItem<String>(venue["id"].toString(), venue["name"].toString());
-                      }).toList(),
-                      initialValue: _selectedVenues,
-                      onConfirm: (values) {
-                        setState(() {
-                          _selectedVenues = values.cast<String>(); // Cast List<dynamic> to List<String>
-                        });
-                      },
-                      chipDisplay: MultiSelectChipDisplay(
-                        chipColor: Colors.orange,
-                        textStyle: const TextStyle(color: Colors.white),
-                      ),
-                      buttonText: const Text("Assign venues"),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: MultiSelectDialogField(
-                      items: _permissionList.map((permission) {
-                        return MultiSelectItem<String>(permission["id"].toString(), permission["name"].toString());
-                      }).toList(),
-                      initialValue: _selectedPermissions,
-                      onConfirm: (values) {
-                        setState(() {
-                          _selectedPermissions = values.cast<String>(); // Cast List<dynamic> to List<String>
-                        });
-                      },
-                      chipDisplay: MultiSelectChipDisplay(
-                        chipColor: Colors.orange,
-                        textStyle: const TextStyle(color: Colors.white),
-                      ),
-                      buttonText: const Text("Assign permissions"),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 30),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _submitForm,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.orange,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      ),
-                      child: _isLoading
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text('Submit', style: TextStyle(color: Colors.white, fontSize: 16)),
                     ),
                   ),
                 ],
               ),
+            ),
+     SizedBox(height: 30),
+        Row(
+          children: [
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 5.0,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: TextField(
+                  controller: _firstNameController,
+                  decoration: const InputDecoration(
+                    hintText: 'First Name',
+                    hintStyle: TextStyle(color: Colors.grey),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(width: 10),
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 5.0,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: TextField(
+                  controller: _lastNameController, // Fixed: was using _firstNameController
+                  decoration: const InputDecoration(
+                    hintText: 'Last Name',
+                    hintStyle: TextStyle(color: Colors.grey),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 15),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(15),
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black26,
+                blurRadius: 5.0,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: TextField(
+            controller: _emailController,
+            decoration: const InputDecoration(
+              hintText: 'Enter email address',
+              hintStyle: TextStyle(color: Colors.grey),
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+            ),
+          ),
+        ),
+        SizedBox(height: 15),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(15),
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black26,
+                blurRadius: 5.0,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: TextField(
+            controller: _phoneController,
+            decoration: const InputDecoration(
+              hintText: 'Enter phone number',
+              hintStyle: TextStyle(color: Colors.grey),
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+            ),
+          ),
+        ),
+        SizedBox(height: 15),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(15),
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black26,
+                blurRadius: 5.0,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: TextField(
+            controller: _passwordController,
+            obscureText: _obscureText,
+            decoration: InputDecoration(
+              hintText: 'Enter password',
+              hintStyle: TextStyle(color: Colors.grey),
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscureText ? Icons.visibility_off : Icons.visibility,
+                  color: Colors.grey,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _obscureText = !_obscureText;
+                  });
+                },
+              ),
+            ),
+          ),
+        ),
+        SizedBox(height: 15),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(15),
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black26,
+                blurRadius: 5.0,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: MultiSelectDialogField(
+            items: _venueList.map((venue) {
+              return MultiSelectItem<String>(venue["id"].toString(), venue["name"].toString());
+            }).toList(),
+            initialValue: _selectedVenues,
+            onConfirm: (values) {
+              setState(() {
+                _selectedVenues = values.cast<String>();
+              });
+            },
+            chipDisplay: MultiSelectChipDisplay(
+              chipColor: Colors.orange,
+              textStyle: TextStyle(color: Colors.white),
+            ),
+            buttonText: Text(
+              "Assign venues",
+              style: TextStyle(color: Colors.grey),
+            ),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(15),
+            ),
+            buttonIcon: Icon(Icons.arrow_drop_down, color: Colors.grey),
+          ),
+        ),
+        SizedBox(height: 15),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(15),
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black26,
+                blurRadius: 5.0,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: MultiSelectDialogField(
+            items: _permissionList.map((permission) {
+              return MultiSelectItem<String>(permission["id"].toString(), permission["name"].toString());
+            }).toList(),
+            initialValue: _selectedPermissions,
+            onConfirm: (values) {
+              setState(() {
+                _selectedPermissions = values.cast<String>();
+              });
+            },
+            chipDisplay: MultiSelectChipDisplay(
+              chipColor: Colors.orange,
+              textStyle: TextStyle(color: Colors.white),
+            ),
+            buttonText: Text(
+              "Assign permissions",
+              style: TextStyle(color: Colors.grey),
+            ),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(15),
+            ),
+            buttonIcon: Icon(Icons.arrow_drop_down, color: Colors.grey),
+          ),
+        ),
+            // Container(
+            //   decoration: BoxDecoration(
+            //     border: Border.all(color: Colors.grey),
+            //     borderRadius: BorderRadius.circular(8),
+            //   ),
+            //   child: MultiSelectDialogField(
+            //     items: _permissionList.map((permission) {
+            //       return MultiSelectItem<String>(permission["id"].toString(), permission["name"].toString());
+            //     }).toList(),
+            //     initialValue: _selectedPermissions,
+            //     onConfirm: (values) {
+            //       setState(() {
+            //         _selectedPermissions = values.cast<String>();
+            //       });
+            //     },
+            //     chipDisplay: MultiSelectChipDisplay(
+            //       chipColor: Colors.orange,
+            //       textStyle: TextStyle(color: Colors.white),
+            //     ),
+            //     buttonText: Text("Assign permissions", style: TextStyle(color: Colors.grey)),
+            //     decoration: BoxDecoration(
+            //       borderRadius: BorderRadius.circular(8),
+            //     ),
+            //   ),
+            // ),
+            SizedBox(height: 30),
+            ElevatedButton(
+              onPressed: _isLoading ? null : _submitForm,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                minimumSize: Size(double.infinity, 50),
+              ),
+              child: _isLoading
+                  ? CircularProgressIndicator(color: Colors.white)
+                  : Text(
+                      'Submit',
+                      style: TextStyle(color: Colors.white, fontSize: 16),
+                    ),
             ),
           ],
         ),

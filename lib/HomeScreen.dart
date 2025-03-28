@@ -13,276 +13,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'package:permission_handler/permission_handler.dart';
-import 'package:qr_flutter/qr_flutter.dart'; // For QrImageView
-import 'package:dropdown_search/dropdown_search.dart'; // For searchable dropdown
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:dropdown_search/dropdown_search.dart';
+import 'package:flock/custom_scaffold.dart';
 
-/// Reusable scaffold that integrates the FAB and bottom navigation bar.
-class CustomScaffold extends StatelessWidget {
-  final Widget body;
-  final int currentIndex;
-  const CustomScaffold({Key? key, required this.body, required this.currentIndex})
-      : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: body,
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.orange,
-        onPressed: () {
-          showModalBottomSheet(
-            context: context,
-            backgroundColor: Colors.transparent, // No background color for the bottom sheet
-            builder: (BuildContext context) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Row for Add Venues and Add Offers
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        // Add Venues Button
-                        Expanded(
-                          child: _buildActionButton(
-                            context: context,
-                            icon: Icons.apartment,
-                            label: "Add Venues",
-                            iconColor: Colors.blue,
-                            textColor: Colors.blue[900]!,
-                            onTap: () async {
-                              Navigator.pop(context);
-                              final result = await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => addVenue.AddEggScreen()),
-                              );
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        // Add Offers Button
-                        Expanded(
-                          child: _buildActionButton(
-                            context: context,
-                            icon: Icons.percent,
-                            label: "Add Offers",
-                            iconColor: Colors.blue,
-                            textColor: Colors.blue[900]!,
-                            borderColor: Colors.blue, // Add a border to differentiate
-                            onTap: () {
-                              Navigator.pop(context);
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (context) => AddOfferScreen()),
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    // Send Notification Button (full width)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 28.0), // Adjust as needed
-                      child: _buildActionButton(
-                        context: context,
-                        icon: Icons.notifications,
-                        label: "Send Notification",
-                        iconColor: Colors.blue,
-                        textColor: Colors.blue[900]!,
-                        backgroundColor: Colors.white.withOpacity(0.9),
-                        onTap: () {
-                          Navigator.pop(context);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => SendNotificationScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          );
-        },
-        child: Image.asset(
-          'assets/bird.png',
-          fit: BoxFit.contain,
-          width: 35,
-          height: 35,
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: CustomBottomBar(currentIndex: currentIndex),
-    );
-  }
-
-  // Helper method to build each action button
-  Widget _buildActionButton({
-    required BuildContext context,
-    required IconData icon,
-    required String label,
-    required Color iconColor,
-    required Color textColor,
-    Color backgroundColor = Colors.white,
-    Color? borderColor,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: BorderRadius.circular(10),
-          border: borderColor != null
-              ? Border.all(color: borderColor, width: 1)
-              : null,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 5,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              color: iconColor,
-              size: 24,
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: textColor,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Reusable Bottom Navigation Bar widget.
-class CustomBottomBar extends StatelessWidget {
-  final int currentIndex;
-  const CustomBottomBar({Key? key, required this.currentIndex}) : super(key: key);
-
-  void _onItemTapped(BuildContext context, int index) {
-    switch (index) {
-      case 0:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => TabDashboard()),
-        );
-        break;
-      case 1:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => venue.TabEggScreen()),
-        );
-        break;
-      case 2:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const CheckInsScreen()),
-        );
-        break;
-      case 3:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => profile.TabProfile()),
-        );
-        break;
-    }
-  }
-
-  Widget _buildNavItem(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required int index,
-  }) {
-    final bool isActive = (currentIndex == index);
-    final Color activeColor = Colors.orange;
-    final Color inactiveColor = Colors.grey;
-    return InkWell(
-      onTap: () => _onItemTapped(context, index),
-      child: SizedBox(
-        width: 60,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: isActive ? activeColor : inactiveColor),
-            Text(
-              label,
-              style: TextStyle(
-                color: isActive ? activeColor : inactiveColor,
-                fontSize: 10,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return BottomAppBar(
-      shape: const CircularNotchedRectangle(),
-      notchMargin: 6.0,
-      child: SizedBox(
-        height: 60,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: <Widget>[
-            _buildNavItem(
-              context,
-              icon: Icons.grid_view_rounded,
-              label: "Dashboard",
-              index: 0,
-            ),
-            _buildNavItem(
-              context,
-              icon: Icons.apartment,
-              label: "Venues",
-              index: 1,
-            ),
-            const SizedBox(width: 50),
-            _buildNavItem(
-              context,
-              icon: Icons.login_outlined,
-              label: "Check In",
-              index: 2,
-            ),
-            _buildNavItem(
-              context,
-              icon: Icons.person,
-              label: "My Profile",
-              index: 3,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// TabDashboard widget (updated to use CustomScaffold).
 class TabDashboard extends StatefulWidget {
   @override
   _TabDashboardState createState() => _TabDashboardState();
@@ -297,11 +31,9 @@ class _TabDashboardState extends State<TabDashboard> {
   String lastName = '';
   bool loader = false;
 
-  // Venue-related state.
-  List<Map<String, dynamic>> venueList = []; // Properly typed as List<Map<String, dynamic>>
-  Map<String, dynamic>? selectedVenue; // To store the currently selected venue
+  List<Map<String, dynamic>> venueList = [];
+  Map<String, dynamic>? selectedVenue;
 
-  // Example list for dashboard cards.
   List<Map<String, dynamic>> hotelList = [
     {
       'id': 1,
@@ -455,7 +187,6 @@ class _TabDashboardState extends State<TabDashboard> {
         if (responseJson != null && responseJson['status'] == 'success') {
           setState(() {
             venueList = List<Map<String, dynamic>>.from(responseJson['data'] ?? []);
-            // Set the default selected venue to the first one in the list
             if (venueList.isNotEmpty) {
               selectedVenue = venueList[0];
             }
@@ -552,7 +283,6 @@ class _TabDashboardState extends State<TabDashboard> {
       Fluttertoast.showToast(msg: 'Camera Permission Denied!');
     }
   }
-
 Widget venueListWithQRCodes() {
   if (!hasPermission('verify_voucher') || venueList.isEmpty) {
     return const SizedBox.shrink();
@@ -562,79 +292,114 @@ Widget venueListWithQRCodes() {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       const Padding(
-        padding: EdgeInsets.only(bottom: 8.0),
-        child: Text(
-          "Select Venue",
-          style: TextStyle(
-            fontSize: 16,
-            color: Colors.grey,
+        padding: EdgeInsets.only(top: 8.0, bottom: 8.0),
+        // child: Text(
+        //   "Select Venue",
+        //   style: TextStyle(
+        //     fontSize: 16,
+        //     color: Colors.grey,
+        //     fontWeight: FontWeight.w500,
+        //   ),
+        // ),
+      ),
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.2),
+              spreadRadius: 2,
+              blurRadius: 5,
+              offset: const Offset(0, 3),
+            ),
+          ],
+          border: Border.all(color: Colors.grey.shade300, width: 1),
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<Map<String, dynamic>>(
+            value: selectedVenue,
+            isExpanded: true,
+            icon: const Icon(
+              Icons.arrow_drop_down,
+              color: Colors.grey,
+              size: 30,
+            ),
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.black,
+            ),
+            items: venueList.map((Map<String, dynamic> venue) {
+              return DropdownMenuItem<Map<String, dynamic>>(
+                value: venue,
+                child: Text(
+                  venue['name'] ?? 'Unknown Venue',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Colors.black,
+                  ),
+                ),
+              );
+            }).toList(),
+            onChanged: (Map<String, dynamic>? newValue) {
+              setState(() {
+                selectedVenue = newValue;
+              });
+            },
+            hint: const Text(
+              'Select Venue',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey,
+              ),
+            ),
           ),
         ),
       ),
-      DropdownSearch<Map<String, dynamic>>(
-        popupProps: const PopupProps.menu(
-          showSearchBox: false, // Disable the search bar
-        ),
-        // asyncItems: (String filter) async {
-        //   if (filter.isEmpty) {
-        //     return venueList;
-        //   }
-        //   return venueList.where((venue) {
-        //     final name = venue['name']?.toString().toLowerCase() ?? '';
-        //     final id = venue['id']?.toString().toLowerCase() ?? '';
-        //     return name.contains(filter.toLowerCase()) || id.contains(filter.toLowerCase());
-        //   }).toList();
-        // },
-        compareFn: (Map<String, dynamic>? item1, Map<String, dynamic>? item2) {
-          if (item1 == null || item2 == null) return false;
-          return item1['id'] == item2['id'];
-        },
-        itemAsString: (Map<String, dynamic> venue) => venue['name'] ?? 'Unknown Venue',
-        onChanged: (Map<String, dynamic>? newValue) {
-          setState(() {
-            selectedVenue = newValue;
-          });
-        },
-        selectedItem: selectedVenue,
-        dropdownBuilder: (context, selectedItem) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-            child: Text(
-              selectedItem != null
-                  ? selectedItem['name'] ?? 'Unknown Venue'
-                  : 'Select Venue',
-              style: const TextStyle(fontSize: 16),
-            ),
-          );
-        },
-      ),
-      const SizedBox(height: 10),
+      const SizedBox(height: 15),
       if (selectedVenue != null)
         Card(
+          color: Colors.white,
           elevation: Platform.isIOS ? 2.5 : 7,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
           ),
           margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 0),
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+            padding: const EdgeInsets.all(15),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   selectedVenue!['name'] ?? 'Unknown Venue',
                   style: const TextStyle(
-                    fontSize: 16,
+                    fontSize: 18,
                     fontWeight: FontWeight.w600,
                     color: Colors.black,
                   ),
                 ),
                 const SizedBox(height: 10),
                 Center(
-                  child: QrImageView(
-                    data: selectedVenue!['id'].toString(),
-                    version: QrVersions.auto,
-                    size: 150.0,
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.1),
+                          spreadRadius: 2,
+                          blurRadius: 5,
+                        ),
+                      ],
+                    ),
+                    child: QrImageView(
+                      data: selectedVenue!['id'].toString(),
+                      version: QrVersions.auto,
+                      size: 150.0,
+                      backgroundColor: Colors.white,
+                    ),
                   ),
                 ),
               ],
@@ -655,6 +420,7 @@ Widget venueListWithQRCodes() {
         children: [
           SafeArea(
             child: Container(
+              color: Colors.white, // Set main container background to white
               padding: const EdgeInsets.symmetric(horizontal: 12.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -707,6 +473,7 @@ Widget venueListWithQRCodes() {
                       child: Column(
                         children: [
                           Card(
+                            color: Colors.white, // Set card background to white
                             elevation: Platform.isIOS ? 2.5 : 7,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
@@ -726,7 +493,9 @@ Widget venueListWithQRCodes() {
                                         'Feathers Rewarded Today',
                                         style: TextStyle(
                                           fontSize: 14,
-                                          color: lightGrey,
+                                          fontFamily: 'SFProText',
+                                         color: Color(0xFFB4B4B4),
+
                                           fontWeight: FontWeight.w600,
                                         ),
                                       ),
@@ -753,7 +522,7 @@ Widget venueListWithQRCodes() {
                                         'Venue Points Rewarded Today: ',
                                         style: TextStyle(
                                           fontSize: 14,
-                                          color: lightGrey,
+                                          color: Color(0xFFB4B4B4),
                                           fontWeight: FontWeight.w600,
                                         ),
                                       ),
@@ -780,7 +549,7 @@ Widget venueListWithQRCodes() {
                                 crossAxisCount: 2,
                                 mainAxisSpacing: 15,
                                 crossAxisSpacing: 10,
-                                childAspectRatio: Platform.isIOS ? 140 / 140 : 120 / 120,
+childAspectRatio: Platform.isIOS ? 160 / 140 : 140 / 120, 
                               ),
                               itemCount: hotelList.length,
                               itemBuilder: (context, index) {
@@ -788,6 +557,7 @@ Widget venueListWithQRCodes() {
                                 return GestureDetector(
                                   onTap: () => clickCard(item),
                                   child: Card(
+                                    color: Colors.white, // Set card background to white
                                     elevation: Platform.isIOS ? 2.5 : 7,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(10),
@@ -808,7 +578,7 @@ Widget venueListWithQRCodes() {
                                                     item['img'],
                                                     width: Platform.isIOS ? 25 : 25,
                                                     height: Platform.isIOS ? 25 : 25,
-                                                    color: Colors.deepOrange,
+                                                    color: const Color.fromRGBO(255, 130, 16, 1),
                                                   ),
                                                   const SizedBox(width: 8),
                                                   Text(
@@ -842,7 +612,7 @@ Widget venueListWithQRCodes() {
                                           ),
                                           Positioned(
                                             top: -10,
-                                            right: -5,
+                                            right: -15,
                                             child: IconButton(
                                               icon: Image.asset(
                                                 'assets/side_arrow.png',
@@ -873,7 +643,7 @@ Widget venueListWithQRCodes() {
           ),
           if (loader)
             Container(
-              color: Colors.white.withOpacity(0.19),
+              color: Colors.white.withOpacity(0.19), // Semi-transparent overlay
               child: const Center(child: CircularProgressIndicator()),
             ),
         ],

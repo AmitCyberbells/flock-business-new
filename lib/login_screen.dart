@@ -201,12 +201,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 20),
                         Align(
                           alignment: Alignment.topLeft,
-                          child: IconButton(
-                            icon: const Icon(Icons.arrow_back, color: Colors.orange),
-                            onPressed: () {
-                              Navigator.pop(context);
-                            },
-                          ),
+                          // child: IconButton(
+                          //   icon: const Icon(Icons.arrow_back, color: Colors.orange),
+                          //   onPressed: () {
+                          //     Navigator.pop(context);
+                          //   },
+                          // ),
                         ),
                         const SizedBox(height: 20),
                         Image.asset(
@@ -217,7 +217,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 30),
                         const Text(
                           'Login',
-                          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                          style: TextStyle(fontSize: 24),
                         ),
                         const Text(
                           'Login to your account',
@@ -245,8 +245,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   TextSpan(
                                     text: 'Reset here',
                                     style: TextStyle(
-                                        color: Colors.orange,
-                                        fontWeight: FontWeight.bold),
+                                        color: Colors.orange ),
                                   ),
                                 ],
                               ),
@@ -259,7 +258,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           height: 50,
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.orange,
+                              backgroundColor: const Color.fromRGBO(255, 130, 16, 1),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(15),
                               ),
@@ -285,8 +284,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 TextSpan(
                                   text: 'Create New',
                                   style: TextStyle(
-                                      color: Colors.orange,
-                                      fontWeight: FontWeight.bold),
+                                      color: Colors.orange),
                                 ),
                               ],
                             ),

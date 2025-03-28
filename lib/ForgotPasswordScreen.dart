@@ -1,5 +1,6 @@
 import 'dart:async'; // Import for TimeoutException
 import 'dart:convert';
+import 'package:flock/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
@@ -115,14 +116,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   // Title
                   const Text(
                     "Reset Password",
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 24,fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 30),
                   // Input field with shadow
                   Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(15),
+                      borderRadius: BorderRadius.circular(10),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withOpacity(0.1),
@@ -131,28 +132,24 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         ),
                       ],
                     ),
-                    child: TextField(
-                      controller: _emailController,
-                      decoration: const InputDecoration(
-                        hintText: 'Enter email address',
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                      ),
-                    ),
-                  ),
+                   child: TextField(
+                    
+          controller: _emailController,
+          style: const TextStyle(fontSize: 14),
+        decoration: AppConstants.textFieldDecoration.copyWith(
+            hintText: "Enter email address", // Define hintText here
+          ),
+          // Use the defined decoration
+        ),
+      ),
+                  
                   const SizedBox(height: 40),
-                  // Continue button
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange,
-                      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 50),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                    ),
-                    onPressed: _resetPassword,
-                    child: const Text("Continue", style: TextStyle(color: Colors.white)),
-                  ),
+              AppConstants.fullWidthButton(
+  text: "Continue",
+  onPressed: _resetPassword,
+)
+
+
                 ],
               ),
             ),

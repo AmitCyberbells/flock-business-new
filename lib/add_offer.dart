@@ -304,6 +304,7 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text("Add New Offer"),
         leading: IconButton(
@@ -326,22 +327,34 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
             const SizedBox(height: 16),
 
             // Name of Offer
-            const Text(
-              "Name of Offer",
-              style: TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _nameController,
-              decoration: InputDecoration(
-                hintText: "Enter Name of Offer",
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-            ),
+         const Text(
+  "Title of Offer",
+  style: TextStyle(fontSize: 16, color: Colors.black),
+),
+const SizedBox(height: 8),
+TextField(
+  controller: _nameController,
+  style: const TextStyle(color: Colors.black),
+  decoration: InputDecoration(
+    hintText: "Enter Title of Offer",
+    hintStyle: TextStyle(color: Colors.grey.shade600),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+    filled: true,
+    fillColor: const Color.fromARGB(255, 227, 242, 253),
+    // border: OutlineInputBorder(
+    //   borderRadius: BorderRadius.circular(8),
+    //   borderSide: BorderSide(color: Colors.grey.shade400),
+    // ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: BorderSide(color: Colors.grey.shade400),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: BorderSide(color: Colors.blue.shade300),
+    ),
+  ),
+),
             const SizedBox(height: 16),
 
             // Fee
@@ -417,7 +430,7 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
               "Redeem Type",
               style: TextStyle(fontSize: 16),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Row(
               children: [
                 Expanded(
