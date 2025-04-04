@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flock/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -184,10 +185,13 @@ class _SendNotificationScreenState extends State<SendNotificationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Send Notification"),
-        centerTitle: true,
-      ),
+      backgroundColor: Colors.white, 
+      appBar: AppConstants.customAppBar(
+    context: context,
+    title: 'Send Notification',
+    // Optionally, if you want a different back icon, you can pass:
+    // backIconAsset: 'assets/your_custom_back.png',
+  ),// 'ba
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage.isNotEmpty
@@ -257,32 +261,59 @@ class _SendNotificationScreenState extends State<SendNotificationScreen> {
                       ),
 
                       // Venue dropdown
-                      Container(
-                        margin: const EdgeInsets.only(bottom: 16),
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade100,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<Map<String, dynamic>>(
-                            value: _selectedVenue,
-                            icon: const Icon(Icons.keyboard_arrow_down),
-                            isExpanded: true,
-                            items: _venues.map((Map<String, dynamic> venue) {
-                              return DropdownMenuItem<Map<String, dynamic>>(
-                                value: venue,
-                                child: Text(venue['name'] ?? 'Unknown Venue'),
-                              );
-                            }).toList(),
-                            onChanged: (newValue) {
-                              setState(() {
-                                _selectedVenue = newValue ?? _selectedVenue;
-                              });
-                            },
-                          ),
-                        ),
-                      ),
+                  Container(
+  margin: const EdgeInsets.only(bottom: 16),
+  padding: const EdgeInsets.symmetric(horizontal: 12),
+  decoration: BoxDecoration(
+    color: Colors.white12, // Background of closed dropdown
+    borderRadius: BorderRadius.circular(12),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.black.withOpacity(0.05),
+        blurRadius: 4,
+        offset: const Offset(0, 2),
+      ),
+    ],
+    border: Border.all(color: Colors.grey.shade300),
+  ),
+  child: DropdownButtonHideUnderline(
+    child: Theme(
+      data: Theme.of(context).copyWith(
+        canvasColor: Colors.white, // dropdown background
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+      ),
+      child: DropdownButton<Map<String, dynamic>>(
+        borderRadius: BorderRadius.circular(12), // 👈 for dropdown menu corners
+        dropdownColor: Colors.white,
+        value: _selectedVenue,
+        icon: const Icon(Icons.keyboard_arrow_down),
+        isExpanded: true,
+        style: const TextStyle(
+          fontSize: 14,
+          color: Colors.black87,
+        ),
+        items: _venues.map((Map<String, dynamic> venue) {
+          return DropdownMenuItem<Map<String, dynamic>>(
+            value: venue,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Text(
+                venue['name'] ?? 'Unknown Venue',
+                style: const TextStyle(fontSize: 14),
+              ),
+            ),
+          );
+        }).toList(),
+        onChanged: (newValue) {
+          setState(() {
+            _selectedVenue = newValue ?? _selectedVenue;
+          });
+        },
+      ),
+    ),
+  ),
+),
 
                       const SizedBox(height: 20),
 

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flock/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
@@ -131,37 +132,29 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
               ),
               const SizedBox(height: 30),
 
-              // Current Password
-              _buildPasswordField(
-                controller: _currentPasswordController,
-                hintText: "Enter current password",
-                isObscured: !_currentPasswordVisible,
-                onToggle: () => setState(() {
-                  _currentPasswordVisible = !_currentPasswordVisible;
-                }),
-              ),
-              const SizedBox(height: 15),
-
-              // New Password
-              _buildPasswordField(
-                controller: _newPasswordController,
-                hintText: "Enter new password",
-                isObscured: !_newPasswordVisible,
-                onToggle: () => setState(() {
-                  _newPasswordVisible = !_newPasswordVisible;
-                }),
-              ),
-              const SizedBox(height: 15),
-
-              // Confirm New Password
-              _buildPasswordField(
-                controller: _confirmPasswordController,
-                hintText: "Confirm new password",
-                isObscured: !_confirmPasswordVisible,
-                onToggle: () => setState(() {
-                  _confirmPasswordVisible = !_confirmPasswordVisible;
-                }),
-              ),
+             AppConstants.currentPasswordField(
+      controller: _currentPasswordController,
+      obscureText: !_currentPasswordVisible,
+      toggleObscure: () => setState(() {
+        _currentPasswordVisible = !_currentPasswordVisible;
+      }),
+    ),
+    SizedBox(height: 15),
+    AppConstants.newPasswordField(
+      controller: _newPasswordController,
+      obscureText: !_newPasswordVisible,
+      toggleObscure: () => setState(() {
+        _newPasswordVisible = !_newPasswordVisible;
+      }),
+    ),
+    SizedBox(height: 15),
+    AppConstants.confirmPasswordField(
+      controller: _confirmPasswordController,
+      obscureText: !_confirmPasswordVisible,
+      toggleObscure: () => setState(() {
+        _confirmPasswordVisible = !_confirmPasswordVisible;
+      }),
+    ),
               const Spacer(),
 
               // Update Password button

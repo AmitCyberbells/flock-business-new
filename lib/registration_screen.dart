@@ -1,9 +1,14 @@
 import 'dart:convert';
+import 'package:flock/TermsAndConditionsPage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_html/flutter_html.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/gestures.dart';
 import 'otp_verification_screen.dart';
+import 'constants.dart'; // Adjust the import path as needed.
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -20,137 +25,119 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _dobController = TextEditingController();
+  final TextEditingController _locationController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
+  // Error messages for inline validation
+  String? _firstNameError;
+  String? _lastNameError;
+  String? _dobError;
+  String? _emailError;
+  String? _phoneError;
+  String? _passwordError;
+
   final String _signupUrl = 'http://165.232.152.77/mobi/api/vendor/signup';
-  final String _termsUrl = 'http://165.232.152.77/mobi/api/vendor/terms';
 
   @override
   void dispose() {
     _firstNameController.dispose();
     _lastNameController.dispose();
     _dobController.dispose();
+    _locationController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
-  /// Retrieve token stored during login (if any)
-  Future<String?> _getToken() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.getString('access_token');
+  bool isValidEmail(String email) {
+    final RegExp regex =
+        RegExp(r"^[\w.\+\-]+@([\w\-]+\.)+[\w\-]{2,4}$");
+    return regex.hasMatch(email);
   }
 
-  /// Fetch Terms and Conditions from the API
-  Future<void> _fetchTermsAndConditions() async {
-    String? token = await _getToken();
+  bool isValidPhone(String phone) {
+    return phone.length == 10 &&
+        RegExp(r'^[0-9]+$').hasMatch(phone);
+  }
 
-    try {
-      final response = await http.get(
-        Uri.parse(_termsUrl),
-        headers: {
-          'Content-Type': 'application/json',
-          if (token != null) 'Authorization': 'Bearer $token',
-        },
-      );
+  bool _validateInputs() {
+    bool isValid = true;
+    setState(() {
+      // Reset errors before validating
+      _firstNameError = null;
+      _lastNameError = null;
+      _dobError = null;
+      _emailError = null;
+      _phoneError = null;
+      _passwordError = null;
+    });
 
-      // Log the raw response for debugging
-      print("Terms API Response Status: ${response.statusCode}");
-      print("Terms API Response Body: ${response.body}");
+    final firstName = _firstNameController.text.trim();
+    final lastName = _lastNameController.text.trim();
+    final dob = _dobController.text.trim();
+    final email = _emailController.text.trim();
+    final phone = _phoneController.text.trim();
+    final password = _passwordController.text;
 
-      if (response.statusCode == 200) {
-        // Check if the response body is empty
-        if (response.body.isEmpty) {
-          _showError('Terms and Conditions are not available.');
-          return;
-        }
-
-        // Try to parse the response as JSON
-        try {
-          final responseData = jsonDecode(response.body);
-          // Assuming the terms are in responseData['data']['terms']
-          String terms = responseData['data']?['terms']?.toString() ??
-              responseData['terms']?.toString() ??
-              'No terms available.';
-          _showTermsDialog(terms);
-        } catch (e) {
-          // If JSON parsing fails, treat the response as plain text
-          print("JSON Parsing Error: $e");
-          _showTermsDialog(response.body); // Fallback to raw response body
-        }
-      } else {
-        _showError('Error ${response.statusCode}: Unable to fetch terms.');
-      }
-    } catch (error) {
-      _showError('Network error: $error');
+    // Validate First Name
+    if (firstName.isEmpty) {
+      _firstNameError = 'First name is required';
+      isValid = false;
     }
-  }
-
-  /// Show Terms and Conditions in a dialog
-  void _showTermsDialog(String terms) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Terms and Conditions'),
-        content: SingleChildScrollView(
-          child: Text(terms),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Show Date Picker for DOB
-  Future<void> _selectDate() async {
-    DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-    );
-
-    if (pickedDate != null) {
-      setState(() {
-        _dobController.text = "${pickedDate.toLocal()}".split(' ')[0]; // Format: YYYY-MM-DD
-      });
+    // Validate Last Name
+    if (lastName.isEmpty) {
+      _lastNameError = 'Last name is required';
+      isValid = false;
     }
+    // Validate Date of Birth
+    if (dob.isEmpty) {
+      _dobError = 'Date of birth is required';
+      isValid = false;
+    }
+    // Validate Email
+    if (email.isEmpty) {
+      _emailError = 'Email is required';
+      isValid = false;
+    } else if (!isValidEmail(email)) {
+      _emailError = 'Please enter a valid email address';
+      isValid = false;
+    }
+    // Validate Phone Number
+    if (phone.isEmpty) {
+      _phoneError = 'Phone number is required';
+      isValid = false;
+    } else if (!isValidPhone(phone)) {
+      _phoneError = 'Please enter a valid 10-digit phone number';
+      isValid = false;
+    }
+    // Validate Password
+    if (password.isEmpty) {
+      _passwordError = 'Password is required';
+      isValid = false;
+    }
+    return isValid;
   }
 
   Future<void> _register() async {
+    if (!_validateInputs()) return;
+
     final String firstName = _firstNameController.text.trim();
     final String lastName = _lastNameController.text.trim();
     final String dob = _dobController.text.trim();
+    final String location = _locationController.text.trim();
     final String email = _emailController.text.trim();
     final String phone = _phoneController.text.trim();
     final String password = _passwordController.text;
-
-    if (firstName.isEmpty ||
-        lastName.isEmpty ||
-        dob.isEmpty ||
-        email.isEmpty ||
-        phone.isEmpty ||
-        password.isEmpty) {
-      _showError('Please fill in all the fields.');
-      return;
-    }
-    if (!isChecked) {
-      _showError('You must agree to the Terms and Conditions.');
-      return;
-    }
 
     try {
       final Map<String, dynamic> body = {
         'first_name': firstName,
         'last_name': lastName,
         'dob': dob,
+        'location': location,
         'email': email,
         'phone': phone,
         'password': password,
@@ -162,15 +149,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
         body: jsonEncode(body),
       );
 
+      debugPrint("Signup Response Status: ${response.statusCode}");
+      debugPrint("Signup Response Body: ${response.body}");
+
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
-        print("Registration response: $responseData");
-
         if (responseData['status'] == 'success') {
           SharedPreferences prefs = await SharedPreferences.getInstance();
           await prefs.setString('firstName', firstName);
           await prefs.setString('lastName', lastName);
           await prefs.setString('email', email);
+
+          if (responseData['data'] != null &&
+              responseData['data']['access_token'] != null) {
+            final token = responseData['data']['access_token'];
+            await prefs.setString('access_token', token);
+            debugPrint("Stored token after signup: $token");
+          } else {
+            debugPrint("No token returned from signup API");
+          }
 
           showDialog(
             context: context,
@@ -184,7 +181,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => OtpVerificationScreen(email: email),
+                        builder: (context) =>
+                            OtpVerificationScreen(email: email),
                       ),
                     );
                   },
@@ -200,8 +198,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _showError('Registration failed with status: ${response.statusCode}.');
       }
     } catch (error) {
+      debugPrint("Error during signup: $error");
       _showError('An error occurred. Please try again.');
-      print("Error during registration: $error");
     }
   }
 
@@ -215,8 +213,75 @@ class _RegisterScreenState extends State<RegisterScreen> {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('OK'),
-          )
+          ),
         ],
+      ),
+    );
+  }
+
+  Future<void> _getCurrentLocation() async {
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.whileInUse ||
+          permission == LocationPermission.always) {
+        Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+        );
+        List<Placemark> placemarks = await placemarkFromCoordinates(
+          position.latitude,
+          position.longitude,
+        );
+        if (placemarks.isNotEmpty) {
+          Placemark place = placemarks[0];
+          setState(() {
+            _locationController.text =
+                '${place.street}, ${place.locality}, ${place.country}';
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error getting location: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Unable to get location. Please try again.')),
+      );
+    }
+  }
+
+  // Helper method for building text fields with inline validation
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String hintText,
+    String? errorText,
+    bool obscureText = false,
+    IconButton? suffixIcon,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 5.0,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: TextField(
+        controller: controller,
+        obscureText: obscureText,
+        style: const TextStyle(
+          color: Colors.black,
+          fontSize: 14.0,
+        ),
+        decoration: AppConstants.textFieldDecoration.copyWith(
+          hintText: hintText,
+          errorText: errorText,
+          suffixIcon: suffixIcon,
+        ),
       ),
     );
   }
@@ -225,309 +290,203 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Container(
-        width: MediaQuery.of(context).size.width,
-        height: MediaQuery.of(context).size.height,
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/login_back.jpg'),
-            fit: BoxFit.cover,
-            alignment: Alignment.center,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent, // Match background image
+        elevation: 0,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 10.0),
+          child: IconButton(
+            icon: const Icon(
+              Icons.arrow_back_ios,
+              color: Colors.black,
+              size: 20,
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+            },
           ),
         ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Align(
-                  alignment: Alignment.topLeft,
-                  child: IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.orange),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Container(
-                  color: Colors.transparent,
-                  child: Image.asset('assets/business_logo.png',
-                      width: 120, height: 120),
-                ),
-                const SizedBox(height: 10),
-                const SizedBox(height: 30),
-                const Text(
-                  'Register',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                const Text(
-                  'Create your account',
-                  style: TextStyle(fontSize: 16, color: Colors.black54),
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Colors.black26,
-                              blurRadius: 2.0,
-                              offset: Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: TextField(
-
-                          controller: _firstNameController,
-                          decoration: const InputDecoration(
-                            hintText: 'First Name',
-                            fillColor: Colors.grey,
-                            border: InputBorder.none,
-                                             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Colors.black26,
-                              blurRadius: 2.0,
-                              offset: Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: TextField(
-                          controller: _lastNameController,
-                          decoration: const InputDecoration(
-                            hintText: 'Last Name',
-                            border: InputBorder.none,
-                            contentPadding:
-                                EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 25),
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Colors.black26,
-                        blurRadius: 2.0,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: TextField(
-                    controller: _dobController,
-                    readOnly: true,
-                    decoration: InputDecoration(
-                      hintText: 'Date of Birth',
-                      border: InputBorder.none,
-                      contentPadding:
-                          const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      suffixIcon: IconButton(
-                        icon: const Icon(Icons.calendar_today, color: Colors.grey),
-                        onPressed: _selectDate,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 25),
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Colors.black26,
-                        blurRadius: 2.0,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: TextField(
-                    controller: _emailController,
-                    decoration: const InputDecoration(
-                      hintText: 'Enter email address',
-                      border: InputBorder.none,
-                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 25),
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Colors.black26,
-                        blurRadius: 2.0,
-                        
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: TextField(
-                    controller: _phoneController,
-                    decoration: const InputDecoration(
-                      hintText: 'Enter phone number',
-                      border: InputBorder.none,
-                                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 25),
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Colors.black26,
-                        blurRadius: 2.0,
-                        offset: Offset(0, 1),
-                      ),
-                    ],
-                  ),
-                  child: TextField(
-                    controller: _passwordController,
-                    obscureText: _obscureText,
-                    decoration: InputDecoration(
-                      hintText: 'Enter password',
-                      border: InputBorder.none,
-                      contentPadding:
-                          const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscureText
-                              ? Icons.visibility_off
-                              : Icons.visibility,
-                          color: Colors.grey,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _obscureText = !_obscureText;
-                          });
-                        },
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 25),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: Checkbox(
-                        value: isChecked,
-                        activeColor: Colors.orange,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        onChanged: (bool? value) {
-                          setState(() {
-                            isChecked = value!;
-                          });
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text.rich(
-                        TextSpan(
-                          text: 'I am 18 years of age and agree to the ',
-                          style: const TextStyle(color: Colors.black87),
-                          children: [
-                            TextSpan(
-                              text: 'Terms and Conditions',
-                              style: const TextStyle(color: Colors.orange),
-                              recognizer: TapGestureRecognizer()
-                                ..onTap = () {
-                                  _fetchTermsAndConditions();
-                                },
-                            ),
-                            const TextSpan(text: ' as set out by the '),
-                            TextSpan(
-                              text: 'User Agreement.',
-                              style: const TextStyle(color: Colors.orange),
-                              recognizer: TapGestureRecognizer()
-                                ..onTap = () {
-                                  _fetchTermsAndConditions();
-                                },
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 30),
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      elevation: 0,
-                    ),
-                    onPressed: _register,
-                    child: const Text(
-                      'Continue',
-                      style: TextStyle(fontSize: 18, color: Colors.white),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: const Text.rich(
-                    TextSpan(
-                      text: 'Have an account? ',
-                      style: TextStyle(color: Colors.black87),
-                      children: [
-                        TextSpan(
-                          text: 'Login',
-                          style: TextStyle(
-                              color: Colors.orange,
-                              fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 30),
-              ],
+        leadingWidth: 80,
+      ),
+      body: Stack(
+        children: [
+          // Background image
+          Positioned.fill(
+            child: Image.asset(
+              'assets/login_back.jpg',
+              fit: BoxFit.cover,
             ),
           ),
-        ),
+          // Form content
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 20),
+                  Image.asset(
+                    'assets/business_logo.png',
+                    width: 120,
+                    height: 120,
+                  ),
+                  const SizedBox(height: 30),
+                  const Text('Register', style: TextStyle(fontSize: 24)),
+                  const Text(
+                    'Create your account',
+                    style: TextStyle(fontSize: 16, color: Colors.black54),
+                  ),
+                  const SizedBox(height: 20),
+                  // First Name and Last Name in one row
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildTextField(
+                          controller: _firstNameController,
+                          hintText: 'First Name',
+                          errorText: _firstNameError,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _buildTextField(
+                          controller: _lastNameController,
+                          hintText: 'Last Name',
+                          errorText: _lastNameError,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 25),
+                  _buildTextField(
+                    controller: _emailController,
+                    hintText: 'Enter email address',
+                    errorText: _emailError,
+                  ),
+                  const SizedBox(height: 25),
+                  _buildTextField(
+                    controller: _phoneController,
+                    hintText: 'Enter phone number',
+                    errorText: _phoneError,
+                  ),
+                  const SizedBox(height: 25),
+                  _buildTextField(
+                    controller: _dobController,
+                    hintText: 'Date of Birth',
+                    errorText: _dobError,
+                  ),
+                  const SizedBox(height: 25),
+                  _buildTextField(
+                    controller: _locationController,
+                    hintText: 'Enter your location',
+                    suffixIcon: IconButton(
+                      icon: const Icon(
+                        Icons.my_location,
+                        color: Colors.blue,
+                      ),
+                      onPressed: _getCurrentLocation,
+                    ),
+                  ),
+                  const SizedBox(height: 25),
+                  _buildTextField(
+                    controller: _passwordController,
+                    hintText: 'Enter password',
+                    errorText: _passwordError,
+                    obscureText: _obscureText,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureText
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                        color: Colors.grey,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscureText = !_obscureText;
+                        });
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 30),
+                  // Checkbox and link for Terms and Conditions/User Agreement
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: Checkbox(
+                          value: isChecked,
+                          activeColor: Colors.orange,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          onChanged: (bool? value) {
+                            setState(() {
+                              isChecked = value!;
+                            });
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text.rich(
+                          TextSpan(
+                            text: 'I am 18 years of age and agree to the ',
+                            style: const TextStyle(color: Colors.black87),
+                            children: [
+                              TextSpan(
+                                text: 'Terms and Conditions',
+                                style:
+                                    const TextStyle(color: Colors.orange),
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const TermsAndConditionsPage(),
+                                      ),
+                                    );
+                                  },
+                              ),
+                              const TextSpan(
+                                  text: ' as set out by the '),
+                              TextSpan(
+                                text: 'User Agreement.',
+                                style:
+                                    const TextStyle(color: Colors.orange),
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const TermsAndConditionsPage(),
+                                      ),
+                                    );
+                                  },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 30),
+                  AppConstants.fullWidthButton(
+                    text: "Continue",
+                    onPressed: _register,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
+
+
+

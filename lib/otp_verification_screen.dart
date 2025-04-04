@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flock/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -73,10 +74,13 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('OTP Verification'),
-        backgroundColor: Colors.orange,
-      ),
+      appBar: AppConstants.customAppBar(
+    context: context,
+    title: 'OTP Verification',
+    // Optionally, if you want a different back icon, you can pass:
+    // backIconAsset: 'assets/your_custom_back.png',
+  ),// 'back' is a String holding the asset path, e.g., 'assets/images/back_icon.png'
+
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(

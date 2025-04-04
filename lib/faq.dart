@@ -1,3 +1,4 @@
+import 'package:flock/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -89,17 +90,13 @@ class _FaqScreenState extends State<FaqScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          'FAQs',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-        ),
-        centerTitle: true,
-      ),
+      backgroundColor: Colors.white,
+       appBar: AppConstants.customAppBar(
+    context: context,
+    title: 'FAQs',
+    // Optionally, if you want a different back icon, you can pass:
+    // backIconAsset: 'assets/your_custom_back.png',
+  ),// 'b
       body: Padding(
         padding: const EdgeInsets.all(10.0),
         child: Column(
@@ -155,6 +152,7 @@ class _FaqScreenState extends State<FaqScreen> {
                                                 child: Text(
                                                   item['question'] ?? '',
                                                   style: const TextStyle(
+                                                  
                                                     fontSize: 16,
                                                     fontWeight: FontWeight.w600,
                                                   ),

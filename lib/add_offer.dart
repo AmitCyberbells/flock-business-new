@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flock/constants.dart';
+import 'package:flock/venue.dart' show Design;
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
@@ -242,7 +244,7 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
       if (_pickedImage != null) {
         request.files.add(
           await http.MultipartFile.fromPath(
-            'image[]', // Matches your screenshot's field name
+            'images[]', // Matches your screenshot's field name
             _pickedImage!.path,
           ),
         );
@@ -305,13 +307,13 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text("Add New Offer"),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
+     appBar: AppConstants.customAppBar(
+    context: context,
+    title: 'Add New Offer',
+    // Optionally, if you want a different back icon, you can pass:
+    // backIconAsset: 'assets/your_custom_back.png',
+  ),// 'back' is a String holding the asset path, e.g., 'assets/images/back_icon.png'
+
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -331,50 +333,12 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
   "Title of Offer",
   style: TextStyle(fontSize: 16, color: Colors.black),
 ),
-const SizedBox(height: 8),
-TextField(
-  controller: _nameController,
-  style: const TextStyle(color: Colors.black),
-  decoration: InputDecoration(
-    hintText: "Enter Title of Offer",
-    hintStyle: TextStyle(color: Colors.grey.shade600),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-    filled: true,
-    fillColor: const Color.fromARGB(255, 227, 242, 253),
-    // border: OutlineInputBorder(
-    //   borderRadius: BorderRadius.circular(8),
-    //   borderSide: BorderSide(color: Colors.grey.shade400),
-    // ),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8),
-      borderSide: BorderSide(color: Colors.grey.shade400),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8),
-      borderSide: BorderSide(color: Colors.blue.shade300),
-    ),
-  ),
-),
-            const SizedBox(height: 16),
 
-            // Fee
-            // const Text(
-            //   "Fee",
-            //   style: TextStyle(fontSize: 16),
-            // ),
-            // const SizedBox(height: 8),
-            // TextField(
-            //   controller: _feeController,
-            //   keyboardType: TextInputType.number,
-            //   decoration: InputDecoration(
-            //     hintText: "Enter Fee",
-            //     contentPadding:
-            //         const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-            //     border: OutlineInputBorder(
-            //       borderRadius: BorderRadius.circular(8),
-            //     ),
-            //   ),
-            // ),
+ const SizedBox(height: 18),
+                          AppConstants.customTextField(controller: _nameController,
+                           hintText: 'Enter Title of Offer',),
+            
+
             const SizedBox(height: 16),
 
             // Venue dropdown
@@ -383,46 +347,92 @@ TextField(
               style: TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 8),
-            Container(
+          Container(
+  decoration: BoxDecoration(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(10),
+    border: Border.all(color: Colors.grey.shade300),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.grey.withOpacity(0.1),
+        spreadRadius: 1,
+        blurRadius: 2,
+        offset: const Offset(0, 1),
+      ),
+    ],
+  ),
+  child: _isVenuesLoading
+      ? Padding(
+          padding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 16.0),
+          child: Row(
+            children: [
+              SizedBox(
+                height: 10,
+                width: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Design.primaryColorOrange),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                "Loading venues...",
+                style: const TextStyle(
+                  color: Colors.grey,
+                  fontSize: 14.0,
+                  fontFamily: 'YourFontFamily',
+                ),
+              ),
+            ],
+          ),
+        )
+      : DropdownButtonHideUnderline(
+          child: ButtonTheme(
+            alignedDropdown: true,
+            child: DropdownButton<Map<String, dynamic>>(
+              value: _selectedVenue,
+              isExpanded: true,
+              icon: Icon(
+                Icons.keyboard_arrow_down, 
+                color: Design.primaryColorOrange,
+                size: 22,
+              ),
+              hint: Text(
+                "Select Venue",
+                style: TextStyle(
+                  color: Colors.grey.shade500,
+                  fontSize: 14.0,
+                  fontFamily: 'YourFontFamily',
+                ),
+              ),
+              items: _venues.map((venueMap) {
+                return DropdownMenuItem<Map<String, dynamic>>(
+                  value: venueMap,
+                  child: Text(
+                    venueMap['name'] ?? 'Unnamed',
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontSize: 14.0,
+                      fontFamily: 'YourFontFamily',
+                    ),
+                  ),
+                );
+              }).toList(),
+              onChanged: (newValue) {
+                setState(() {
+                  _selectedVenue = newValue;
+                });
+              },
+              underline: Container(),
+              dropdownColor: Colors.white,
+              itemHeight: 50,
               padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade400),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: _isVenuesLoading
-                    ? Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 12.0),
-                        child: Row(
-                          children: const [
-                            SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
-                            SizedBox(width: 8),
-                            Text("Loading venues..."),
-                          ],
-                        ),
-                      )
-                    : DropdownButton<Map<String, dynamic>>(
-                        value: _selectedVenue,
-                        isExpanded: true,
-                        icon: const Icon(Icons.keyboard_arrow_down),
-                        items: _venues.map((venueMap) {
-                          return DropdownMenuItem<Map<String, dynamic>>(
-                            value: venueMap,
-                            child: Text(venueMap['name'] ?? 'Unnamed'),
-                          );
-                        }).toList(),
-                        onChanged: (newValue) {
-                          setState(() {
-                            _selectedVenue = newValue;
-                          });
-                        },
-                      ),
-              ),
+              borderRadius: BorderRadius.circular(10),
+              elevation: 3,
             ),
+          ),
+        ),
+),
             const SizedBox(height: 16),
 
             // Redeem Type - using Checkboxes
@@ -431,77 +441,99 @@ TextField(
               style: TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 6),
-            Row(
-              children: [
-                Expanded(
-                  child: CheckboxListTile(
-                    title: const Text("Venue Points"),
-                    value: _useVenuePoints,
-                    onChanged: (value) {
-                      setState(() {
-                        _useVenuePoints = value ?? false;
-                      });
-                    },
-                  ),
-                ),
-                Expanded(
-                  child: CheckboxListTile(
-                    title: const Text("App Points"),
-                    value: _useAppPoints,
-                    onChanged: (value) {
-                      setState(() {
-                        _useAppPoints = value ?? false;
-                      });
-                    },
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
+          Row(
+  children: [
+    Expanded(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          Checkbox(
+            value: _useVenuePoints,
+            onChanged: (value) {
+              setState(() {
+                _useVenuePoints = value ?? false;
+              });
+            },
+          ),
+          const Text("Venue Points"),
+        ],
+      ),
+    ),
+    Expanded(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          Checkbox(
+            value: _useAppPoints,
+            onChanged: (value) {
+              setState(() {
+                _useAppPoints = value ?? false;
+              });
+            },
+          ),
+          const Text("App Points"),
+        ],
+      ),
+    ),
+  ],
+),
 
-            // Show "Venue Points" text field only if checked
-            if (_useVenuePoints) ...[
-              const Text(
-                "Venue Points (sends as feather_points)",
-                style: TextStyle(fontSize: 16),
-              ),
-              const SizedBox(height: 8),
+            const SizedBox(height: 10),
+if (_useVenuePoints || _useAppPoints)
+  Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      if (_useVenuePoints)
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               TextField(
                 controller: _venuePointsController,
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
                   hintText: "Enter Venue Points",
+                  hintStyle: const TextStyle(fontSize: 12), // Reduced hint font size
                   contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 14),
+                      horizontal: 8, vertical: 8),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
             ],
-
-            // Show "App Points" text field only if checked
-            if (_useAppPoints) ...[
-              const Text(
-                "App Points (sends as venue_points)",
-                style: TextStyle(fontSize: 16),
-              ),
-              const SizedBox(height: 8),
+          ),
+        ),
+      if (_useVenuePoints && _useAppPoints)
+        const SizedBox(width: 16),
+      if (_useAppPoints)
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               TextField(
                 controller: _appPointsController,
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
                   hintText: "Enter App Points",
+                  hintStyle: const TextStyle(fontSize: 12), // Reduced hint font size
                   contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 14),
+                      horizontal: 8, vertical: 8),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
             ],
+          ),
+        ),
+    ],
+  ),
+
+
+if (_useVenuePoints || _useAppPoints)
+  const SizedBox(height: 16),
+
 
             // Description
             const Text(

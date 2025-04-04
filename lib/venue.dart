@@ -7,6 +7,14 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flock/add_offer.dart';
+import 'package:flock/send_notifications.dart';
+import 'package:flock/add_venue.dart' as addVenue;
+import 'package:flock/venue.dart' as venue;
+import 'package:flock/checkIns.dart';
+import 'package:flock/profile_screen.dart' as profile hide TabEggScreen;
+import 'package:flock/HomeScreen.dart';
+import 'package:flock/custom_scaffold.dart';
 
 // Design tokens
 class Design {
@@ -23,6 +31,8 @@ class Design {
   static const double font15 = 15;
   static const double font17 = 17;
   static const double font20 = 20;
+
+  static var lightPurple;
 }
 
 // Global images
@@ -33,12 +43,18 @@ class GlobalImages {
 
 // Server endpoints
 class Server {
-  static const String categoryList = 'http://165.232.152.77/mobi/api/vendor/categories';
-  static const String getProfile = 'http://165.232.152.77/mobi/api/vendor/profile';
-  static const String getVenueData = 'http://165.232.152.77/mobi/api/vendor/venues';
-  static const String removeVenue = 'http://165.232.152.77/mobi/api/vendor/venues';
-  static const String updateVenue = 'http://165.232.152.77/mobi/api/vendor/venues';
-  static const String venueList = 'http://165.232.152.77/mobi/api/vendor/venues';
+  static const String categoryList =
+      'http://165.232.152.77/mobi/api/vendor/categories';
+  static const String getProfile =
+      'http://165.232.152.77/mobi/api/vendor/profile';
+  static const String getVenueData =
+      'http://165.232.152.77/mobi/api/vendor/venues';
+  static const String removeVenue =
+      'http://165.232.152.77/mobi/api/vendor/venues';
+  static const String updateVenue =
+      'http://165.232.152.77/mobi/api/vendor/venues';
+  static const String venueList =
+      'http://165.232.152.77/mobi/api/vendor/venues';
 }
 
 // Permissions placeholder
@@ -140,8 +156,9 @@ class _TabEggScreenState extends State<TabEggScreen> {
   }) async {
     try {
       final uri = Uri.parse(url).replace(queryParameters: queryParams);
-      final response =
-          await http.get(uri, headers: headers).timeout(const Duration(seconds: 10));
+      final response = await http
+          .get(uri, headers: headers)
+          .timeout(const Duration(seconds: 5));
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
@@ -173,7 +190,10 @@ class _TabEggScreenState extends State<TabEggScreen> {
         'Content-Type': 'application/json',
       };
 
-      final response = await makeApiRequest(url: Server.getProfile, headers: headers);
+      final response = await makeApiRequest(
+        url: Server.getProfile,
+        headers: headers,
+      );
 
       setState(() {
         loader = false;
@@ -206,7 +226,10 @@ class _TabEggScreenState extends State<TabEggScreen> {
         'Content-Type': 'application/json',
       };
 
-      final response = await makeApiRequest(url: Server.categoryList, headers: headers);
+      final response = await makeApiRequest(
+        url: Server.categoryList,
+        headers: headers,
+      );
 
       setState(() {
         categoryList = response['data'] ?? [];
@@ -277,7 +300,6 @@ class _TabEggScreenState extends State<TabEggScreen> {
         'Content-Type': 'application/json',
       };
 
-      // Use DELETE method
       final response = await http.delete(
         Uri.parse('${Server.removeVenue}/$removeVenueId'),
         headers: headers,
@@ -289,7 +311,8 @@ class _TabEggScreenState extends State<TabEggScreen> {
       if (response.statusCode == 200) {
         setState(() {
           allData.removeWhere(
-              (element) => element['id'].toString() == removeVenueId);
+            (element) => element['id'].toString() == removeVenueId,
+          );
           dialogAlert = false;
           loader = false;
         });
@@ -302,7 +325,8 @@ class _TabEggScreenState extends State<TabEggScreen> {
           getVenueData(userId, categoryList[cardPosition]['id'].toString());
         }
       } else {
-        var errorMessage = responseData['message'] ??
+        var errorMessage =
+            responseData['message'] ??
             'Failed to remove venue (Status: ${response.statusCode})';
         throw Exception(errorMessage);
       }
@@ -322,20 +346,24 @@ class _TabEggScreenState extends State<TabEggScreen> {
       Fluttertoast.showToast(msg: "You don't have access to this feature!");
       return;
     }
-    final categoryId = item['category_id']?.toString() ?? categoryList[cardPosition]['id'].toString();
+    final categoryId =
+        item['category_id']?.toString() ??
+        categoryList[cardPosition]['id'].toString();
 
-    // Navigate to the EditVenueScreen.
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => EditVenueScreen(
-          venueData: Map<String, dynamic>.from(item),
-          categoryId: categoryId,
-        ),
+        builder:
+            (context) => EditVenueScreen(
+              venueData: Map<String, dynamic>.from(item),
+              categoryId: categoryId,
+            ),
       ),
     ).then((updatedVenue) {
       if (updatedVenue != null && updatedVenue is Map<String, dynamic>) {
-        final index = allData.indexWhere((v) => v['id']?.toString() == item['id']?.toString());
+        final index = allData.indexWhere(
+          (v) => v['id']?.toString() == item['id']?.toString(),
+        );
         if (index != -1) {
           setState(() {
             allData[index] = Map<String, dynamic>.from(allData[index])
@@ -348,7 +376,6 @@ class _TabEggScreenState extends State<TabEggScreen> {
     });
   }
 
-  // Updated qrCodeBtn using QrImageView for QR code display.
   void qrCodeBtn(Map<String, dynamic> item) {
     final String qrData = item['qrData'] ?? item['id'].toString();
 
@@ -390,39 +417,87 @@ class _TabEggScreenState extends State<TabEggScreen> {
     final colors = ["#FBDFC3", "#CAD2F7", "#C3CFD6", "#FEF2BF"];
     final bgColor = Color(int.parse('0xff${colors[index % 4].substring(1)}'));
 
+    // Use MediaQuery for responsive sizing
+    final screenWidth = MediaQuery.of(context).size.width;
+    final iconSize =
+        screenWidth * 0.1; // 8% of screen width for icon (adjustable)
+    // final iconSize = .00;
     return GestureDetector(
       onTap: () => clickCategoryItem(item, index),
       child: Container(
-        width: 75,
-        margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+        width: screenWidth * 0.18, // Responsive width (adjustable)
+        margin: EdgeInsets.symmetric(
+          horizontal: screenWidth * 0.025, // Responsive margin
+          vertical: 2,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            cardWrapper(
-              borderRadius: 50,
-              elevation: isSelected ? 0 : 5,
-              color: bgColor,
-              child: SizedBox(
-                width: 50,
-                height: 50,
-                child: Image.network(
-                  item['icon'] ?? 'https://picsum.photos/50',
-                  width: 25,
-                  height: 25,
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) => const Icon(Icons.error),
-                ),
+            Container(
+              decoration: BoxDecoration(
+                color: isSelected ? Colors.white : Colors.transparent,
+                borderRadius: BorderRadius.circular(50),
+                border:
+                    isSelected
+                        ? Border.all(color: Colors.grey.shade300, width: 2)
+                        : null,
+                boxShadow:
+                    isSelected
+                        ? [
+                          BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 5,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                        : [],
               ),
-            ),
-            const SizedBox(height: 6),
-            SizedBox(
-              width: 75,
-              child: Text(
-                item['name'] ?? '',
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: Design.font11),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+              padding:
+                  isSelected
+                      ? EdgeInsets.all(
+                        screenWidth * 0.025,
+                      ) // Responsive padding
+                      : EdgeInsets.zero,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                cardWrapper(
+  borderRadius: 30,
+  elevation: isSelected ? 0 : 5,
+  color: bgColor,
+  child: Padding(
+    padding: const EdgeInsets.all(4.0),
+    child: ClipOval(
+      child: SizedBox(
+        width: iconSize,
+        height: iconSize,
+        child: Image.network(
+          item['icon'] ?? 'https://picsum.photos/50',
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) =>
+              Icon(Icons.error, size: iconSize * 0.6),
+        ),
+      ),
+    ),
+  ),
+),
+
+
+
+                  if (isSelected) SizedBox(height: screenWidth * 0.060),
+                  SizedBox(
+                    width: screenWidth * 0.2, // Responsive text width
+                    child: Text(
+                      item['name'] ?? '',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: screenWidth * 0.03,
+                      ), // Responsive font size
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -440,20 +515,21 @@ class _TabEggScreenState extends State<TabEggScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               ClipRRect(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(20),
                 child: Image.network(
                   item['images'] != null && item['images'].isNotEmpty
-                      ? item['images'][0]['image']
+                      ? item['images'].last['image']
                       : 'https://picsum.photos/90',
                   width: 90,
                   height: 90,
                   fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    width: 90,
-                    height: 90,
-                    color: Colors.grey[300],
-                    child: const Icon(Icons.image_not_supported),
-                  ),
+                  errorBuilder:
+                      (context, error, stackTrace) => Container(
+                        width: 90,
+                        height: 90,
+                        color: Colors.grey[300],
+                        child: const Icon(Icons.image_not_supported),
+                      ),
                 ),
               ),
               const SizedBox(width: 10),
@@ -514,11 +590,12 @@ class _TabEggScreenState extends State<TabEggScreen> {
                         const SizedBox(width: 5),
                         Expanded(
                           child: InkWell(
-                            onTap: () => locationBtn(
-                              item['lat']?.toString() ?? '0.0',
-                              item['lon']?.toString() ?? '0.0',
-                              item['location'] ?? 'Unknown',
-                            ),
+                            onTap:
+                                () => locationBtn(
+                                  item['lat']?.toString() ?? '0.0',
+                                  item['lon']?.toString() ?? '0.0',
+                                  item['location'] ?? 'Unknown',
+                                ),
                             child: Text(
                               item['location'] ?? 'No location',
                               style: TextStyle(
@@ -542,7 +619,10 @@ class _TabEggScreenState extends State<TabEggScreen> {
                             child: InkWell(
                               onTap: () => editVenue(item),
                               child: const Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 6,
+                                ),
                                 child: Text(
                                   'Edit Info',
                                   textAlign: TextAlign.center,
@@ -563,8 +643,13 @@ class _TabEggScreenState extends State<TabEggScreen> {
                             color: Design.lightPink,
                             child: InkWell(
                               onTap: () {
-                                if (!UserPermissions.hasPermission('remove_venue')) {
-                                  Fluttertoast.showToast(msg: "You don't have access to this feature!");
+                                if (!UserPermissions.hasPermission(
+                                  'remove_venue',
+                                )) {
+                                  Fluttertoast.showToast(
+                                    msg:
+                                        "You don't have access to this feature!",
+                                  );
                                   return;
                                 }
                                 setState(() {
@@ -573,12 +658,19 @@ class _TabEggScreenState extends State<TabEggScreen> {
                                 });
                               },
                               child: const Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 6,
+                                ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(Icons.delete, size: 18, color: Colors.red),
+                                    Icon(
+                                      Icons.delete,
+                                      size: 18,
+                                      color: Colors.red,
+                                    ),
                                     SizedBox(width: 6),
                                     Text(
                                       'Remove',
@@ -607,8 +699,8 @@ class _TabEggScreenState extends State<TabEggScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Design.white,
+    return CustomScaffold(
+      currentIndex: 1, // Venues screen corresponds to index 1
       body: SafeArea(
         child: Stack(
           children: [
@@ -622,14 +714,21 @@ class _TabEggScreenState extends State<TabEggScreen> {
                       Row(
                         children: [
                           IconButton(
-                            icon: Image.asset(GlobalImages.back, width: 30, height: 30),
+                            icon: Image.asset(
+                              GlobalImages.back,
+                              width: 30,
+                              height: 30,
+                            ),
                             onPressed: () => Navigator.pop(context),
                           ),
                           const Expanded(
                             child: Center(
                               child: Text(
                                 "All Venues",
-                                style: TextStyle(fontSize: Design.font20, fontWeight: FontWeight.w500),
+                                style: TextStyle(
+                                  fontSize: Design.font20,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ),
                           ),
@@ -644,10 +743,18 @@ class _TabEggScreenState extends State<TabEggScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('$greeting,', style: const TextStyle(fontSize: Design.font20)),
+                                  Text(
+                                    '$greeting,',
+                                    style: const TextStyle(
+                                      fontSize: Design.font20,
+                                    ),
+                                  ),
                                   Text(
                                     '$firstName $lastName',
-                                    style: const TextStyle(fontSize: Design.font20, fontWeight: FontWeight.w600),
+                                    style: const TextStyle(
+                                      fontSize: Design.font20,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                     overflow: TextOverflow.ellipsis,
                                     maxLines: 1,
                                   ),
@@ -659,56 +766,77 @@ class _TabEggScreenState extends State<TabEggScreen> {
                       ),
                       Container(
                         margin: const EdgeInsets.only(top: 8),
-                        height: 130,
-                        child: loader && categoryList.isEmpty
-                            ? const Center(child: CircularProgressIndicator())
-                            : categoryList.isEmpty
-                                ? const Center(child: Text('No Categories Found'))
+                        height: 140,
+                        child:
+                            categoryList.isEmpty
+                                ? const Center(
+                                  child: Text('No Categories Found'),
+                                )
                                 : ListView.builder(
-                                    scrollDirection: Axis.horizontal,
-                                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                                    itemCount: categoryList.length,
-                                    itemBuilder: (context, index) {
-                                      final item = categoryList[index];
-                                      return buildCategoryItem(item, index);
-                                    },
+                                  scrollDirection: Axis.horizontal,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
                                   ),
+                                  itemCount: categoryList.length,
+                                  itemBuilder: (context, index) {
+                                    final item = categoryList[index];
+                                    return buildCategoryItem(item, index);
+                                  },
+                                ),
                       ),
                     ],
                   ),
                 ),
                 Expanded(
-                  child: loader && allData.isEmpty
-                      ? const Center(child: CircularProgressIndicator())
-                      : allData.isEmpty
+                  child:
+                      loader && allData.isEmpty
+                          ? const Center(child: CircularProgressIndicator())
+                          : allData.isEmpty
                           ? Center(
-                              child: Text(
-                                'No Venues Found in ${categoryList.isNotEmpty ? categoryList[cardPosition]['name'] : 'Selected Category'}',
-                                style: const TextStyle(fontSize: Design.font20, color: Design.lightGrey),
+                            child: Text(
+                              'No Venues Found in ${categoryList.isNotEmpty ? categoryList[cardPosition]['name'] : 'Selected Category'}',
+                              style: const TextStyle(
+                                fontSize: Design.font20,
+                                color: Design.lightGrey,
                               ),
-                            )
-                          : Column(
-                              children: [
-                                Container(
-                                  alignment: Alignment.centerLeft,
-                                  padding: const EdgeInsets.only(left: 16, top: 8, bottom: 4),
-                                  child: Text(
-                                    'Venues in ${categoryList[cardPosition]['name']}',
-                                    style: const TextStyle(fontWeight: FontWeight.w600),
-                                  ),
-                                ),
-                                Expanded(
-                                  child: ListView.builder(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                    itemCount: allData.length,
-                                    itemBuilder: (context, index) {
-                                      final item = allData[index];
-                                      return buildVenueItem(item);
-                                    },
-                                  ),
-                                ),
-                              ],
                             ),
+                          )
+                          : Column(
+                            children: [
+                              Container(
+                                alignment: Alignment.centerLeft,
+                                padding: const EdgeInsets.only(
+                                  left: 16,
+                                  top: 8,
+                                  bottom: 4,
+                                ),
+                                child: Text(
+                                  'Venues in ${categoryList[cardPosition]['name']}',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: ListView.builder(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 8,
+                                  ),
+                                  itemCount: allData.length,
+                                  itemBuilder: (context, index) {
+                                    final item = allData[index];
+                                    return Column(
+                                      children: [
+                                        buildVenueItem(item),
+                                        const SizedBox(height: 12),
+                                      ],
+                                    );
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
                 ),
               ],
             ),
@@ -728,7 +856,10 @@ class _TabEggScreenState extends State<TabEggScreen> {
                       const Text(
                         'Are you sure you want to Remove Venue?',
                         textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: Design.font15, fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                          fontSize: Design.font15,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       const SizedBox(height: 20),
                       Row(
@@ -736,12 +867,17 @@ class _TabEggScreenState extends State<TabEggScreen> {
                         children: [
                           ElevatedButton(
                             onPressed: removeVenueBtn,
-                            style: ElevatedButton.styleFrom(backgroundColor: Design.primaryColorOrange),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Design.primaryColorOrange,
+                            ),
                             child: const Text('Yes'),
                           ),
                           OutlinedButton(
-                            onPressed: () => setState(() => dialogAlert = false),
-                            style: OutlinedButton.styleFrom(foregroundColor: Design.primaryColorOrange),
+                            onPressed:
+                                () => setState(() => dialogAlert = false),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Design.primaryColorOrange,
+                            ),
                             child: const Text('No'),
                           ),
                         ],
@@ -750,8 +886,8 @@ class _TabEggScreenState extends State<TabEggScreen> {
                   ),
                 ),
               ),
-            if (loader)
-              Container(color: Colors.black26, child: const Center(child: CircularProgressIndicator())),
+            // if (loader)
+            //   Container(color: Colors.black26, child: const Center(child: CircularProgressIndicator())),
           ],
         ),
       ),

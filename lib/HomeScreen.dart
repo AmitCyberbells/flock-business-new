@@ -2,19 +2,14 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flock/qr_code_scanner_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:flock/add_offer.dart';
-import 'package:flock/add_venue.dart' as addVenue;
-import 'package:flock/profile_screen.dart' as profile hide TabEggScreen;
-import 'package:flock/send_notifications.dart';
-import 'package:flock/venue.dart' as venue;
-import 'package:flock/checkIns.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:dropdown_search/dropdown_search.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:flock/custom_scaffold.dart';
 
 class TabDashboard extends StatefulWidget {
@@ -142,9 +137,9 @@ class _TabDashboardState extends State<TabDashboard> {
             totalFeathers = data['totalFeathers']?.toString() ?? '';
             todayFeathers = data['today_feathers'] ?? 0;
             todayVenuePoints = data['today_venue_points'] ?? 0;
-            hotelList[0]['points'] = '${data['checkin_count'] ?? 0} Check Ins';
-            hotelList[1]['points'] = '${data['offers_count'] ?? 0} Active offers';
-            hotelList[2]['points'] = '${data['venues_count'] ?? 0} Venues';
+            hotelList[0]['points'] = '${data['checkin_count'] ?? 0} ';
+            hotelList[1]['points'] = '${data['offers_count'] ?? 0} ';
+            hotelList[2]['points'] = '${data['venues_count'] ?? 0}';
           });
         } else {
           Fluttertoast.showToast(msg: responseJson['message'] ?? 'Error');
@@ -206,7 +201,7 @@ class _TabDashboardState extends State<TabDashboard> {
   }
 
   bool hasPermission(String permission) {
-    return true; // Replace with your actual permission logic.
+    return true;
   }
 
   String getPermissionName(String field) {
@@ -276,184 +271,170 @@ class _TabDashboardState extends State<TabDashboard> {
       Fluttertoast.showToast(msg: 'Permission Denied!');
       return;
     }
-    var status = await Permission.camera.request();
+
+    var status = await Permission.camera.status;
+    if (status.isDenied) {
+      status = await Permission.camera.request();
+    }
+
     if (status.isGranted) {
-      Navigator.pushNamed(context, '/qrcode');
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const QRScanScreen(),
+        ),
+      );
+    } else if (status.isPermanentlyDenied) {
+      Fluttertoast.showToast(
+        msg: 'Camera permission is permanently denied. Please enable it in settings.',
+      );
+      await openAppSettings();
     } else {
       Fluttertoast.showToast(msg: 'Camera Permission Denied!');
     }
   }
-Widget venueListWithQRCodes() {
-  if (!hasPermission('verify_voucher') || venueList.isEmpty) {
-    return const SizedBox.shrink();
+
+  void _handleScannedQRCode(String qrCode) {
+    Fluttertoast.showToast(msg: 'Scanned QR Code: $qrCode');
   }
 
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      const Padding(
-        padding: EdgeInsets.only(top: 8.0, bottom: 8.0),
-        // child: Text(
-        //   "Select Venue",
-        //   style: TextStyle(
-        //     fontSize: 16,
-        //     color: Colors.grey,
-        //     fontWeight: FontWeight.w500,
-        //   ),
-        // ),
-      ),
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.2),
-              spreadRadius: 2,
-              blurRadius: 5,
-              offset: const Offset(0, 3),
-            ),
-          ],
-          border: Border.all(color: Colors.grey.shade300, width: 1),
+  // Updated venueListWithQRCodes method
+  Widget venueListWithQRCodes() {
+    if (!hasPermission('verify_voucher') || venueList.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+       Padding(
+  padding: const EdgeInsets.symmetric(horizontal: 8.0), // Add left & right padding
+  child: Container(
+    height: 42,
+    padding: const EdgeInsets.symmetric(horizontal: 19),
+    decoration: BoxDecoration(
+      color: Colors.white, // Changed to white background
+      borderRadius: BorderRadius.circular(10),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.03), // Reduced shadow effect
+          blurRadius: 1, // Reduced blur radius
+          offset: const Offset(0, 1),
         ),
-        child: DropdownButtonHideUnderline(
-          child: DropdownButton<Map<String, dynamic>>(
-            value: selectedVenue,
-            isExpanded: true,
-            icon: const Icon(
-              Icons.arrow_drop_down,
-              color: Colors.grey,
-              size: 30,
-            ),
-            style: const TextStyle(
-              fontSize: 16,
-              color: Colors.black,
-            ),
-            items: venueList.map((Map<String, dynamic> venue) {
-              return DropdownMenuItem<Map<String, dynamic>>(
-                value: venue,
+      ],
+      border: Border.all(color: Colors.grey.shade300),
+    ),
+    child: DropdownButtonHideUnderline(
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          canvasColor: Colors.white, // Ensure dropdown has white background
+          splashColor: Colors.transparent,
+          highlightColor: Colors.transparent,
+        ),
+        child: DropdownButton<Map<String, dynamic>>(
+          borderRadius: BorderRadius.circular(10),
+          dropdownColor: Colors.white,
+          value: selectedVenue,
+          icon: const Icon(Icons.keyboard_arrow_down),
+          isExpanded: true,
+          style: const TextStyle(
+            fontSize: 14,
+            color: Colors.black87,
+          ),
+          items: venueList.map((Map<String, dynamic> venue) {
+            return DropdownMenuItem<Map<String, dynamic>>(
+              value: venue,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4.0),
                 child: Text(
                   venue['name'] ?? 'Unknown Venue',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    color: Colors.black,
-                  ),
+                  style: const TextStyle(fontSize: 14),
                 ),
-              );
-            }).toList(),
-            onChanged: (Map<String, dynamic>? newValue) {
-              setState(() {
-                selectedVenue = newValue;
-              });
-            },
-            hint: const Text(
-              'Select Venue',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
+              ),
+            );
+          }).toList(),
+          onChanged: (newValue) {
+            setState(() {
+              selectedVenue = newValue ?? selectedVenue;
+            });
+          },
+          hint: const Text(
+            'Select Venue',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.black54,
+            ),
+          ),
+        ),
+      ),
+    ),
+  ),
+),
+
+        if (selectedVenue != null)
+          Padding(
+            padding: const EdgeInsets.all(5),
+            child: Center(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: QrImageView(
+                  data: selectedVenue!['id'].toString(),
+                  version: QrVersions.auto,
+                  size: 150.0,
+                  backgroundColor: Colors.transparent,
+                ),
               ),
             ),
           ),
-        ),
-      ),
-      const SizedBox(height: 15),
-      if (selectedVenue != null)
-        Card(
-          color: Colors.white,
-          elevation: Platform.isIOS ? 2.5 : 7,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 0),
-          child: Padding(
-            padding: const EdgeInsets.all(15),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  selectedVenue!['name'] ?? 'Unknown Venue',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Center(
-                  child: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.1),
-                          spreadRadius: 2,
-                          blurRadius: 5,
-                        ),
-                      ],
-                    ),
-                    child: QrImageView(
-                      data: selectedVenue!['id'].toString(),
-                      version: QrVersions.auto,
-                      size: 150.0,
-                      backgroundColor: Colors.white,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-    ],
-  );
-}
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final black = Colors.black;
-    final lightGrey = Colors.grey;
     return CustomScaffold(
       currentIndex: 0,
       body: Stack(
         children: [
           SafeArea(
+            // Updated container padding to match grid view
             child: Container(
-              color: Colors.white, // Set main container background to white
-              padding: const EdgeInsets.symmetric(horizontal: 12.0),
+              color: Colors.white,
+              padding: EdgeInsets.symmetric(
+                  horizontal: MediaQuery.of(context).size.width * 0.023),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Updated "Hello" section with matching horizontal padding
                   Padding(
                     padding: EdgeInsets.only(
-                      top: Platform.isIOS ? 55 : 15,
-                      bottom: Platform.isIOS ? 30 : 20,
+                      top: Platform.isIOS ? 20 : 5,
+                      bottom: Platform.isIOS ? 10 : 5,
+                      left: Platform.isIOS ? 15 : 5,
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        Row(
                           children: [
-                            Row(
-                              children: [
-                                const Text(
-                                  'Hello, ',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                                Text(
-                                  '$firstName $lastName',
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
+                            const Text(
+                              'Hello, ',
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Colors.black,
+                              ),
+                            ),
+                            Text(
+                              '$firstName $lastName',
+                              style: const TextStyle(
+                                fontSize: 18,
+                                color: Colors.black,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ],
                         ),
@@ -472,156 +453,170 @@ Widget venueListWithQRCodes() {
                     child: SingleChildScrollView(
                       child: Column(
                         children: [
-                          Card(
-                            color: Colors.white, // Set card background to white
-                            elevation: Platform.isIOS ? 2.5 : 7,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            margin: const EdgeInsets.symmetric(vertical: 5),
-                            child: Padding(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: Platform.isIOS ? 20 : 15,
-                                vertical: Platform.isIOS ? 10 : 7,
-                              ),
-                              child: Column(
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        'Feathers Rewarded Today',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontFamily: 'SFProText',
-                                         color: Color(0xFFB4B4B4),
-
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  SizedBox(height: Platform.isIOS ? 10 : 0),
-                                  Text(
-                                    '$todayFeathers fts',
-                                    style: TextStyle(
-                                      fontSize: 23,
-                                      color: black,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  Divider(
-                                    color: Colors.grey,
-                                    thickness: Platform.isIOS ? 0.6 : 0.3,
-                                    height: Platform.isIOS ? 10 : 5,
-                                  ),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        'Venue Points Rewarded Today: ',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: Color(0xFFB4B4B4),
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                      Text(
-                                        '$todayVenuePoints pts',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: black,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
                           Padding(
-                            padding: EdgeInsets.only(top: Platform.isIOS ? 20 : 15),
+                            padding: EdgeInsets.only(
+                              top: Platform.isIOS ? 5 : 5,
+                            ),
                             child: GridView.builder(
                               physics: const NeverScrollableScrollPhysics(),
                               shrinkWrap: true,
-                              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                              padding: EdgeInsets.all(
+                                  MediaQuery.of(context).size.width * 0.023),
+                              gridDelegate:
+                                  SliverGridDelegateWithFixedCrossAxisCount(
                                 crossAxisCount: 2,
-                                mainAxisSpacing: 15,
-                                crossAxisSpacing: 10,
-childAspectRatio: Platform.isIOS ? 160 / 140 : 140 / 120, 
+                                mainAxisSpacing:
+                                    MediaQuery.of(context).size.height * 0.005,
+                                crossAxisSpacing:
+                                    MediaQuery.of(context).size.width * 0.03,
+                                childAspectRatio: MediaQuery.of(context).size.width /
+                                    (MediaQuery.of(context).size.height * 0.4),
                               ),
                               itemCount: hotelList.length,
                               itemBuilder: (context, index) {
                                 final item = hotelList[index];
                                 return GestureDetector(
                                   onTap: () => clickCard(item),
-                                  child: Card(
-                                    color: Colors.white, // Set card background to white
-                                    elevation: Platform.isIOS ? 2.5 : 7,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
+                                  child: Container(
+                                    margin: EdgeInsets.symmetric(
+                                      vertical: MediaQuery.of(context).size.height *
+                                          0.0025,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(15),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.2),
+                                          spreadRadius: 1,
+                                          blurRadius: 5,
+                                          offset: const Offset(0, 3),
+                                        ),
+                                      ],
                                     ),
                                     child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 25,
-                                        horizontal: 15,
+                                      padding: EdgeInsets.symmetric(
+                                        vertical:
+                                            MediaQuery.of(context).size.height *
+                                                0.020,
+                                        horizontal:
+                                            MediaQuery.of(context).size.width *
+                                                0.03,
                                       ),
                                       child: Stack(
                                         children: [
                                           Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: [
                                               Row(
                                                 children: [
                                                   Image.asset(
                                                     item['img'],
-                                                    width: Platform.isIOS ? 25 : 25,
-                                                    height: Platform.isIOS ? 25 : 25,
-                                                    color: const Color.fromRGBO(255, 130, 16, 1),
+                                                    width:
+                                                        MediaQuery.of(context)
+                                                                .size
+                                                                .width *
+                                                            0.06,
+                                                    height:
+                                                        MediaQuery.of(context)
+                                                                .size
+                                                                .width *
+                                                            0.06,
+                                                    color: const Color.fromRGBO(
+                                                        255, 130, 16, 1),
                                                   ),
-                                                  const SizedBox(width: 8),
-                                                  Text(
-                                                    item['category'],
-                                                    style: const TextStyle(
-                                                      fontSize: 16,
-                                                      color: Colors.black,
-                                                      fontWeight: FontWeight.w600,
+                                                  const SizedBox(width: 6),
+                                                  Expanded(
+                                                    child: Text(
+                                                      item['category'],
+                                                      style: TextStyle(
+                                                        fontSize:
+                                                            MediaQuery.of(context)
+                                                                    .size
+                                                                    .width *
+                                                                0.042,
+                                                        color: Colors.black,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
                                                     ),
                                                   ),
                                                 ],
                                               ),
-                                              SizedBox(height: Platform.isIOS ? 14 : 7),
-                                              Text(
-                                                item['title'],
-                                                style: const TextStyle(
-                                                  fontSize: 12,
-                                                  color: Colors.grey,
+                                              SizedBox(
+                                                height: MediaQuery.of(context)
+                                                        .size
+                                                        .height *
+                                                    0.01,
+                                              ),
+                                              Center(
+                                                child: Text(
+                                                  item['title'],
+                                                  textAlign: TextAlign.center,
+                                                  style: TextStyle(
+                                                    fontSize:
+                                                        MediaQuery.of(context)
+                                                                .size
+                                                                .width *
+                                                            0.03,
+                                                    color: Colors.grey,
+                                                  ),
+                                                  maxLines: 2,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
                                                 ),
                                               ),
-                                              SizedBox(height: Platform.isIOS ? 15 : 0),
-                                              Text(
-                                                item['points'],
-                                                style: const TextStyle(
-                                                  fontSize: 18,
-                                                  color: Colors.black,
-                                                  fontWeight: FontWeight.w600,
+                                              SizedBox(
+                                                height: MediaQuery.of(context)
+                                                        .size
+                                                        .height *
+                                                    0.01,
+                                              ),
+                                              Center(
+                                                child: Text(
+                                                  item['points'],
+                                                  textAlign: TextAlign.center,
+                                                  style: TextStyle(
+                                                    fontSize:
+                                                        MediaQuery.of(context)
+                                                                .size
+                                                                .width *
+                                                            0.08,
+                                                    color: Colors.orange,
+                                                    fontWeight: FontWeight.w800,
+                                                  ),
                                                 ),
                                               ),
                                             ],
                                           ),
                                           Positioned(
-                                            top: -10,
-                                            right: -15,
+                                            top: -MediaQuery.of(context)
+                                                    .size
+                                                    .height *
+                                                0.018,
+                                            right: -MediaQuery.of(context)
+                                                    .size
+                                                    .width *
+                                                0.035,
                                             child: IconButton(
                                               icon: Image.asset(
                                                 'assets/side_arrow.png',
-                                                width: Platform.isIOS ? 18 : 15,
-                                                height: Platform.isIOS ? 18 : 15,
+                                                width: MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                    0.035,
+                                                height: MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                    0.035,
                                               ),
-                                              onPressed: () => clickCard(item),
+                                              onPressed: () =>
+                                                  clickCard(item),
                                             ),
-                                          )
+                                          ),
                                         ],
                                       ),
                                     ),
@@ -630,9 +625,8 @@ childAspectRatio: Platform.isIOS ? 160 / 140 : 140 / 120,
                               },
                             ),
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 15),
                           venueListWithQRCodes(),
-                          const SizedBox(height: 20),
                         ],
                       ),
                     ),
@@ -643,7 +637,7 @@ childAspectRatio: Platform.isIOS ? 160 / 140 : 140 / 120,
           ),
           if (loader)
             Container(
-              color: Colors.white.withOpacity(0.19), // Semi-transparent overlay
+              color: Colors.white.withOpacity(0.19),
               child: const Center(child: CircularProgressIndicator()),
             ),
         ],
@@ -651,3 +645,6 @@ childAspectRatio: Platform.isIOS ? 160 / 140 : 140 / 120,
     );
   }
 }
+
+
+

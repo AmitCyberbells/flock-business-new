@@ -13,16 +13,16 @@ import 'package:flock/staffManagement.dart';
 import 'package:flock/tutorial.dart';
 import 'package:flock/venue.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart'; // Import Provider
+import 'package:provider/provider.dart';
 import 'login_screen.dart';
 import 'checkIns.dart';
-import 'profile_provider.dart'; // Import your ProfileProvider
+import 'profile_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(
     MultiProvider(
       providers: [
-        // Add your providers here
         ChangeNotifierProvider(create: (_) => ProfileProvider()),
       ],
       child: const MyApp(),
@@ -41,7 +41,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.orange,
       ),
-      home: const LoginScreen(),
+      home: const LoadingScreen(),
       routes: {
         '/forgot-password': (context) => ForgotPasswordScreen(),
         '/home': (context) => TabDashboard(),
@@ -52,14 +52,52 @@ class MyApp extends StatelessWidget {
         '/feedback': (context) => const ReportScreen(),
         '/DeleteAccount': (context) => const DeleteAccountScreen(),
         '/tutorials': (context) => const TutorialsScreen(),
-        '/Login': (context) => const LoginScreen(),
+        '/login': (context) => const LoginScreen(),
         '/tab_checkin': (context) => const CheckInsScreen(),
         '/register': (context) => const RegisterScreen(),
-        '/tab_egg':(context) => const TabEggScreen(),
-        '/faq': (context) =>  FaqScreen(),
+        '/tab_egg': (context) => const TabEggScreen(),
+        '/faq': (context) => FaqScreen(),
         '/offers': (context) => const OffersScreen(),
-        '/HistoryScreen':(context) => const CheckinHistoryScreen(),
+        '/HistoryScreen': (context) => const HistoryScreen(),
       },
+    );
+  }
+}
+
+class LoadingScreen extends StatefulWidget {
+  const LoadingScreen({super.key});
+
+  @override
+  State<LoadingScreen> createState() => _LoadingScreenState();
+}
+
+class _LoadingScreenState extends State<LoadingScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _checkLoginStatus();
+  }
+
+  Future<void> _checkLoginStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+    final token = prefs.getString('access_token');
+
+    if (mounted) {
+      if (isLoggedIn && token != null && token.isNotEmpty) {
+        Navigator.pushReplacementNamed(context, '/home');
+      } else {
+        Navigator.pushReplacementNamed(context, '/login');
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Center(
+        child: CircularProgressIndicator(),
+      ),
     );
   }
 }

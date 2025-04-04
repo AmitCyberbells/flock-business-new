@@ -93,6 +93,37 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.white, // Match the background image
+        elevation: 0, // Remove shadow
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 10.0),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: const Icon(
+                  Icons.arrow_back_ios, // iOS-style back chevron
+                  color: Colors.black,
+                  size: 20,
+                ),
+                onPressed: () {
+                  Navigator.pop(context); // Navigate back to the previous screen
+                },
+              ),
+              // const Text(
+              //   'Back',
+              //   style: TextStyle(
+              //     color: Colors.black,
+              //     fontSize: 16,
+              //     fontWeight: FontWeight.w500,
+              //   ),
+              // ),
+            ],
+          ),
+        ),
+        leadingWidth: 80, // Adjust width to accommodate the icon and text
+      ),
       body: Stack(
         children: [
           Container(
@@ -116,7 +147,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   // Title
                   const Text(
                     "Reset Password",
-                    style: TextStyle(fontSize: 24,fontWeight: FontWeight.w600),
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 30),
                   // Input field with shadow
@@ -132,24 +163,19 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         ),
                       ],
                     ),
-                   child: TextField(
-                    
-          controller: _emailController,
-          style: const TextStyle(fontSize: 14),
-        decoration: AppConstants.textFieldDecoration.copyWith(
-            hintText: "Enter email address", // Define hintText here
-          ),
-          // Use the defined decoration
-        ),
-      ),
-                  
+                    child: TextField(
+                      controller: _emailController,
+                      style: const TextStyle(fontSize: 14),
+                      decoration: AppConstants.textFieldDecoration.copyWith(
+                        hintText: "Enter email address", // Define hintText here
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 40),
-              AppConstants.fullWidthButton(
-  text: "Continue",
-  onPressed: _resetPassword,
-)
-
-
+                  AppConstants.fullWidthButton(
+                    text: "Continue",
+                    onPressed: _resetPassword,
+                  ),
                 ],
               ),
             ),
@@ -164,3 +190,5 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     );
   }
 }
+
+

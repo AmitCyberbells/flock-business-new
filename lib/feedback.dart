@@ -11,16 +11,17 @@ class ReportScreen extends StatefulWidget {
 }
 
 class _ReportScreenState extends State<ReportScreen> {
-  String? _selectedVenue;
+  /// We'll store venues as a list of maps: [{'id': 65, 'name': 'Venue Name'}, ...]
+  List<Map<String, dynamic>> _venues = [];
+  /// We'll store the selected venue object (with id & name)
+  Map<String, dynamic>? _selectedVenue;
+
+  /// We'll store report types as a list of strings (e.g. ['Boost', 'Complaint', ...])
+  /// If your API also provides an ID for each report type, you can store it similarly to venues.
+  List<String> _reportTypes = [];
   String? _selectedReportType;
 
   final TextEditingController _descriptionController = TextEditingController();
-
-  // These lists will be populated from the APIs
-  List<String> _venues = [];
-  List<String> _reportTypes = [];
-
-  // Basic error message handling (optional)
   String _errorMessage = '';
 
   @override
@@ -61,9 +62,12 @@ class _ReportScreenState extends State<ReportScreen> {
         if (data['status'] == 'success' && data['data'] != null) {
           final List<dynamic> venueData = data['data'];
           setState(() {
-            // Convert each object into a string (e.g. the "name" field)
+            // Instead of just storing names, store a map with { 'id': ..., 'name': ... }
             _venues = venueData
-                .map((venue) => venue['name'].toString())
+                .map((venue) => {
+                      'id': venue['id'],
+                      'name': venue['name']?.toString() ?? 'Unnamed Venue',
+                    })
                 .toList();
           });
         } else {
@@ -131,13 +135,76 @@ class _ReportScreenState extends State<ReportScreen> {
   }
 
   /// Handle form submission
-  void _submitReport() {
-    // For demonstration, just print the chosen values
-    print('Venue: $_selectedVenue');
-    print('Report Type: $_selectedReportType');
-    print('Description: ${_descriptionController.text}');
+  Future<void> _submitReport() async {
+    if (_selectedVenue == null) {
+      setState(() {
+        _errorMessage = 'Please select a venue.';
+      });
+      return;
+    }
+    if (_selectedReportType == null) {
+      setState(() {
+        _errorMessage = 'Please select a report type.';
+      });
+      return;
+    }
+    if (_descriptionController.text.trim().isEmpty) {
+      setState(() {
+        _errorMessage = 'Please enter a description.';
+      });
+      return;
+    }
 
-    // TODO: Submit these values to your API as needed
+    setState(() => _errorMessage = '');
+
+    final token = await _getToken();
+    if (token == null || token.isEmpty) {
+      setState(() {
+        _errorMessage = 'No token found. Please login again.';
+      });
+      return;
+    }
+
+    // The API endpoint from your screenshot
+    final url = Uri.parse('http://165.232.152.77/mobi/api/vendor/feedbacks');
+
+    try {
+      // We'll send multipart/form-data just like your screenshot
+      final request = http.MultipartRequest('POST', url);
+      request.headers['Authorization'] = 'Bearer $token';
+
+      // Fill out the fields
+      request.fields['venue_id'] = _selectedVenue!['id'].toString();
+      request.fields['report_type'] = _selectedReportType ?? '';
+      request.fields['description'] = _descriptionController.text.trim();
+
+      // Send the request
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final responseData = json.decode(response.body);
+        if (responseData['status'] == 'success') {
+          // Report submitted successfully
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(responseData['message'] ?? 'Report submitted!')),
+          );
+          Navigator.pop(context); // Return to previous screen or do whatever
+        } else {
+          setState(() {
+            _errorMessage = responseData['message'] ?? 'Failed to submit report.';
+          });
+        }
+      } else {
+        setState(() {
+          _errorMessage = 'Error ${response.statusCode}: ${response.body}';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Network error: $e';
+      });
+    }
   }
 
   @override
@@ -190,7 +257,7 @@ class _ReportScreenState extends State<ReportScreen> {
                 const SizedBox(height: 8),
 
                 // Venue Dropdown
-                DropdownButtonFormField<String>(
+                DropdownButtonFormField<Map<String, dynamic>>(
                   decoration: InputDecoration(
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 12,
@@ -203,9 +270,9 @@ class _ReportScreenState extends State<ReportScreen> {
                   hint: const Text("Choose Venue"),
                   value: _selectedVenue,
                   items: _venues.map((venue) {
-                    return DropdownMenuItem<String>(
+                    return DropdownMenuItem<Map<String, dynamic>>(
                       value: venue,
-                      child: Text(venue),
+                      child: Text(venue['name']),
                     );
                   }).toList(),
                   onChanged: (value) {
@@ -274,7 +341,7 @@ class _ReportScreenState extends State<ReportScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Show any error messages from the fetch calls
+                // Show any error messages from the fetch calls or validations
                 if (_errorMessage.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 8),

@@ -4,7 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:multi_select_flutter/multi_select_flutter.dart';
+
+import 'package:flock/constants.dart'; // Adjust the import path as needed.
 
 class AddMemberScreen extends StatefulWidget {
   final Map<String, String>? existingMember;
@@ -16,7 +17,6 @@ class AddMemberScreen extends StatefulWidget {
 
 class _AddMemberScreenState extends State<AddMemberScreen> {
   bool _obscurePassword = true;
-  bool _obscureText = true;
   List<String> _selectedVenues = [];
   List<String> _selectedPermissions = [];
 
@@ -40,7 +40,8 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
       _emailController.text = widget.existingMember!['email'] ?? '';
       _phoneController.text = widget.existingMember!['phone'] ?? '';
       _selectedVenues = widget.existingMember!['venue']?.split(',') ?? [];
-      _selectedPermissions = widget.existingMember!['permission']?.split(',') ?? [];
+      _selectedPermissions =
+          widget.existingMember!['permission']?.split(',') ?? [];
     }
     fetchDropdownData();
   }
@@ -91,7 +92,9 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
 
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
-    final XFile? pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    final XFile? pickedFile = await picker.pickImage(
+      source: ImageSource.gallery,
+    );
     if (pickedFile != null) {
       setState(() {
         _pickedImage = File(pickedFile.path);
@@ -117,8 +120,9 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
         "first_name": _firstNameController.text,
         "last_name": _lastNameController.text,
         "email": _emailController.text,
-        if (_passwordController.text.isNotEmpty) "password": _passwordController.text,
         "contact": _phoneController.text,
+        if (_passwordController.text.isNotEmpty)
+          "password": _passwordController.text,
       };
 
       for (var i = 0; i < _selectedPermissions.length; i++) {
@@ -139,9 +143,10 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
       FormData formData = FormData.fromMap(formDataMap);
 
       final dio = Dio();
-      final String url = widget.existingMember != null && widget.existingMember!['id'] != null
-          ? "http://165.232.152.77/mobi/api/vendor/teams/${widget.existingMember!['id']}"
-          : "http://165.232.152.77/mobi/api/vendor/teams";
+      final String url =
+          widget.existingMember != null && widget.existingMember!['id'] != null
+              ? "http://165.232.152.77/mobi/api/vendor/teams/${widget.existingMember!['id']}"
+              : "http://165.232.152.77/mobi/api/vendor/teams";
 
       final response = await dio.post(
         url,
@@ -160,13 +165,20 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
       if (response.statusCode == 200 || response.statusCode == 201) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(widget.existingMember != null ? "Member updated successfully!" : "Member added successfully!")),
+            SnackBar(
+              content: Text(
+                widget.existingMember != null
+                    ? "Member updated successfully!"
+                    : "Member added successfully!",
+              ),
+            ),
           );
           Navigator.pop(context, true);
         }
       } else {
         final errorMessage = response.data['message'] ?? 'Unknown error';
-        final errors = response.data['errors']?.toString() ?? 'No details provided';
+        final errors =
+            response.data['errors']?.toString() ?? 'No details provided';
         _showError('Failed to save member: $errorMessage\nDetails: $errors');
       }
     } catch (e) {
@@ -177,9 +189,9 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
 
   void _showError(String message) {
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
     }
   }
 
@@ -187,18 +199,13 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Text(
-          'Add Member',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-      ),
+      appBar: AppConstants.customAppBar(
+        context: context,
+        title: 'Add Member',
+        // Optionally, if you want a different back icon, you can pass:
+        // backIconAsset: 'assets/your_custom_back.png',
+      ), // 'back' is a String holding the asset path, e.g., 'assets/images/back_icon.png'
+
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16),
         child: Column(
@@ -211,10 +218,12 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
                   CircleAvatar(
                     radius: 50,
                     backgroundColor: Colors.grey[300],
-                    backgroundImage: _pickedImage != null ? FileImage(_pickedImage!) : null,
-                    child: _pickedImage == null
-                        ? Icon(Icons.person, size: 60, color: Colors.grey)
-                        : null,
+                    backgroundImage:
+                        _pickedImage != null ? FileImage(_pickedImage!) : null,
+                    child:
+                        _pickedImage == null
+                            ? Icon(Icons.person, size: 60, color: Colors.grey)
+                            : null,
                   ),
                   Positioned(
                     bottom: -10,
@@ -223,7 +232,11 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
                       radius: 18,
                       backgroundColor: Colors.orange,
                       child: IconButton(
-                        icon: Icon(Icons.camera_alt, color: Colors.white, size: 18),
+                        icon: Icon(
+                          Icons.camera_alt,
+                          color: Colors.white,
+                          size: 18,
+                        ),
                         onPressed: _pickImage,
                         padding: EdgeInsets.zero,
                       ),
@@ -232,270 +245,75 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
                 ],
               ),
             ),
-     SizedBox(height: 30),
-        Row(
-          children: [
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(15),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 5.0,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: TextField(
-                  controller: _firstNameController,
-                  decoration: const InputDecoration(
-                    hintText: 'First Name',
-                    hintStyle: TextStyle(color: Colors.grey),
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(width: 10),
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(15),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 5.0,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: TextField(
-                  controller: _lastNameController, // Fixed: was using _firstNameController
-                  decoration: const InputDecoration(
-                    hintText: 'Last Name',
-                    hintStyle: TextStyle(color: Colors.grey),
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-        SizedBox(height: 15),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(15),
-            boxShadow: const [
-              BoxShadow(
-                color: Colors.black26,
-                blurRadius: 5.0,
-                offset: Offset(0, 2),
-              ),
-            ],
-          ),
-          child: TextField(
-            controller: _emailController,
-            decoration: const InputDecoration(
-              hintText: 'Enter email address',
-              hintStyle: TextStyle(color: Colors.grey),
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-            ),
-          ),
-        ),
-        SizedBox(height: 15),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(15),
-            boxShadow: const [
-              BoxShadow(
-                color: Colors.black26,
-                blurRadius: 5.0,
-                offset: Offset(0, 2),
-              ),
-            ],
-          ),
-          child: TextField(
-            controller: _phoneController,
-            decoration: const InputDecoration(
-              hintText: 'Enter phone number',
-              hintStyle: TextStyle(color: Colors.grey),
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-            ),
-          ),
-        ),
-        SizedBox(height: 15),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(15),
-            boxShadow: const [
-              BoxShadow(
-                color: Colors.black26,
-                blurRadius: 5.0,
-                offset: Offset(0, 2),
-              ),
-            ],
-          ),
-          child: TextField(
-            controller: _passwordController,
-            obscureText: _obscureText,
-            decoration: InputDecoration(
-              hintText: 'Enter password',
-              hintStyle: TextStyle(color: Colors.grey),
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-              suffixIcon: IconButton(
-                icon: Icon(
-                  _obscureText ? Icons.visibility_off : Icons.visibility,
-                  color: Colors.grey,
-                ),
-                onPressed: () {
-                  setState(() {
-                    _obscureText = !_obscureText;
-                  });
-                },
-              ),
-            ),
-          ),
-        ),
-        SizedBox(height: 15),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(15),
-            boxShadow: const [
-              BoxShadow(
-                color: Colors.black26,
-                blurRadius: 5.0,
-                offset: Offset(0, 2),
-              ),
-            ],
-          ),
-          child: MultiSelectDialogField(
-            items: _venueList.map((venue) {
-              return MultiSelectItem<String>(venue["id"].toString(), venue["name"].toString());
-            }).toList(),
-            initialValue: _selectedVenues,
-            onConfirm: (values) {
-              setState(() {
-                _selectedVenues = values.cast<String>();
-              });
-            },
-            chipDisplay: MultiSelectChipDisplay(
-              chipColor: Colors.orange,
-              textStyle: TextStyle(color: Colors.white),
-            ),
-            buttonText: Text(
-              "Assign venues",
-              style: TextStyle(color: Colors.grey),
-            ),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(15),
-            ),
-            buttonIcon: Icon(Icons.arrow_drop_down, color: Colors.grey),
-          ),
-        ),
-        SizedBox(height: 15),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(15),
-            boxShadow: const [
-              BoxShadow(
-                color: Colors.black26,
-                blurRadius: 5.0,
-                offset: Offset(0, 2),
-              ),
-            ],
-          ),
-          child: MultiSelectDialogField(
-            items: _permissionList.map((permission) {
-              return MultiSelectItem<String>(permission["id"].toString(), permission["name"].toString());
-            }).toList(),
-            initialValue: _selectedPermissions,
-            onConfirm: (values) {
-              setState(() {
-                _selectedPermissions = values.cast<String>();
-              });
-            },
-            chipDisplay: MultiSelectChipDisplay(
-              chipColor: Colors.orange,
-              textStyle: TextStyle(color: Colors.white),
-            ),
-            buttonText: Text(
-              "Assign permissions",
-              style: TextStyle(color: Colors.grey),
-            ),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(15),
-            ),
-            buttonIcon: Icon(Icons.arrow_drop_down, color: Colors.grey),
-          ),
-        ),
-            // Container(
-            //   decoration: BoxDecoration(
-            //     border: Border.all(color: Colors.grey),
-            //     borderRadius: BorderRadius.circular(8),
-            //   ),
-            //   child: MultiSelectDialogField(
-            //     items: _permissionList.map((permission) {
-            //       return MultiSelectItem<String>(permission["id"].toString(), permission["name"].toString());
-            //     }).toList(),
-            //     initialValue: _selectedPermissions,
-            //     onConfirm: (values) {
-            //       setState(() {
-            //         _selectedPermissions = values.cast<String>();
-            //       });
-            //     },
-            //     chipDisplay: MultiSelectChipDisplay(
-            //       chipColor: Colors.orange,
-            //       textStyle: TextStyle(color: Colors.white),
-            //     ),
-            //     buttonText: Text("Assign permissions", style: TextStyle(color: Colors.grey)),
-            //     decoration: BoxDecoration(
-            //       borderRadius: BorderRadius.circular(8),
-            //     ),
-            //   ),
-            // ),
             SizedBox(height: 30),
-            ElevatedButton(
-              onPressed: _isLoading ? null : _submitForm,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+            // First Name and Last Name in one row
+            Row(
+              children: [
+                Expanded(
+                  child: AppConstants.firstNameField(
+                    controller: _firstNameController,
+                  ),
                 ),
-                minimumSize: Size(double.infinity, 50),
-              ),
-              child: _isLoading
-                  ? CircularProgressIndicator(color: Colors.white)
-                  : Text(
-                      'Submit',
-                      style: TextStyle(color: Colors.white, fontSize: 16),
-                    ),
+                SizedBox(width: 10),
+                Expanded(
+                  child: AppConstants.lastNameField(
+                    controller: _lastNameController,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 15),
+            // Reusable Email Field
+            AppConstants.emailField(controller: _emailController),
+            SizedBox(height: 15),
+            // Reusable Phone Number Field
+            AppConstants.phoneField(controller: _phoneController),
+            SizedBox(height: 15),
+            // Reusable Password Field
+            AppConstants.passwordField(
+              controller: _passwordController,
+              obscureText: _obscurePassword,
+              toggleObscure: () {
+                setState(() {
+                  _obscurePassword = !_obscurePassword;
+                });
+              },
+            ),
+            SizedBox(height: 15),
+            // For assigning venues:
+            AppConstants.assignVenuesDropdown(
+              venueList: _venueList,
+              selectedVenues: _selectedVenues,
+              onConfirm: (values) {
+                setState(() {
+                  print("Selected Venues: $_selectedVenues");
+
+                  _selectedVenues = values.cast<String>();
+                });
+              },
+            ),
+            SizedBox(height: 15),
+
+            // For assigning permissions:
+            AppConstants.assignPermissionsDropdown(
+              permissionList: _permissionList,
+              selectedPermissions: _selectedPermissions,
+              onConfirm: (values) {
+                setState(() {
+                  print("Selected permission: $_selectedPermissions");
+                  _selectedPermissions = values.cast<String>();
+                });
+              },
+            ),
+
+            const SizedBox(height: 40),
+            AppConstants.fullWidthButton(
+              text: "Submit",
+              onPressed: _submitForm,
             ),
           ],
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _firstNameController.dispose();
-    _lastNameController.dispose();
-    _emailController.dispose();
-    _phoneController.dispose();
-    _passwordController.dispose();
-    super.dispose();
   }
 }
