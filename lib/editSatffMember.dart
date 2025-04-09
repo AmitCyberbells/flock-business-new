@@ -48,7 +48,7 @@ class _EditStaffMemberScreenState extends State<EditStaffMemberScreen> {
   try {
     // 1) Fetch existing staff data
     final response = await dio.get(
-      'http://165.232.152.77/mobi/api/vendor/teams/${widget.staffId}',
+      'http://165.232.152.77/api/vendor/teams/${widget.staffId}',
       options: Options(
         headers: {
           'Authorization': 'Bearer $token',
@@ -59,6 +59,7 @@ class _EditStaffMemberScreenState extends State<EditStaffMemberScreen> {
 
     if (response.statusCode == 200) {
       final data = response.data['data'];
+      print("Staff Data: $data");
 
       _firstNameController.text = data["first_name"] ?? '';
       _lastNameController.text  = data["last_name"] ?? '';
@@ -82,7 +83,7 @@ _selectedPermissions = (data["permissions"] as List<dynamic>?)
 
     // 2) Fetch Venues
     final venueResponse = await dio.get(
-      'http://165.232.152.77/mobi/api/vendor/venues',
+      'http://165.232.152.77/api/vendor/venues',
       options: Options(
         headers: {
           'Authorization': 'Bearer $token',
@@ -97,7 +98,7 @@ _selectedPermissions = (data["permissions"] as List<dynamic>?)
 
     // 3) Fetch Permissions
     final permissionResponse = await dio.get(
-      'http://165.232.152.77/mobi/api/vendor/permissions',
+      'http://165.232.152.77/api/vendor/permissions',
       options: Options(
         headers: {
           'Authorization': 'Bearer $token',
@@ -175,7 +176,7 @@ FormData formData = FormData.fromMap(formDataMap);
 
 
       final response = await dio.post(
-        'http://165.232.152.77/mobi/api/vendor/teams/${widget.staffId}',
+        'http://165.232.152.77/api/vendor/teams/${widget.staffId}',
         data: formData,
         options: Options(
           headers: {
@@ -208,12 +209,12 @@ FormData formData = FormData.fromMap(formDataMap);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppConstants.customAppBar(
+        backgroundColor: Colors.white,
         context: context,
         title: 'Edit Member',
       ),
@@ -243,7 +244,7 @@ FormData formData = FormData.fromMap(formDataMap);
                           right: -10,
                           child: CircleAvatar(
                             radius: 18,
-                            backgroundColor: Colors.orange,
+                            backgroundColor: const Color.fromRGBO(255, 130, 16, 1),
                             child: IconButton(
                               icon: const Icon(Icons.camera_alt, color: Colors.white, size: 18),
                               onPressed: _pickImage,

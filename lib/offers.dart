@@ -134,7 +134,7 @@ class _OffersScreenState extends State<OffersScreen> {
                           crossAxisCount: 2,
                           crossAxisSpacing: 12,
                           mainAxisSpacing: 12,
-                          childAspectRatio: 0.55,
+                          childAspectRatio: 0.7,
                         ),
                      itemBuilder: (context, index) {
   final offer = offersList[index];
@@ -188,66 +188,76 @@ class _OffersScreenState extends State<OffersScreen> {
                 ),
         ),
         // Offer details
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '$discount% off',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  desc,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 12, color: Colors.black54),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    const Icon(Icons.location_on, size: 14, color: Colors.grey),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        venueName,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+       Padding(
+  padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    mainAxisSize: MainAxisSize.min, // this keeps the height tight
+    children: [
+      Text(
+        '$discount',
+        style: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      const SizedBox(height: 4),
+      Text(
+        desc,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(fontSize: 12, color: Colors.black54),
+      ),
+      const SizedBox(height: 4),
+      Row(
+        children: [
+          const Icon(Icons.location_on, size: 14, color: Colors.grey),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Text(
+              venueName,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 12),
             ),
           ),
-        ),
+                const SizedBox(height: 24),
+
+        ],
+      ),
+    ],
+  ),
+),
+
         // Bottom button row
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8.0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => OfferDetails(allDetail: offer),
-                    ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.deepPurple.shade100,
-                  minimumSize: const Size(60, 30),
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                ),
-                child: const Text('Details', style: TextStyle(fontSize: 11)),
-              ),
+            ElevatedButton(
+  onPressed: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => OfferDetails(allDetail: offer),
+      ),
+    );
+  },
+  style: ElevatedButton.styleFrom(
+    backgroundColor: Colors.white, // white background
+    side: BorderSide(color: Colors.white), // optional border
+    minimumSize: const Size(60, 30),
+    padding: const EdgeInsets.symmetric(horizontal: 8),
+  ),
+  child: Text(
+    'See Details',
+    style: TextStyle(
+      fontSize: 11,
+      color: Colors.deepPurple.shade200, // text color now deepPurple
+    ),
+  ),
+),
+
               IconButton(
                 icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
                 onPressed: () {

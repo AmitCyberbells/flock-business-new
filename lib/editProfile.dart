@@ -71,7 +71,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       return;
     }
 
-    const String profileUrl = 'http://165.232.152.77/mobi/api/vendor/profile';
+    const String profileUrl = 'http://165.232.152.77/api/vendor/profile';
     try {
       final response = await http.get(
         Uri.parse(profileUrl),
@@ -143,7 +143,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final password = passwordController.text.trim();
     final contact = phoneController.text.trim();
 
-    if (firstName.isEmpty || lastName.isEmpty || email.isEmpty || contact.isEmpty) {
+    if (firstName.isEmpty ||
+        lastName.isEmpty ||
+        email.isEmpty ||
+        contact.isEmpty) {
       Fluttertoast.showToast(msg: "Please fill in all fields");
       return;
     }
@@ -162,7 +165,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       return;
     }
 
-    final url = Uri.parse("http://165.232.152.77/mobi/api/vendor/profile/update");
+    final url = Uri.parse(
+      "http://165.232.152.77/api/vendor/profile/update",
+    );
 
     try {
       final request = http.MultipartRequest('POST', url);
@@ -194,7 +199,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         final data = json.decode(response.body);
         if (data['status'] == 'success') {
           Fluttertoast.showToast(msg: data['message'] ?? 'Profile updated!');
-          String newProfilePic = data['data']?['image']?.toString() ?? profilePic;
+          String newProfilePic =
+              data['data']?['image']?.toString() ?? profilePic;
 
           SharedPreferences prefs = await SharedPreferences.getInstance();
           await prefs.setString('firstName', firstName);
@@ -238,146 +244,171 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Row(
-                            children: [
-                              InkWell(
-                                onTap: () => Navigator.of(context).pop(),
-                                child: const Icon(Icons.arrow_back, color: Colors.blue),
-                              ),
-                              const Expanded(
-                                child: Center(
-                                  child: Text(
-                                    "Edit Profile",
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.black,
-                                    ),
+              child:
+                  _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Row(
+                              children: [
+                                InkWell(
+                                  onTap: () => Navigator.of(context).pop(),
+                                  child: const Icon(
+                                    Icons.arrow_back,
+                                    color: Colors.blue,
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 24),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-                          Center(
-                            child: Stack(
-                              clipBehavior: Clip.none,
-                              children: [
-                                CircleAvatar(
-                                  radius: 50,
-                                  backgroundColor: Colors.grey.shade200,
-                                  backgroundImage: _selectedImage != null
-                                      ? FileImage(_selectedImage!)
-                                      : (profilePic.isNotEmpty && profilePic.startsWith('http')
-                                          ? NetworkImage(profilePic)
-                                          : null) as ImageProvider<Object>?,
-                                  child: (profilePic.isEmpty && _selectedImage == null)
-                                      ? const Icon(
-                                          Icons.person,
-                                          size: 60,
-                                          color: Colors.grey,
-                                        )
-                                      : null,
-                                ),
-                                Positioned(
-                                  bottom: 0,
-                                  right: 0,
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      shape: BoxShape.circle,
-                                      border: Border.all(color: Colors.grey.shade300),
-                                    ),
-                                    child: CircleAvatar(
-                                      radius: 16,
-                                      backgroundColor: Colors.orange,
-                                      child: IconButton(
-                                        onPressed: _selectImage,
-                                        icon: const Icon(
-                                          Icons.camera_alt,
-                                          size: 16,
-                                          color: Colors.white,
-                                        ),
-                                        padding: EdgeInsets.zero,
+                                const Expanded(
+                                  child: Center(
+                                    child: Text(
+                                      "Edit Profile",
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.black,
                                       ),
                                     ),
                                   ),
                                 ),
+                                const SizedBox(width: 24),
                               ],
                             ),
-                          ),
-                          const SizedBox(height: 30),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: AppConstants.firstNameField(controller: firstNameController),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: AppConstants.lastNameField(controller: lastNameController),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 25),
-                          AppConstants.emailField(controller: emailController),
-                          const SizedBox(height: 25),
-                          AppConstants.phoneField(controller: phoneController),
-                          const SizedBox(height: 25),
-                          AppConstants.passwordField(
-                            controller: passwordController,
-                            obscureText: _obscurePassword,
-                            toggleObscure: () {
-                              setState(() {
-                                _obscurePassword = !_obscurePassword;
-                              });
-                            },
-                          ),
-                          const SizedBox(height: 30),
-                          if (_errorMessage.isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 10),
-                              child: Text(
-                                _errorMessage,
-                                style: const TextStyle(color: Colors.red),
+                            const SizedBox(height: 20),
+                            Center(
+                              child: Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  CircleAvatar(
+                                    radius: 50,
+                                    backgroundColor: Colors.grey.shade200,
+                                    backgroundImage:
+                                        _selectedImage != null
+                                            ? FileImage(_selectedImage!)
+                                            : (profilePic.isNotEmpty &&
+                                                        profilePic.startsWith(
+                                                          'http',
+                                                        )
+                                                    ? NetworkImage(profilePic)
+                                                    : null)
+                                                as ImageProvider<Object>?,
+                                    child:
+                                        (profilePic.isEmpty &&
+                                                _selectedImage == null)
+                                            ? const Icon(
+                                              Icons.person,
+                                              size: 60,
+                                              color: Colors.grey,
+                                            )
+                                            : null,
+                                  ),
+                                  Positioned(
+                                    bottom: 0,
+                                    right: 0,
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: Colors.grey.shade300,
+                                        ),
+                                      ),
+                                      child: CircleAvatar(
+                                        radius: 16,
+                                        backgroundColor: Colors.orange,
+                                        child: IconButton(
+                                          onPressed: _selectImage,
+                                          icon: const Icon(
+                                            Icons.camera_alt,
+                                            size: 16,
+                                            color: Colors.white,
+                                          ),
+                                          padding: EdgeInsets.zero,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                          SizedBox(
-                            width: double.infinity,
-                            height: 48,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.orange,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
+                            const SizedBox(height: 30),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: AppConstants.firstNameField(
+                                    controller: firstNameController,
+                                  ),
                                 ),
-                                elevation: 0,
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: AppConstants.lastNameField(
+                                    controller: lastNameController,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 25),
+
+                            AppConstants.emailField(
+                              controller: emailController,
+                               readOnly: true,
+                            ),
+                            const SizedBox(height: 25),
+                            AppConstants.phoneField(
+                              controller: phoneController,
+                            readOnly: true,
+                            ),
+                            const SizedBox(height: 25),
+                            // AppConstants.passwordField(
+                            //   controller: passwordController,
+                            //   obscureText: _obscurePassword,
+                            //   toggleObscure: () {
+                            //     setState(() {
+                            //       _obscurePassword = !_obscurePassword;
+                            //     });
+                            //   },
+                            // ),
+                            const SizedBox(height: 30),
+                            if (_errorMessage.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 10),
+                                child: Text(
+                                  _errorMessage,
+                                  style: const TextStyle(color: Colors.red),
+                                ),
                               ),
-                              onPressed: _updateProfile,
-                              child: const Text(
-                                'UPDATE',
-                                style: TextStyle(fontSize: 18, color: Colors.white),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 48,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color.fromRGBO(255, 130, 16, 1),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  elevation: 0,
+                                ),
+                                onPressed: _updateProfile,
+                                child: const Text(
+                                  'Update',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    color: Colors.white,
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 20),
-                        ],
+                            const SizedBox(height: 20),
+                          ],
+                        ),
                       ),
-                    ),
             ),
           ),
           if (_isUpdating)
             Container(
               color: Colors.white54,
-              child: const Center(
-                child: CircularProgressIndicator(),
-              ),
+              child: const Center(child: CircularProgressIndicator()),
             ),
         ],
       ),

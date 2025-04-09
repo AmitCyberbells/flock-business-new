@@ -53,7 +53,7 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
 
     try {
       final venueResponse = await dio.get(
-        'http://165.232.152.77/mobi/api/vendor/venues',
+        'http://165.232.152.77/api/vendor/venues',
         options: Options(
           headers: {
             'Authorization': 'Bearer $token',
@@ -72,7 +72,7 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
 
     try {
       final permissionResponse = await dio.get(
-        'http://165.232.152.77/mobi/api/vendor/permissions',
+        'http://165.232.152.77/api/vendor/permissions',
         options: Options(
           headers: {
             'Authorization': 'Bearer $token',
@@ -145,8 +145,8 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
       final dio = Dio();
       final String url =
           widget.existingMember != null && widget.existingMember!['id'] != null
-              ? "http://165.232.152.77/mobi/api/vendor/teams/${widget.existingMember!['id']}"
-              : "http://165.232.152.77/mobi/api/vendor/teams";
+              ? "http://165.232.152.77/api/vendor/teams/${widget.existingMember!['id']}"
+              : "http://165.232.152.77/api/vendor/teams";
 
       final response = await dio.post(
         url,

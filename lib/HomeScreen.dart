@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flock/qr_code_scanner_screen.dart';
+import 'package:flock/venue.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -17,7 +18,8 @@ class TabDashboard extends StatefulWidget {
   _TabDashboardState createState() => _TabDashboardState();
 }
 
-class _TabDashboardState extends State<TabDashboard> {
+class _TabDashboardState extends State<TabDashboard>
+    with WidgetsBindingObserver {
   String averageFeathers = '';
   String totalFeathers = '';
   int todayFeathers = 0;
@@ -28,6 +30,7 @@ class _TabDashboardState extends State<TabDashboard> {
 
   List<Map<String, dynamic>> venueList = [];
   Map<String, dynamic>? selectedVenue;
+  bool showVenueDropdown = false; // For custom dropdown toggle
 
   List<Map<String, dynamic>> hotelList = [
     {
@@ -70,14 +73,26 @@ class _TabDashboardState extends State<TabDashboard> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this); // Start lifecycle observation
     fetchName();
     getUserId();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _timer?.cancel();
     super.dispose();
+  }
+
+  // Called on lifecycle changes.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) async {
+    if (state == AppLifecycleState.resumed) {
+      var status = await Permission.camera.status;
+      print("App resumed; camera permission status: $status");
+      // Don’t navigate here
+    }
   }
 
   Future<void> fetchName() async {
@@ -116,7 +131,7 @@ class _TabDashboardState extends State<TabDashboard> {
       setState(() => loader = false);
       return;
     }
-    final url = Uri.parse("http://165.232.152.77/mobi/api/vendor/dashboard");
+    final url = Uri.parse("http://165.232.152.77/api/vendor/dashboard");
     try {
       final response = await http.get(
         url,
@@ -164,8 +179,7 @@ class _TabDashboardState extends State<TabDashboard> {
       setState(() => loader = false);
       return;
     }
-
-    final url = Uri.parse("http://165.232.152.77/mobi/api/vendor/venues");
+    final url = Uri.parse("http://165.232.152.77/api/vendor/venues");
     try {
       final response = await http.get(
         url,
@@ -181,13 +195,17 @@ class _TabDashboardState extends State<TabDashboard> {
         final responseJson = json.decode(response.body);
         if (responseJson != null && responseJson['status'] == 'success') {
           setState(() {
-            venueList = List<Map<String, dynamic>>.from(responseJson['data'] ?? []);
+            venueList = List<Map<String, dynamic>>.from(
+              responseJson['data'] ?? [],
+            );
             if (venueList.isNotEmpty) {
               selectedVenue = venueList[0];
             }
           });
         } else {
-          Fluttertoast.showToast(msg: responseJson['message'] ?? 'Error fetching venues');
+          Fluttertoast.showToast(
+            msg: responseJson['message'] ?? 'Error fetching venues',
+          );
         }
       } else {
         Fluttertoast.showToast(msg: 'Error ${response.statusCode}');
@@ -251,10 +269,14 @@ class _TabDashboardState extends State<TabDashboard> {
         loader = false;
       });
       if (responseJson != null && responseJson['status'] == 'success') {
-        Navigator.pushNamed(context, '/feathers', arguments: {
-          'totalfeathers': responseJson['totalfeathers'],
-          'totalvenuepoints': responseJson['total_venue_points'],
-        });
+        Navigator.pushNamed(
+          context,
+          '/feathers',
+          arguments: {
+            'totalfeathers': responseJson['totalfeathers'],
+            'totalvenuepoints': responseJson['total_venue_points'],
+          },
+        );
       } else {
         Fluttertoast.showToast(msg: responseJson['message'] ?? 'Error');
       }
@@ -273,107 +295,193 @@ class _TabDashboardState extends State<TabDashboard> {
     }
 
     var status = await Permission.camera.status;
+    print("Initial camera permission status: $status");
+
     if (status.isDenied) {
       status = await Permission.camera.request();
+      print("Camera permission status after request: $status");
     }
 
     if (status.isGranted) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const QRScanScreen(),
-        ),
-      );
+      _navigateToQRScanScreen();
     } else if (status.isPermanentlyDenied) {
       Fluttertoast.showToast(
-        msg: 'Camera permission is permanently denied. Please enable it in settings.',
+        msg:
+            'Camera permission is permanently denied. Please enable it in settings.',
       );
       await openAppSettings();
+      // Wait for app to resume and re-check permission
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        var newStatus = await Permission.camera.status;
+        if (newStatus.isGranted) {
+          _navigateToQRScanScreen();
+        }
+      });
     } else {
       Fluttertoast.showToast(msg: 'Camera Permission Denied!');
     }
+  }
+
+  void _navigateToQRScanScreen() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const QRScanScreen()),
+    );
   }
 
   void _handleScannedQRCode(String qrCode) {
     Fluttertoast.showToast(msg: 'Scanned QR Code: $qrCode');
   }
 
-  // Updated venueListWithQRCodes method
+  /// Custom dropdown design for selecting venue.
+  Widget customVenueDropdown() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        // White box shadow for differentiation.
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.4),
+            spreadRadius: 1,
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                showVenueDropdown = !showVenueDropdown;
+              });
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+              decoration: BoxDecoration(
+                color: Design.lightPurple,
+                borderRadius: BorderRadius.circular(5),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    selectedVenue == null
+                        ? "Select Venue"
+                        : selectedVenue!['name'] ?? "Select Venue",
+                    style: const TextStyle(fontSize: 15),
+                  ),
+                  Icon(
+                    showVenueDropdown
+                        ? Icons.arrow_drop_up
+                        : Icons.arrow_drop_down,
+                    color: Colors.grey,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (showVenueDropdown)
+            Container(
+              constraints: BoxConstraints(maxHeight: 35.0 * 5),
+              decoration: BoxDecoration(
+                color: Design.lightPurple,
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(5),
+                  bottomRight: Radius.circular(5),
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Scrollbar(
+                      thumbVisibility: true, // always show scrollbar
+                      child: ListView.builder(
+                        padding: EdgeInsets.zero,
+                        shrinkWrap: true,
+                        itemCount: venueList.length,
+                        itemBuilder: (context, index) {
+                          final venue = venueList[index];
+                          final isSelected =
+                              selectedVenue != null &&
+                              selectedVenue!['id'].toString() ==
+                                  venue['id'].toString();
+                          return InkWell(
+                            onTap: () {
+                              setState(() {
+                                selectedVenue = venue;
+                                showVenueDropdown = false;
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 6,
+                              ),
+                              color:
+                                  isSelected
+                                      ? Design.primaryColorOrange.withOpacity(
+                                        0.1,
+                                      )
+                                      : Colors.transparent,
+                              child: Text(
+                                venue['name'] ?? '',
+                                style: const TextStyle(fontSize: 15),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  // Padding(
+                  //   padding: const EdgeInsets.all(6.0),
+                  //   child: SizedBox(
+                  //     width: double.infinity,
+                  //     child: ElevatedButton(
+                  //       onPressed: () {
+                  //         setState(() {
+                  //           showVenueDropdown = false;
+                  //         });
+                  //       },
+                  //       style: ElevatedButton.styleFrom(
+                  //         backgroundColor: Design.primaryColorOrange,
+                  //         shape: RoundedRectangleBorder(
+                  //           borderRadius: BorderRadius.circular(5),
+                  //         ),
+                  //         padding: const EdgeInsets.symmetric(vertical: 8),
+                  //       ),
+                  //       child: const Text(
+                  //         "Done",
+                  //         style: TextStyle(color: Colors.white),
+                  //       ),
+                  //     ),
+                  //   ),
+                  // ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// Updated venue list with QR Codes method (includes the custom dropdown)
   Widget venueListWithQRCodes() {
     if (!hasPermission('verify_voucher') || venueList.isEmpty) {
       return const SizedBox.shrink();
     }
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-       Padding(
-  padding: const EdgeInsets.symmetric(horizontal: 8.0), // Add left & right padding
-  child: Container(
-    height: 42,
-    padding: const EdgeInsets.symmetric(horizontal: 19),
-    decoration: BoxDecoration(
-      color: Colors.white, // Changed to white background
-      borderRadius: BorderRadius.circular(10),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.03), // Reduced shadow effect
-          blurRadius: 1, // Reduced blur radius
-          offset: const Offset(0, 1),
-        ),
-      ],
-      border: Border.all(color: Colors.grey.shade300),
-    ),
-    child: DropdownButtonHideUnderline(
-      child: Theme(
-        data: Theme.of(context).copyWith(
-          canvasColor: Colors.white, // Ensure dropdown has white background
-          splashColor: Colors.transparent,
-          highlightColor: Colors.transparent,
-        ),
-        child: DropdownButton<Map<String, dynamic>>(
-          borderRadius: BorderRadius.circular(10),
-          dropdownColor: Colors.white,
-          value: selectedVenue,
-          icon: const Icon(Icons.keyboard_arrow_down),
-          isExpanded: true,
-          style: const TextStyle(
-            fontSize: 14,
-            color: Colors.black87,
-          ),
-          items: venueList.map((Map<String, dynamic> venue) {
-            return DropdownMenuItem<Map<String, dynamic>>(
-              value: venue,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4.0),
-                child: Text(
-                  venue['name'] ?? 'Unknown Venue',
-                  style: const TextStyle(fontSize: 14),
-                ),
-              ),
-            );
-          }).toList(),
-          onChanged: (newValue) {
-            setState(() {
-              selectedVenue = newValue ?? selectedVenue;
-            });
-          },
-          hint: const Text(
-            'Select Venue',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.black54,
-            ),
-          ),
-        ),
-      ),
-    ),
-  ),
-),
-
+        customVenueDropdown(),
         if (selectedVenue != null)
           Padding(
-            padding: const EdgeInsets.all(5),
+            padding: const EdgeInsets.all(10),
             child: Center(
               child: Container(
                 decoration: BoxDecoration(
@@ -395,21 +503,19 @@ class _TabDashboardState extends State<TabDashboard> {
 
   @override
   Widget build(BuildContext context) {
-    final black = Colors.black;
+    final deviceWidth = MediaQuery.of(context).size.width;
     return CustomScaffold(
       currentIndex: 0,
       body: Stack(
         children: [
           SafeArea(
-            // Updated container padding to match grid view
             child: Container(
               color: Colors.white,
-              padding: EdgeInsets.symmetric(
-                  horizontal: MediaQuery.of(context).size.width * 0.023),
+              padding: EdgeInsets.symmetric(horizontal: deviceWidth * 0.023),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Updated "Hello" section with matching horizontal padding
+                  // "Hello" Section
                   Padding(
                     padding: EdgeInsets.only(
                       top: Platform.isIOS ? 20 : 5,
@@ -460,18 +566,19 @@ class _TabDashboardState extends State<TabDashboard> {
                             child: GridView.builder(
                               physics: const NeverScrollableScrollPhysics(),
                               shrinkWrap: true,
-                              padding: EdgeInsets.all(
-                                  MediaQuery.of(context).size.width * 0.023),
+                              padding: EdgeInsets.all(deviceWidth * 0.023),
                               gridDelegate:
                                   SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                mainAxisSpacing:
-                                    MediaQuery.of(context).size.height * 0.005,
-                                crossAxisSpacing:
-                                    MediaQuery.of(context).size.width * 0.03,
-                                childAspectRatio: MediaQuery.of(context).size.width /
-                                    (MediaQuery.of(context).size.height * 0.4),
-                              ),
+                                    crossAxisCount: 2,
+                                    mainAxisSpacing:
+                                        MediaQuery.of(context).size.height *
+                                        0.016,
+                                    crossAxisSpacing: deviceWidth * 0.04,
+                                    childAspectRatio:
+                                        deviceWidth /
+                                        (MediaQuery.of(context).size.height *
+                                            0.4),
+                                  ),
                               itemCount: hotelList.length,
                               itemBuilder: (context, index) {
                                 final item = hotelList[index];
@@ -479,18 +586,19 @@ class _TabDashboardState extends State<TabDashboard> {
                                   onTap: () => clickCard(item),
                                   child: Container(
                                     margin: EdgeInsets.symmetric(
-                                      vertical: MediaQuery.of(context).size.height *
+                                      vertical:
+                                          MediaQuery.of(context).size.height *
                                           0.0025,
                                     ),
                                     decoration: BoxDecoration(
                                       color: Colors.white,
-                                      borderRadius: BorderRadius.circular(15),
+                                      borderRadius: BorderRadius.circular(10),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: Colors.black.withOpacity(0.2),
+                                          color: Colors.grey.withOpacity(0.4),
                                           spreadRadius: 1,
                                           blurRadius: 5,
-                                          offset: const Offset(0, 3),
+                                          offset: const Offset(0, 2),
                                         ),
                                       ],
                                     ),
@@ -498,10 +606,8 @@ class _TabDashboardState extends State<TabDashboard> {
                                       padding: EdgeInsets.symmetric(
                                         vertical:
                                             MediaQuery.of(context).size.height *
-                                                0.020,
-                                        horizontal:
-                                            MediaQuery.of(context).size.width *
-                                                0.03,
+                                            0.020,
+                                        horizontal: deviceWidth * 0.03,
                                       ),
                                       child: Stack(
                                         children: [
@@ -513,18 +619,14 @@ class _TabDashboardState extends State<TabDashboard> {
                                                 children: [
                                                   Image.asset(
                                                     item['img'],
-                                                    width:
-                                                        MediaQuery.of(context)
-                                                                .size
-                                                                .width *
-                                                            0.06,
-                                                    height:
-                                                        MediaQuery.of(context)
-                                                                .size
-                                                                .width *
-                                                            0.06,
+                                                    width: deviceWidth * 0.06,
+                                                    height: deviceWidth * 0.06,
                                                     color: const Color.fromRGBO(
-                                                        255, 130, 16, 1),
+                                                      255,
+                                                      130,
+                                                      16,
+                                                      1,
+                                                    ),
                                                   ),
                                                   const SizedBox(width: 6),
                                                   Expanded(
@@ -532,10 +634,7 @@ class _TabDashboardState extends State<TabDashboard> {
                                                       item['category'],
                                                       style: TextStyle(
                                                         fontSize:
-                                                            MediaQuery.of(context)
-                                                                    .size
-                                                                    .width *
-                                                                0.042,
+                                                            deviceWidth * 0.042,
                                                         color: Colors.black,
                                                         fontWeight:
                                                             FontWeight.w600,
@@ -547,9 +646,10 @@ class _TabDashboardState extends State<TabDashboard> {
                                                 ],
                                               ),
                                               SizedBox(
-                                                height: MediaQuery.of(context)
-                                                        .size
-                                                        .height *
+                                                height:
+                                                    MediaQuery.of(
+                                                      context,
+                                                    ).size.height *
                                                     0.01,
                                               ),
                                               Center(
@@ -558,10 +658,7 @@ class _TabDashboardState extends State<TabDashboard> {
                                                   textAlign: TextAlign.center,
                                                   style: TextStyle(
                                                     fontSize:
-                                                        MediaQuery.of(context)
-                                                                .size
-                                                                .width *
-                                                            0.03,
+                                                        deviceWidth * 0.03,
                                                     color: Colors.grey,
                                                   ),
                                                   maxLines: 2,
@@ -570,9 +667,10 @@ class _TabDashboardState extends State<TabDashboard> {
                                                 ),
                                               ),
                                               SizedBox(
-                                                height: MediaQuery.of(context)
-                                                        .size
-                                                        .height *
+                                                height:
+                                                    MediaQuery.of(
+                                                      context,
+                                                    ).size.height *
                                                     0.01,
                                               ),
                                               Center(
@@ -581,11 +679,13 @@ class _TabDashboardState extends State<TabDashboard> {
                                                   textAlign: TextAlign.center,
                                                   style: TextStyle(
                                                     fontSize:
-                                                        MediaQuery.of(context)
-                                                                .size
-                                                                .width *
-                                                            0.08,
-                                                    color: Colors.orange,
+                                                        deviceWidth * 0.08,
+                                                    color: const Color.fromRGBO(
+                                                      255,
+                                                      130,
+                                                      16,
+                                                      1,
+                                                    ),
                                                     fontWeight: FontWeight.w800,
                                                   ),
                                                 ),
@@ -593,28 +693,19 @@ class _TabDashboardState extends State<TabDashboard> {
                                             ],
                                           ),
                                           Positioned(
-                                            top: -MediaQuery.of(context)
-                                                    .size
-                                                    .height *
+                                            top:
+                                                -MediaQuery.of(
+                                                  context,
+                                                ).size.height *
                                                 0.018,
-                                            right: -MediaQuery.of(context)
-                                                    .size
-                                                    .width *
-                                                0.035,
+                                            right: -deviceWidth * 0.035,
                                             child: IconButton(
                                               icon: Image.asset(
                                                 'assets/side_arrow.png',
-                                                width: MediaQuery.of(context)
-                                                        .size
-                                                        .width *
-                                                    0.035,
-                                                height: MediaQuery.of(context)
-                                                        .size
-                                                        .width *
-                                                    0.035,
+                                                width: deviceWidth * 0.035,
+                                                height: deviceWidth * 0.035,
                                               ),
-                                              onPressed: () =>
-                                                  clickCard(item),
+                                              onPressed: () => clickCard(item),
                                             ),
                                           ),
                                         ],
@@ -638,13 +729,19 @@ class _TabDashboardState extends State<TabDashboard> {
           if (loader)
             Container(
               color: Colors.white.withOpacity(0.19),
-              child: const Center(child: CircularProgressIndicator()),
+
+              child: Center(
+                child: Image.asset(
+                  'assets/Bird_Full_Eye_Blinking.gif',
+
+                  width: 100, // Adjust size as needed
+
+                  height: 100,
+                ),
+              ),
             ),
         ],
       ),
     );
   }
 }
-
-
-

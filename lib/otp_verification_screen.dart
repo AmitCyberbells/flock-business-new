@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flock/NewPasswordScreen.dart';
 import 'package:flock/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -13,7 +14,7 @@ class OtpVerificationScreen extends StatefulWidget {
 
 class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   final TextEditingController _otpController = TextEditingController();
-  final String _otpUrl = 'http://165.232.152.77/mobi/api/vendor/otp-login';
+  final String _otpUrl = 'http://165.232.152.77/api/vendor/otp-login';
 
   @override
   void dispose() {
@@ -34,19 +35,30 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         'otp': otp,
       };
 
-      final response = await http.post(
-        Uri.parse(_otpUrl),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(body),
-      );
+     final response = await http.post(
+  Uri.parse(_otpUrl),
+  headers: {'Content-Type': 'application/json'},
+  body: jsonEncode(body),
+);
+
+print("Response Status: ${response.statusCode}");
+print("Response Body: ${response.body}");
+
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
-        if (responseData['success'] == true) {
-          Navigator.pushNamed(context, '/home');
-        } else {
-          _showError(responseData['message'] ?? 'OTP verification failed.');
-        }
+if (responseData['status'] == 'success') {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => NewPasswordScreen(email: widget.email),
+      ),
+    );
+  }else {
+  // Show error if status isn't success
+  _showError(responseData['message'] ?? 'OTP verification failed.');
+}
+
       } else {
         _showError('OTP verification failed with status: ${response.statusCode}.');
       }
@@ -74,6 +86,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppConstants.customAppBar(
     context: context,
     title: 'OTP Verification',

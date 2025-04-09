@@ -62,7 +62,7 @@
 //       isLoading = true;
 //     });
 //     // Replace with your actual endpoint for verifying redeem offers.
-//     final url = Uri.parse("http://165.232.152.77/mobi/api/vendor/verify_redeem_offer");
+//     final url = Uri.parse("http://165.232.152.77/api/vendor/verify_redeem_offer");
 //     // Prepare the request payload.
 //     final payload = {
 //       "user_id": userId,

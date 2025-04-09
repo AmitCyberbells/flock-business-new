@@ -1,11 +1,39 @@
 import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// Define your design tokens. Adjust these values as needed.
+class Design {
+  static const Color lightPurple = Colors.white;
+  static const Color primaryColorOrange = Color.fromRGBO(255, 130, 16, 1);
+}
+
+void main() {
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+ 
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Report Screen Demo',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        primarySwatch: Colors.orange,
+      ),
+      home: const ReportScreen(),
+    );
+  }
+}
+
 class ReportScreen extends StatefulWidget {
   const ReportScreen({Key? key}) : super(key: key);
-
+  
   @override
   State<ReportScreen> createState() => _ReportScreenState();
 }
@@ -13,30 +41,33 @@ class ReportScreen extends StatefulWidget {
 class _ReportScreenState extends State<ReportScreen> {
   /// We'll store venues as a list of maps: [{'id': 65, 'name': 'Venue Name'}, ...]
   List<Map<String, dynamic>> _venues = [];
-  /// We'll store the selected venue object (with id & name)
+  /// The selected venue object (with id & name)
   Map<String, dynamic>? _selectedVenue;
-
+  
   /// We'll store report types as a list of strings (e.g. ['Boost', 'Complaint', ...])
-  /// If your API also provides an ID for each report type, you can store it similarly to venues.
   List<String> _reportTypes = [];
   String? _selectedReportType;
-
+  
+  // Controls for the custom dropdowns.
+  bool _showVenueDropdown = false;
+  bool _showReportTypeDropdown = false;
+  
   final TextEditingController _descriptionController = TextEditingController();
   String _errorMessage = '';
-
+  
   @override
   void initState() {
     super.initState();
     _fetchVenues();
     _fetchReportTypes();
   }
-
+  
   /// Retrieve the token from SharedPreferences
   Future<String?> _getToken() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return prefs.getString('access_token');
   }
-
+  
   /// Fetch the list of venues from the API
   Future<void> _fetchVenues() async {
     final token = await _getToken();
@@ -46,8 +77,8 @@ class _ReportScreenState extends State<ReportScreen> {
       });
       return;
     }
-
-    final url = Uri.parse('http://165.232.152.77/mobi/api/vendor/venues');
+  
+    final url = Uri.parse('http://165.232.152.77/api/vendor/venues');
     try {
       final response = await http.get(
         url,
@@ -56,13 +87,12 @@ class _ReportScreenState extends State<ReportScreen> {
           'Content-Type': 'application/json',
         },
       );
-
+  
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['status'] == 'success' && data['data'] != null) {
           final List<dynamic> venueData = data['data'];
           setState(() {
-            // Instead of just storing names, store a map with { 'id': ..., 'name': ... }
             _venues = venueData
                 .map((venue) => {
                       'id': venue['id'],
@@ -86,7 +116,7 @@ class _ReportScreenState extends State<ReportScreen> {
       });
     }
   }
-
+  
   /// Fetch the list of report types from the API
   Future<void> _fetchReportTypes() async {
     final token = await _getToken();
@@ -96,8 +126,8 @@ class _ReportScreenState extends State<ReportScreen> {
       });
       return;
     }
-
-    final url = Uri.parse('http://165.232.152.77/mobi/api/vendor/report-types');
+  
+    final url = Uri.parse('http://165.232.152.77/api/vendor/report-types');
     try {
       final response = await http.get(
         url,
@@ -106,25 +136,37 @@ class _ReportScreenState extends State<ReportScreen> {
           'Content-Type': 'application/json',
         },
       );
-
+  
       if (response.statusCode == 200) {
+        // Debug print the response to check structure
+        print("Report types API response: ${response.body}");
         final data = json.decode(response.body);
-        if (data['status'] == 'success' && data['data'] != null) {
+  
+        // Check if the response is a map with a key 'data'
+        if (data is Map &&
+            data['status'] == 'success' &&
+            data['data'] != null) {
           final List<dynamic> reportTypeData = data['data'];
           setState(() {
-            // Convert each object into the "label" string
             _reportTypes = reportTypeData
                 .map((rt) => rt['label'].toString())
                 .toList();
           });
+        } else if (data is List) {
+          // If the API returns a plain list
+          setState(() {
+            _reportTypes = data.map((rt) => rt['label'].toString()).toList();
+          });
         } else {
           setState(() {
-            _errorMessage = data['message'] ?? 'Failed to load report types.';
+            _errorMessage =
+                data['message'] ?? 'Failed to load report types.';
           });
         }
       } else {
         setState(() {
-          _errorMessage = 'Error ${response.statusCode} loading report types.';
+          _errorMessage =
+              'Error ${response.statusCode} loading report types.';
         });
       }
     } catch (e) {
@@ -133,7 +175,7 @@ class _ReportScreenState extends State<ReportScreen> {
       });
     }
   }
-
+  
   /// Handle form submission
   Future<void> _submitReport() async {
     if (_selectedVenue == null) {
@@ -154,9 +196,9 @@ class _ReportScreenState extends State<ReportScreen> {
       });
       return;
     }
-
+  
     setState(() => _errorMessage = '');
-
+  
     final token = await _getToken();
     if (token == null || token.isEmpty) {
       setState(() {
@@ -164,40 +206,39 @@ class _ReportScreenState extends State<ReportScreen> {
       });
       return;
     }
-
-    // The API endpoint from your screenshot
-    final url = Uri.parse('http://165.232.152.77/mobi/api/vendor/feedbacks');
-
+  
+    final url = Uri.parse('http://165.232.152.77/api/vendor/feedbacks');
     try {
-      // We'll send multipart/form-data just like your screenshot
       final request = http.MultipartRequest('POST', url);
       request.headers['Authorization'] = 'Bearer $token';
-
-      // Fill out the fields
+  
       request.fields['venue_id'] = _selectedVenue!['id'].toString();
       request.fields['report_type'] = _selectedReportType ?? '';
-      request.fields['description'] = _descriptionController.text.trim();
-
-      // Send the request
+      request.fields['description'] =
+          _descriptionController.text.trim();
+  
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
-
+  
       if (response.statusCode == 200 || response.statusCode == 201) {
         final responseData = json.decode(response.body);
         if (responseData['status'] == 'success') {
-          // Report submitted successfully
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(responseData['message'] ?? 'Report submitted!')),
+            SnackBar(
+                content: Text(
+                    responseData['message'] ?? 'Report submitted!')),
           );
-          Navigator.pop(context); // Return to previous screen or do whatever
+          Navigator.pop(context);
         } else {
           setState(() {
-            _errorMessage = responseData['message'] ?? 'Failed to submit report.';
+            _errorMessage =
+                responseData['message'] ?? 'Failed to submit report.';
           });
         }
       } else {
         setState(() {
-          _errorMessage = 'Error ${response.statusCode}: ${response.body}';
+          _errorMessage =
+              'Error ${response.statusCode}: ${response.body}';
         });
       }
     } catch (e) {
@@ -206,16 +247,279 @@ class _ReportScreenState extends State<ReportScreen> {
       });
     }
   }
-
+  
+  /// Custom Venue Dropdown Widget (same as before)
+  Widget customVenueDropdown() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        // Box shadow for a subtle elevation effect.
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.4),
+            spreadRadius: 1,
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                _showVenueDropdown = !_showVenueDropdown;
+              });
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+              decoration: BoxDecoration(
+                color: Design.lightPurple,
+                borderRadius: BorderRadius.circular(5),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    _selectedVenue == null
+                        ? "Select Venue"
+                        : _selectedVenue!['name'] ?? "Select Venue",
+                    style: const TextStyle(fontSize: 15),
+                  ),
+                  Icon(
+                    _showVenueDropdown ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+                    color: Colors.grey,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (_showVenueDropdown)
+            Container(
+              constraints: const BoxConstraints(maxHeight: 200),
+              decoration: BoxDecoration(
+                color: Design.lightPurple,
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(5),
+                  bottomRight: Radius.circular(5),
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Scrollbar(
+                      thumbVisibility: true,
+                      child: ListView.builder(
+                        padding: EdgeInsets.zero,
+                        shrinkWrap: true,
+                        itemCount: _venues.length,
+                        itemBuilder: (context, index) {
+                          final venue = _venues[index];
+                          final isSelected = _selectedVenue != null &&
+                              _selectedVenue!['id'].toString() ==
+                                  venue['id'].toString();
+                          return InkWell(
+                            onTap: () {
+                              setState(() {
+                                _selectedVenue = venue;
+                                _showVenueDropdown = false;
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 6,
+                              ),
+                              color: isSelected
+                                  ? Design.primaryColorOrange.withOpacity(0.1)
+                                  : Colors.transparent,
+                              child: Text(
+                                venue['name'] ?? '',
+                                style: const TextStyle(fontSize: 15),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(6.0),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            _showVenueDropdown = false;
+                          });
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Design.primaryColorOrange,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                        ),
+                        child: const Text(
+                          "Done",
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+  
+  /// Custom Report Type Dropdown Widget with similar styling as the venue dropdown.
+  Widget customReportTypeDropdown() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        // Same box shadow.
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.4),
+            spreadRadius: 1,
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                _showReportTypeDropdown = !_showReportTypeDropdown;
+              });
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+              decoration: BoxDecoration(
+                color: Design.lightPurple,
+                borderRadius: BorderRadius.circular(5),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    _selectedReportType == null
+                        ? "Select Report Type"
+                        : _selectedReportType!,
+                    style: const TextStyle(fontSize: 15),
+                  ),
+                  Icon(
+                    _showReportTypeDropdown
+                        ? Icons.arrow_drop_up
+                        : Icons.arrow_drop_down,
+                    color: Colors.grey,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (_showReportTypeDropdown)
+            Container(
+              constraints: const BoxConstraints(maxHeight: 200),
+              decoration: BoxDecoration(
+                color: Design.lightPurple,
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(5),
+                  bottomRight: Radius.circular(5),
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Scrollbar(
+                      thumbVisibility: true,
+                      child: ListView.builder(
+                        padding: EdgeInsets.zero,
+                        shrinkWrap: true,
+                        itemCount: _reportTypes.length,
+                        itemBuilder: (context, index) {
+                          final rt = _reportTypes[index];
+                          final isSelected = _selectedReportType != null &&
+                              _selectedReportType == rt;
+                          return InkWell(
+                            onTap: () {
+                              setState(() {
+                                _selectedReportType = rt;
+                                _showReportTypeDropdown = false;
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 6,
+                              ),
+                              color: isSelected
+                                  ? Design.primaryColorOrange.withOpacity(0.1)
+                                  : Colors.transparent,
+                              child: Text(
+                                rt,
+                                style: const TextStyle(fontSize: 15),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(6.0),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            _showReportTypeDropdown = false;
+                          });
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Design.primaryColorOrange,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                        ),
+                        child: const Text(
+                          "Done",
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, // Matches your screenshot
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
-          // Ensures screen is scrollable if content grows
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -224,7 +528,8 @@ class _ReportScreenState extends State<ReportScreen> {
                   children: [
                     InkWell(
                       onTap: () => Navigator.of(context).pop(),
-                      child: const Icon(Icons.arrow_back, color: Colors.black),
+                      child:
+                          const Icon(Icons.arrow_back, color: Colors.black),
                     ),
                     const SizedBox(width: 16),
                     const Text(
@@ -238,7 +543,6 @@ class _ReportScreenState extends State<ReportScreen> {
                   ],
                 ),
                 const SizedBox(height: 20),
-
                 // Subtitle
                 const Text(
                   "Enter Details",
@@ -248,100 +552,68 @@ class _ReportScreenState extends State<ReportScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-
                 // "Choose venue" label
                 const Text(
                   "Choose venue",
                   style: TextStyle(fontSize: 14, color: Colors.black87),
                 ),
                 const SizedBox(height: 8),
-
-                // Venue Dropdown
-                DropdownButtonFormField<Map<String, dynamic>>(
-                  decoration: InputDecoration(
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 14,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  hint: const Text("Choose Venue"),
-                  value: _selectedVenue,
-                  items: _venues.map((venue) {
-                    return DropdownMenuItem<Map<String, dynamic>>(
-                      value: venue,
-                      child: Text(venue['name']),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedVenue = value;
-                    });
-                  },
-                ),
+                // Custom Venue Dropdown
+                customVenueDropdown(),
                 const SizedBox(height: 16),
-
                 // "Choose report type" label
                 const Text(
                   "Choose report type",
                   style: TextStyle(fontSize: 14, color: Colors.black87),
                 ),
                 const SizedBox(height: 8),
-
-                // Report Type Dropdown
-                DropdownButtonFormField<String>(
-                  decoration: InputDecoration(
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 14,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  hint: const Text("Choose report type"),
-                  value: _selectedReportType,
-                  items: _reportTypes.map((reportType) {
-                    return DropdownMenuItem<String>(
-                      value: reportType,
-                      child: Text(reportType),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedReportType = value;
-                    });
-                  },
-                ),
+                // Custom Report Type Dropdown
+                customReportTypeDropdown(),
                 const SizedBox(height: 16),
-
                 // "Description" label
                 const Text(
                   "Description",
-                  style: TextStyle(fontSize: 14, color: Colors.black87),
+                  style: TextStyle(fontSize: 14),
                 ),
                 const SizedBox(height: 8),
-
                 // Multiline TextField for Description
-                TextField(
-                  controller: _descriptionController,
-                  maxLines: 5,
-                  decoration: InputDecoration(
-                    hintText: "",
-                    fillColor: Colors.grey.shade100,
-                    filled: true,
-                    contentPadding: const EdgeInsets.all(12),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
+          Padding(
+  padding: const EdgeInsets.symmetric(horizontal: 8),
+  child: Container(
+    decoration: BoxDecoration(
+      boxShadow: [
+        BoxShadow(
+          color: Colors.grey.withOpacity(0.5),
+          spreadRadius: 2,
+          blurRadius: 5,
+          offset: Offset(0, 3),
+        ),
+      ],
+    ),
+    child: TextField(
+      controller: _descriptionController,
+      maxLines: 5,
+      decoration: InputDecoration(
+        hintText: "",
+        fillColor: Colors.white,
+        filled: true,
+        contentPadding: const EdgeInsets.all(16),
+        enabledBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.orange, width: 1),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.orange, width: 1),
+          borderRadius: BorderRadius.circular(5),
+        ),
+      ),
+    ),
+  ),
+),
 
-                // Show any error messages from the fetch calls or validations
+
+                const SizedBox(height: 24),
+                // Show any error messages
                 if (_errorMessage.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 8),
@@ -350,7 +622,6 @@ class _ReportScreenState extends State<ReportScreen> {
                       style: const TextStyle(color: Colors.red),
                     ),
                   ),
-
                 // Submit button
                 SizedBox(
                   width: double.infinity,
@@ -358,7 +629,7 @@ class _ReportScreenState extends State<ReportScreen> {
                   child: ElevatedButton(
                     onPressed: _submitReport,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange,
+                      backgroundColor: const Color.fromRGBO(255, 130, 16, 1),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -381,3 +652,6 @@ class _ReportScreenState extends State<ReportScreen> {
     );
   }
 }
+
+
+

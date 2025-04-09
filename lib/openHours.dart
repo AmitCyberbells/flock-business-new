@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flock/feedback.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -63,7 +64,7 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
      });
      return;
    }
-   final url = Uri.parse('http://165.232.152.77/mobi/api/vendor/venues');
+   final url = Uri.parse('http://165.232.152.77/api/vendor/venues');
    try {
      final response = await http.get(
        url,
@@ -104,6 +105,15 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
        _isLoading = false;
      });
    }
+  
+
+  // ✅ Auto-select the first venue
+  if (_venues.isNotEmpty && _selectedVenue == null) {
+    setState(() {
+      _selectedVenue = _venues.first;
+      _fetchOpeningHours(_selectedVenue!['id']);
+    });
+  }
  }
 
 
@@ -120,7 +130,7 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
      });
      return;
    }
-   final url = Uri.parse('http://165.232.152.77/mobi/api/vendor/venues/$venueId/opening-hours');
+   final url = Uri.parse('http://165.232.152.77/api/vendor/venues/$venueId/opening-hours');
    try {
      final response = await http.get(
        url,
@@ -227,7 +237,7 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
    };
 
 
-   final url = Uri.parse('http://165.232.152.77/mobi/api/vendor/venues/$venueId/opening-hours');
+   final url = Uri.parse('http://165.232.152.77/api/vendor/venues/$venueId/opening-hours');
    final request = http.MultipartRequest('POST', url);
    request.headers['Authorization'] = 'Bearer $token';
    request.headers['Accept'] = 'application/json';
@@ -341,66 +351,39 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
                    ),
                  ),
                  // Venue dropdown
-                 Padding(
-                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                   child: Container(
-                     margin: const EdgeInsets.only(bottom: 16),
-                     padding: const EdgeInsets.symmetric(horizontal: 12),
-                     decoration: BoxDecoration(
-                       color: Colors.white12,
-                       borderRadius: BorderRadius.circular(12),
-                       boxShadow: [
-                         BoxShadow(
-                           color: Colors.black.withOpacity(0.05),
-                           blurRadius: 4,
-                           offset: const Offset(0, 2),
-                         ),
-                       ],
-                       border: Border.all(color: Colors.grey.shade300),
-                     ),
-                     child: DropdownButtonHideUnderline(
-                       child: Theme(
-                         data: Theme.of(context).copyWith(
-                           canvasColor: Colors.white,
-                           splashColor: Colors.transparent,
-                           highlightColor: Colors.transparent,
-                         ),
-                         child: DropdownButton<Map<String, dynamic>>(
-                           borderRadius: BorderRadius.circular(12),
-                           dropdownColor: Colors.white,
-                           value: _selectedVenue,
-                           icon: const Icon(Icons.keyboard_arrow_down),
-                           isExpanded: true,
-                           style: const TextStyle(
-                             fontSize: 14,
-                             color: Colors.black87,
-                           ),
-                           hint: const Text("Select a venue"),
-                           items: _venues.map((Map<String, dynamic> venue) {
-                             return DropdownMenuItem<Map<String, dynamic>>(
-                               value: venue,
-                               child: Padding(
-                                 padding: const EdgeInsets.symmetric(vertical: 8.0),
-                                 child: Text(
-                                   venue['name'] ?? 'Unknown Venue',
-                                   style: const TextStyle(fontSize: 14),
-                                 ),
-                               ),
-                             );
-                           }).toList(),
-                           onChanged: (newValue) {
-                             setState(() {
-                               _selectedVenue = newValue;
-                             });
-                             if (newValue != null) {
-                               _fetchOpeningHours(newValue['id']);
-                             }
-                           },
-                         ),
-                       ),
-                     ),
-                   ),
-                 ),
+             Padding(
+  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+  child: InkWell(
+    onTap: _showVenueSelectionDialog,
+    child: Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            _selectedVenue?['name'] ?? 'Select a venue',
+            style: const TextStyle(fontSize: 14, color: Colors.black87),
+          ),
+          const Icon(Icons.keyboard_arrow_down, color: Colors.black54),
+        ],
+      ),
+    ),
+  ),
+),
+
                  // Error message
                  if (_errorMessage.isNotEmpty)
                    Padding(
@@ -417,7 +400,7 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
                    ),
                  // List of days
                  SizedBox(
-                   height: 400,
+                   height: 520,
                    child: ListView.builder(
                      itemCount: _days.length,
                      itemBuilder: (context, index) {
@@ -428,7 +411,7 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
                  ),
                  // Save button
                  Padding(
-                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                   padding: const EdgeInsets.symmetric(horizontal: 16),
                    child: SizedBox(
                      width: double.infinity,
                      height: 48,
@@ -465,6 +448,63 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
    );
  }
 
+void _showVenueSelectionDialog() {
+  showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        backgroundColor: Colors.white,
+        title: const Text(
+          "Select Venue",
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          height: 250,
+          child: ListView.builder(
+            itemCount: _venues.length,
+            itemBuilder: (context, index) {
+              final venue = _venues[index];
+              final isSelected = _selectedVenue?['id'] == venue['id'];
+
+              return InkWell(
+                onTap: () {
+                  setState(() {
+                    _selectedVenue = venue;
+                    _fetchOpeningHours(venue['id']);
+                  });
+                  Navigator.pop(context);
+                },
+                child: Container(
+                  color: isSelected
+                      ? Design.primaryColorOrange.withOpacity(0.1)
+                      : Colors.transparent,
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          venue['name'] ?? 'Unnamed Venue',
+                          style: const TextStyle(fontSize: 14),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (isSelected)
+                        Icon(Icons.check,
+                            size: 18, color: Design.primaryColorOrange),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      );
+    },
+  );
+}
+
 
  Widget _buildDayRow(Map<String, dynamic> dayInfo, int index) {
    return Padding(
@@ -472,11 +512,11 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
      child: Container(
        decoration: BoxDecoration(
          color: Colors.white,
-         borderRadius: BorderRadius.circular(8),
+         borderRadius: BorderRadius.circular(10),
          border: Border.all(color: Colors.grey.shade300),
        ),
        margin: const EdgeInsets.only(bottom: 8),
-       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+       padding: const EdgeInsets.symmetric(horizontal: 12),
        child: Row(
          children: [
            SizedBox(

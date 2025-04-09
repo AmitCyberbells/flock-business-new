@@ -56,7 +56,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       // Use the correct endpoint for transactions
       final response = await http
           .get(
-            Uri.parse('http://165.232.152.77/mobi/api/vendor/transactions'),
+            Uri.parse('http://165.232.152.77/api/vendor/transactions'),
             headers: headers,
           )
           .timeout(const Duration(seconds: 10));

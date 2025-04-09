@@ -103,7 +103,7 @@ void initState() {
      return;
    }
    try {
-     final url = Uri.parse('http://165.232.152.77/mobi/api/vendor/count_redeem_offer');
+     final url = Uri.parse('http://165.232.152.77/api/vendor/count_redeem_offer');
      final request = http.MultipartRequest('POST', url);
      request.headers['Authorization'] = 'Bearer $token';
      request.fields['offer_id'] = offerId.toString();
@@ -150,7 +150,7 @@ void initState() {
      return;
    }
    try {
-     final url = Uri.parse('http://165.232.152.77/mobi/api/vendor/offers/$offerId');
+     final url = Uri.parse('http://165.232.152.77/api/vendor/offers/$offerId');
      final response = await http.delete(
        url,
        headers: {
@@ -187,7 +187,7 @@ Future<void> endOffer() async {
    return;
  }
  try {
-   final url = Uri.parse('http://165.232.152.77/mobi/api/vendor/offers/$offerId/expire-toggle');
+   final url = Uri.parse('http://165.232.152.77/api/vendor/offers/$offerId/expire-toggle');
    final response = await http.post(
      url,
      headers: {
@@ -316,7 +316,7 @@ Future<void> endOffer() async {
 
 
      // Verify the QR code with the API
-     final url = Uri.parse('http://165.232.152.77/mobi/api/vendor/redeemed-offers/$redeemId/verify');
+     final url = Uri.parse('http://165.232.152.77/api/vendor/redeemed-offers/$redeemId/verify');
      final response = await http.post(
        url,
        headers: {

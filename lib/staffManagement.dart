@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'addStaffMember.dart';
+import 'package:intl/intl.dart'; // Add this import
  // <-- New screen for editing
 
 class StaffManagementScreen extends StatefulWidget {
@@ -23,7 +24,18 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
     super.initState();
     _loadTokenAndFetchStaff();
   }
-
+String formatDateTime(String? dateTimeStr) {
+    if (dateTimeStr == null || dateTimeStr.isEmpty) {
+      return 'Not available';
+    }
+    try {
+      final dateTime = DateTime.parse(dateTimeStr);
+      return DateFormat('yyyy-MM-dd HH:mm:ss').format(dateTime);
+    } catch (e) {
+      debugPrint('Error parsing date: $e');
+      return dateTimeStr; // Return original string if parsing fails
+    }
+  }
   Future<void> _loadTokenAndFetchStaff() async {
     final prefs = await SharedPreferences.getInstance();
     _authToken = prefs.getString('access_token');
@@ -39,7 +51,7 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
     try {
       final dio = Dio();
       final response = await dio.get(
-        'http://165.232.152.77/mobi/api/vendor/teams',
+        'http://165.232.152.77/api/vendor/teams',
         options: Options(
           headers: {
             'Authorization': 'Bearer $_authToken',
@@ -119,7 +131,7 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
     try {
       final dio = Dio();
       final response = await dio.delete(
-        'http://165.232.152.77/mobi/api/vendor/teams/$memberId',
+        'http://165.232.152.77/api/vendor/teams/$memberId',
         options: Options(
           headers: {
             'Authorization': 'Bearer $_authToken',
@@ -135,7 +147,7 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
         });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Member deleted successfully!")),
-        );
+      );
       } else {
         final errorMessage = response.data['message'] ?? 'Unknown error';
         debugPrint("Delete request failed with status: ${response.statusCode}, message: $errorMessage");
@@ -229,9 +241,10 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                                   itemBuilder: (context, index) {
                                     final member = staffMembers[index];
                                     return Card(
+                                      color: Colors.white,
                                       elevation: 2,
                                       shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
+                                        borderRadius: BorderRadius.circular(10),
                                       ),
                                       child: ListTile(
                                         title: Text(
@@ -242,7 +255,7 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                                           ),
                                         ),
                                         subtitle: Text(
-                                          member["createdAt"] ?? '',
+                                          formatDateTime(member["createdAt"]),
                                           style: TextStyle(
                                             color: Colors.grey.shade600,
                                             fontSize: 14,
@@ -253,7 +266,12 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                                           children: [
                                             // Edit
                                             IconButton(
-                                              icon: const Icon(Icons.edit, color: Colors.black, size: 20),
+                                              icon: Image.asset(
+                'assets/edit.png', // Path to your custom image
+                width: 20, // Match the size of the previous icon
+                height: 20,
+                color: Colors.black, // Optional: tint the image like the original
+              ),
                                               onPressed: () {
                                                 final id = member["id"] ?? "";
                                                 if (id.isNotEmpty) {
@@ -263,7 +281,12 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                                             ),
                                             // Delete
                                             IconButton(
-                                              icon: const Icon(Icons.close, color: Colors.orange, size: 20),
+                                               icon: Image.asset(
+                'assets/closebtn.png', // Path to your custom image
+                width: 20, // Match the size of the previous icon
+                height: 20,
+                // color: const Color.fromRGBO(255, 130, 16, 1), // Optional: tint the image like the original
+              ),
                                               onPressed: () {
                                                 deleteMember(index);
                                               },

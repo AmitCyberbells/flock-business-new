@@ -5,6 +5,7 @@ import 'package:multi_select_flutter/util/multi_select_item.dart';
 
 class AppConstants {
 // Base method for password fields.
+
 static Widget customPasswordField({
   required TextEditingController controller,
   required bool obscureText,
@@ -192,25 +193,27 @@ static Widget confirmPasswordField({
   }
 
   // Reusable Email Field widget.
-  static Widget emailField({
-    required TextEditingController controller,
-  }) {
-    return Container(
-      decoration: textFieldBoxDecoration,
-      child: TextField(
-        controller: controller,
-        keyboardType: TextInputType.emailAddress,
-        style: const TextStyle(
-          color: Colors.black,
-          fontSize: 14.0,
-          fontFamily: 'YourFontFamily',
-        ),
-        decoration: textFieldDecoration.copyWith(
-          hintText: 'Enter email address',
-        ),
+static Widget emailField({
+  required TextEditingController controller,
+  bool readOnly = false,
+}) {
+  return Container(
+    decoration: textFieldBoxDecoration,
+    child: TextField(
+      controller: controller,
+      readOnly: readOnly,
+      keyboardType: TextInputType.emailAddress,
+      style: const TextStyle(
+        color: Colors.black,
+        fontSize: 14.0,
+        fontFamily: 'YourFontFamily',
       ),
-    );
-  }
+      decoration: textFieldDecoration.copyWith(
+        hintText: 'Enter email address',
+      ),
+    ),
+  );
+}
 
 
 
@@ -234,7 +237,7 @@ static Widget confirmPasswordField({
           hintText: 'Enter password',
           suffixIcon: IconButton(
             icon: Icon(
-              obscureText ? Icons.visibility_off : Icons.visibility,
+    obscureText ? Icons.visibility_off : Icons.visibility, // ✅ Reversed logic
               color: Colors.grey,
             ),
             onPressed: toggleObscure,
@@ -286,24 +289,27 @@ static Widget confirmPasswordField({
 
   // Reusable Phone Number Field widget.
   static Widget phoneField({
-    required TextEditingController controller,
-  }) {
-    return Container(
-      decoration: textFieldBoxDecoration,
-      child: TextField(
-        controller: controller,
-        keyboardType: TextInputType.phone,
-        style: const TextStyle(
-          color: Colors.black,
-          fontSize: 14.0,
-          fontFamily: 'YourFontFamily',
-        ),
-        decoration: textFieldDecoration.copyWith(
-          hintText: 'Enter phone number',
-        ),
+  required TextEditingController controller,
+  bool readOnly = false,
+}) {
+  return Container(
+    decoration: textFieldBoxDecoration,
+    child: TextField(
+      controller: controller,
+      readOnly: readOnly,
+      keyboardType: TextInputType.phone,
+      style: const TextStyle(
+        color: Colors.black,
+        fontSize: 14.0,
+        fontFamily: 'YourFontFamily',
       ),
-    );
-  }
+      decoration: textFieldDecoration.copyWith(
+        hintText: 'Enter phone number',
+      ),
+    ),
+  );
+}
+
 
   // Reusable Date of Birth Field widget.
   // If an onTap callback is provided, the field becomes read-only with a calendar icon.

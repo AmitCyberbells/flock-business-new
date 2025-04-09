@@ -81,7 +81,7 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
       return;
     }
 
-    final url = Uri.parse('http://165.232.152.77/mobi/api/vendor/venues');
+    final url = Uri.parse('http://165.232.152.77/api/vendor/venues');
 
     try {
       final response = await http.get(
@@ -204,7 +204,7 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
       return;
     }
 
-    final url = Uri.parse('http://165.232.152.77/mobi/api/vendor/offers');
+    final url = Uri.parse('http://165.232.152.77/api/vendor/offers');
 
     try {
       // Using MultipartRequest for file upload
@@ -326,7 +326,7 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
                 fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
 
             // Name of Offer
          const Text(
@@ -334,12 +334,12 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
   style: TextStyle(fontSize: 16, color: Colors.black),
 ),
 
- const SizedBox(height: 18),
+ const SizedBox(height: 8),
                           AppConstants.customTextField(controller: _nameController,
                            hintText: 'Enter Title of Offer',),
             
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
 
             // Venue dropdown
             const Text(
@@ -433,52 +433,60 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
           ),
         ),
 ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
 
             // Redeem Type - using Checkboxes
-            const Text(
-              "Redeem Type",
-              style: TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 6),
-          Row(
+         
+const Text(
+  "Redeem Type",
+  style: TextStyle(fontSize: 16),
+),
+
+const SizedBox(height: 2),
+Row(
   children: [
-    Expanded(
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          Checkbox(
-            value: _useVenuePoints,
-            onChanged: (value) {
-              setState(() {
-                _useVenuePoints = value ?? false;
-              });
-            },
-          ),
-          const Text("Venue Points"),
-        ],
-      ),
+    // Venue Points Checkbox and label with compact layout
+    Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Checkbox(
+          activeColor: Colors.orange,
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          visualDensity: VisualDensity.compact,
+          value: _useVenuePoints,
+          onChanged: (value) {
+            setState(() {
+              _useVenuePoints = value ?? false;
+            });
+          },
+        ),
+        const Text("Venue Points"),
+      ],
     ),
-    Expanded(
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          Checkbox(
-            value: _useAppPoints,
-            onChanged: (value) {
-              setState(() {
-                _useAppPoints = value ?? false;
-              });
-            },
-          ),
-          const Text("App Points"),
-        ],
-      ),
+    const SizedBox(width: 32), // Adjust the spacing between the two options
+    // App Points Checkbox and label with compact layout
+    Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Checkbox(
+          activeColor: Colors.orange,
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          visualDensity: VisualDensity.compact,
+          value: _useAppPoints,
+          onChanged: (value) {
+            setState(() {
+              _useAppPoints = value ?? false;
+            });
+          },
+        ),
+        const Text("App Points"),
+      ],
     ),
   ],
 ),
 
-            const SizedBox(height: 10),
+
+         const SizedBox(height: 5),
 if (_useVenuePoints || _useAppPoints)
   Row(
     crossAxisAlignment: CrossAxisAlignment.start,
@@ -544,11 +552,11 @@ if (_useVenuePoints || _useAppPoints)
             Container(
               decoration: BoxDecoration(
                 border: Border.all(color: Colors.grey.shade400),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(10),
               ),
               child: TextField(
                 controller: _descriptionController,
-                maxLines: 5,
+                maxLines: 4,
                 decoration: const InputDecoration(
                   hintText: "",
                   contentPadding:
@@ -614,9 +622,9 @@ if (_useVenuePoints || _useAppPoints)
           width: double.infinity,
           child: ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orange,
+              backgroundColor: const Color.fromRGBO(255, 130, 16, 1),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(10),
               ),
             ),
             onPressed: _isSubmitting ? null : _submitOffer,

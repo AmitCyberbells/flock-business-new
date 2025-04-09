@@ -4,6 +4,7 @@ import 'package:flock/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
+import 'otp_verification_screen.dart'; // replace with actual path
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({Key? key}) : super(key: key);
@@ -27,7 +28,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     });
 
     try {
-      final url = Uri.parse("http://165.232.152.77/mobi/api/vendor/forgot-password");
+      final url = Uri.parse("http://165.232.152.77/api/vendor/forgot-password");
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
@@ -43,7 +44,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         if (responseData['message'] != null &&
             responseData['message'].toString().toLowerCase().contains('success')) {
           Fluttertoast.showToast(msg: "Reset instructions have been sent to your email.");
-        } else {
+             Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => OtpVerificationScreen(
+          email: email,
+        ),
+      ),
+    );
+        }
+         
+       else {
           Fluttertoast.showToast(msg: responseData['message'] ?? 'Reset failed.');
         }
       } else if (response.statusCode == 422) {
@@ -181,10 +192,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             ),
           ),
           if (_isLoading)
-            Container(
-              color: Colors.black38,
-              child: const Center(child: CircularProgressIndicator()),
-            ),
+           Container(
+  color: Colors.white.withOpacity(0.19),
+  child: Center(
+    child: Image.asset(
+      'assets/Bird_Full_Eye_Blinking.gif',
+      width: 100, // Adjust size as needed
+      height: 100,
+    ),
+  ),
+),
         ],
       ),
     );

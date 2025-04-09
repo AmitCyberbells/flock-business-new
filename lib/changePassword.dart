@@ -49,7 +49,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     }
 
     final String urlString =
-        "http://165.232.152.77/mobi/api/vendor/profile/change-password";
+        "http://165.232.152.77/api/vendor/profile/change-password";
     final payload = {
       "old_password": currentPassword,
       "password": newPassword,

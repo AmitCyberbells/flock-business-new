@@ -58,7 +58,7 @@ class _CheckInsScreenState extends State<CheckInsScreen> {
           ? {'date': DateFormat('yyyy-MM-dd').format(selectedDate!)}
           : null;
 
-      final uri = Uri.parse('http://165.232.152.77/mobi/api/vendor/venues-checkins')
+      final uri = Uri.parse('http://165.232.152.77/api/vendor/venues-checkins')
           .replace(queryParameters: queryParams);
 
       final response = await http

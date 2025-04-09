@@ -57,7 +57,7 @@ class _SendNotificationScreenState extends State<SendNotificationScreen> {
     }
 
     try {
-      final url = Uri.parse('http://165.232.152.77/mobi/api/vendor/venues');
+      final url = Uri.parse('http://165.232.152.77/api/vendor/venues');
       final response = await http.get(
         url,
         headers: {
@@ -133,7 +133,7 @@ class _SendNotificationScreenState extends State<SendNotificationScreen> {
     }
 
     try {
-      final url = Uri.parse('http://165.232.152.77/mobi/api/vendor/notifications/send');
+      final url = Uri.parse('http://165.232.152.77/api/vendor/notifications/send');
       var request = http.MultipartRequest('POST', url);
 
       // Add form-data fields

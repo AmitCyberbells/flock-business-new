@@ -31,103 +31,104 @@ class CustomScaffold extends StatelessWidget {
     required this.body,
     required this.currentIndex,
   }) : super(key: key);
-@override
-Widget build(BuildContext context) {
-  final screenHeight = MediaQuery.of(context).size.height;
-  final screenWidth = MediaQuery.of(context).size.width;
 
-  return Stack(
-    children: [
-      // Background layer (this fills full screen, behind status bar etc.)
-      Container(
-        decoration: BoxDecoration(
-          color: Colors.white, // change to background image or gradient if needed
-        ),
-      ),
+  @override
+  Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
 
-      // Foreground UI (Scaffold on top)
-      Scaffold(
-        backgroundColor: Colors.transparent, // Keep it transparent so background shows
-        body: SafeArea(
-          top: true,
-          bottom: true,
-          child: body, // Body respects SafeArea, FAB and nav don't need to
-        ),
-        floatingActionButtonLocation: _CustomFABLocation(),
-        floatingActionButton: GestureDetector(
-          onTap: () {
-            showModalBottomSheet(
-              context: context,
-              backgroundColor: Colors.transparent,
-              builder: (BuildContext context) {
-                return Padding(
-                  padding: EdgeInsets.symmetric(
-                    vertical: screenHeight * 0.1,
-                    horizontal: screenWidth * 0.04,
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: _buildActionButton(
-                              context: context,
-                              icon: Icons.apartment,
-                              label: "Add Venue",
-                              iconColor: const Color(0xFF2A4CE1),
-                              textColor: const Color(0xFF2A4CE1),
-                              onTap: () async {
-                                Navigator.pop(context);
-                                await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => addVenue.AddEggScreen(),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                          SizedBox(width: screenWidth * 0.03),
-                          Expanded(
-                            child: _buildActionButton(
-                              context: context,
-                              icon: Icons.percent,
-                              label: "Add Offer",
-                              iconColor: const Color(0xFF2A4CE1),
-                              textColor: const Color(0xFF2A4CE1),
-                              onTap: () {
-                                Navigator.pop(context);
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => AddOfferScreen(),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                );
-              },
-            );
-          },
-          child: Image.asset(
-            'assets/bird.png',
-            width: screenWidth * 0.15,
-            height: screenWidth * 0.15,
+    return Stack(
+      children: [
+        // Background layer
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
           ),
         ),
-        bottomNavigationBar: CustomBottomBar(currentIndex: currentIndex),
-      ),
-    ],
-  );
-}
+        Scaffold(
+          backgroundColor: Colors.transparent,
+          body: SafeArea(
+            top: true,
+            bottom: true,
+            child: body,
+          ),
+          floatingActionButtonLocation: _CustomFABLocation(),
+          floatingActionButton: GestureDetector(
+            onTap: () {
+              showModalBottomSheet(
+                context: context,
+                backgroundColor: Colors.transparent,
+                builder: (BuildContext context) {
+                  return Padding(
+                    padding: EdgeInsets.symmetric(
+                      vertical: screenHeight * 0.15,
+                      horizontal: screenWidth * 0.04,
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: _buildActionButton(
+                                context: context,
+                                icon: Icons.apartment,
+                                label: "Add Venue",
+                                iconColor: const Color(0xFF2A4CE1),
+                                textColor: const Color(0xFF2A4CE1),
+                                onTap: () async {
+                                  Navigator.pop(context);
+                                  await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => addVenue.AddEggScreen(),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                            SizedBox(width: screenWidth * 0.03),
+                            Expanded(
+                              child: _buildActionButton(
+                                context: context,
+                                icon: Icons.percent,
+                                label: "Add Offer",
+                                iconColor: const Color(0xFF2A4CE1),
+                                textColor: const Color(0xFF2A4CE1),
+                                onTap: () {
+                                  Navigator.pop(context);
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => AddOfferScreen(),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            },
+           child: Center(
+  child: Image.asset(
+    'assets/bird.png',
+    width: screenWidth * 0.2,
+    height: screenWidth * 0.2,
+  ),
+),
 
+          ),
+          bottomNavigationBar: CustomBottomBar(currentIndex: currentIndex),
+        ),
+      ],
+    );
+  }
 
   Widget _buildActionButton({
     required BuildContext context,
@@ -145,7 +146,7 @@ Widget build(BuildContext context) {
       onTap: onTap,
       child: Container(
         padding: EdgeInsets.symmetric(
-          vertical: screenWidth * 0.03,
+          vertical: screenWidth * 0.02,
           horizontal: screenWidth * 0.04,
         ),
         decoration: BoxDecoration(
@@ -184,30 +185,31 @@ class CustomBottomBar extends StatelessWidget {
   final int currentIndex;
 
   const CustomBottomBar({Key? key, required this.currentIndex})
-    : super(key: key);
+      : super(key: key);
 
   void _onItemTapped(BuildContext context, int index) {
+    if (index == currentIndex) return; // Prevent unnecessary navigation
     switch (index) {
       case 0:
-        Navigator.push(
+        Navigator.pushReplacement( // Use pushReplacement to avoid stack buildup
           context,
           MaterialPageRoute(builder: (context) => TabDashboard()),
         );
         break;
       case 1:
-        Navigator.push(
+        Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => venue.TabEggScreen()),
         );
         break;
       case 2:
-        Navigator.push(
+        Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const CheckInsScreen()),
         );
         break;
       case 3:
-        Navigator.push(
+        Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => profile.TabProfile()),
         );
@@ -223,7 +225,7 @@ class CustomBottomBar extends StatelessWidget {
     required Color color,
   }) {
     final bool isActive = (currentIndex == index);
-    final Color activeColor = Colors.orange;
+    final Color activeColor = const Color.fromRGBO(255, 130, 16, 1);
     final Color inactiveColor = color;
     final screenWidth = MediaQuery.of(context).size.width;
 
@@ -231,7 +233,7 @@ class CustomBottomBar extends StatelessWidget {
       onTap: () => _onItemTapped(context, index),
       child: Padding(
         padding: EdgeInsets.symmetric(
-          horizontal: screenWidth * 0.03,
+          horizontal: screenWidth * 0.005,
           vertical: screenWidth * 0.015,
         ),
         child: Column(
@@ -242,12 +244,12 @@ class CustomBottomBar extends StatelessWidget {
               color: isActive ? activeColor : inactiveColor,
               size: screenWidth * 0.08,
             ),
-            SizedBox(height: screenWidth * 0.01),
+            SizedBox(height: screenWidth * 0.004),
             Text(
               label,
               style: TextStyle(
                 color: isActive ? activeColor : inactiveColor,
-                fontSize: screenWidth * 0.025,
+                fontSize: screenWidth * 0.032,
               ),
             ),
           ],
@@ -271,6 +273,7 @@ class CustomBottomBar extends StatelessWidget {
             top: 0,
             left: 0,
             right: 0,
+            
             child: Image.asset(
               'assets/bottom_nav.png',
               fit: BoxFit.cover,
@@ -280,10 +283,9 @@ class CustomBottomBar extends StatelessWidget {
           ),
           Padding(
             padding: EdgeInsets.only(
-              top: screenHeight * 0.037,
+              top: screenHeight * 0.04,
               left: screenWidth * 0.05,
               right: screenWidth * 0.03,
-              // / bottom: screenWidth * 0.05, // Remove unnecessary bottom padding
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -293,29 +295,31 @@ class CustomBottomBar extends StatelessWidget {
                   icon: Icons.grid_view_rounded,
                   label: "Dashboard",
                   index: 0,
-                  color: iconTextColor,
+                   color: Colors.black
+                  
                 ),
                 _buildNavItem(
                   context,
                   icon: Icons.apartment,
                   label: "Venues",
                   index: 1,
-                  color: iconTextColor,
+                    color: Colors.black
                 ),
-                SizedBox(width: screenWidth * 0.12),
+                SizedBox(width: screenWidth * 0.2),
                 _buildNavItem(
                   context,
                   icon: Icons.login_outlined,
                   label: "Check In",
                   index: 2,
-                  color: iconTextColor,
+                 color: Colors.black
                 ),
                 _buildNavItem(
                   context,
                   icon: Icons.person,
                   label: "My Profile",
                   index: 3,
-                  color: iconTextColor,
+                  
+                color: Colors.black
                 ),
               ],
             ),

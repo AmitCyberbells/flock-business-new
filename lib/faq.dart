@@ -41,7 +41,7 @@ class _FaqScreenState extends State<FaqScreen> {
       return;
     }
 
-    final url = Uri.parse('http://165.232.152.77/mobi/api/vendor/faqs');
+    final url = Uri.parse('http://165.232.152.77/api/vendor/faqs');
 
     try {
       final response = await http.get(

@@ -1,6 +1,7 @@
 import 'package:flock/DeleteAccountScreen.dart';
 import 'package:flock/ForgotPasswordScreen.dart';
 import 'package:flock/HomeScreen.dart';
+import 'package:flock/app_colors.dart';
 import 'package:flock/changePassword.dart';
 import 'package:flock/editProfile.dart';
 import 'package:flock/faq.dart';
@@ -20,7 +21,9 @@ import 'profile_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  
   runApp(
+    
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ProfileProvider()),
@@ -35,12 +38,63 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Flock Login',
-      theme: ThemeData(
-        primarySwatch: Colors.orange,
+      
+  theme: ThemeData(
+  primarySwatch: Colors.orange,
+  textSelectionTheme: TextSelectionThemeData(
+    cursorColor: Colors.black,
+    selectionColor: AppColors.primary.withOpacity(0.2),
+    selectionHandleColor: AppColors.primary,
+  ),
+  elevatedButtonTheme: ElevatedButtonThemeData(
+    style: ElevatedButton.styleFrom(
+      backgroundColor: AppColors.primary,
+      foregroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
       ),
+    ),
+  ),
+  textButtonTheme: TextButtonThemeData(
+    style: TextButton.styleFrom(
+      foregroundColor: AppColors.primary,
+    ),
+  ),
+  outlinedButtonTheme: OutlinedButtonThemeData(
+    style: OutlinedButton.styleFrom(
+      foregroundColor: AppColors.primary,
+      side: BorderSide(color: AppColors.primary),
+    ),
+  ),
+
+    // ✅ Add this block for global TextField styling
+  inputDecorationTheme: InputDecorationTheme(
+    labelStyle: const TextStyle(
+      color: Colors.black54,
+    ),
+    floatingLabelStyle: TextStyle(
+      color: Colors.black54,
+      fontWeight: FontWeight.w600,
+    ),
+    border: OutlineInputBorder(
+      borderSide: BorderSide(
+        color: Colors.black54,
+      ),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderSide: BorderSide(
+       color: Colors.black54,
+        width: 2.0,
+      ),
+    ),
+  ),
+),
+
+
       home: const LoadingScreen(),
       routes: {
         '/forgot-password': (context) => ForgotPasswordScreen(),

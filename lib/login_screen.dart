@@ -20,7 +20,7 @@ class _LoginScreenState extends State<LoginScreen> {
   String? _emailError;
   String? _passwordError;
 
-  final String _loginUrl = 'http://165.232.152.77/mobi/api/vendor/login';
+  final String _loginUrl = 'http://165.232.152.77/api/vendor/login';
 
   @override
   void dispose() {

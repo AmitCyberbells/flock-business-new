@@ -12,16 +12,11 @@ import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
-
-// -------------- NEW IMPORTS FOR LOCATION & MAP --------------
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-// ------------------------------------------------------------
 
-
-// Design tokens and constants
 class Design {
- static const Color primaryColorOrange = Colors.orange;
+ static const Color primaryColorOrange = Color.fromRGBO(255, 152, 0, 1);
  static const Color black = Colors.black;
  static const Color white = Colors.white;
  static const Color lightPurple = Color(0xFFF0F0F5);
@@ -48,12 +43,12 @@ class GlobalImages {
 
 // Server endpoints
 class Server {
- static const String venues = "http://165.232.152.77/mobi/api/vendor/venues";
- static const String tags = "http://165.232.152.77/mobi/api/vendor/tags";
+ static const String venues = "http://165.232.152.77/api/vendor/venues";
+ static const String tags = "http://165.232.152.77/api/vendor/tags";
  static const String categoryList =
-     "http://165.232.152.77/mobi/api/vendor/categories";
+     "http://165.232.152.77/api/vendor/categories";
  static const String amenities =
-     "http://165.232.152.77/mobi/api/vendor/amenities";
+     "http://165.232.152.77/api/vendor/amenities";
 }
 
 
@@ -747,160 +742,188 @@ Future<void> _launchURL(String url) async {
                          const SizedBox(height: 18),
                         // Add a GlobalKey to position the dropdown
 
-
-
-
-// Replace the MultiSelectBottomSheetField with a custom dropdown
 // Select Category field with dropdown
 
 Container(
- decoration: BoxDecoration(
-   color: Design.lightPurple,
-   borderRadius: BorderRadius.circular(5),
- ),
- child: Column(
-   crossAxisAlignment: CrossAxisAlignment.start,
-   children: [
-     GestureDetector(
-       key: _categoryFieldKey,
-       onTap: () {
-         setState(() {
-           showCategoryDropdown = !showCategoryDropdown;
-         });
-       },
-       child: Container(
-         padding: const EdgeInsets.symmetric(
-           horizontal: 15,
-           vertical: 10,
-         ),
-         decoration: BoxDecoration(
-           color: Design.lightPurple,
-           borderRadius: BorderRadius.circular(5),
-         ),
-         child: Row(
-           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-           children: [
-             Text(
-               nameofegg.isEmpty ? "Select Category" : nameofegg,
-               style: const TextStyle(fontSize: 15),
-             ),
-             Icon(
-               showCategoryDropdown ? Icons.arrow_drop_up : Icons.arrow_drop_down,
-               color: Colors.grey,
-             ),
-           ],
-         ),
-       ),
-     ),
-     if (showCategoryDropdown)
-       Container(
-         constraints: BoxConstraints(
-           maxHeight: 50 * 5, // Show 4 items (each ListTile is ~48px tall)
-         ),
-         decoration: BoxDecoration(
-           color: Design.lightPurple,
-           borderRadius: const BorderRadius.only(
-             bottomLeft: Radius.circular(5),
-             bottomRight: Radius.circular(5),
-           ),
-         ),
-         child: Column(
-           mainAxisSize: MainAxisSize.min,
-           children: [
-             Flexible(
-               child: ListView.builder(
-                 shrinkWrap: true,
-                 itemCount: allCategory.length,
-                 itemBuilder: (context, index) {
-                   final category = allCategory[index];
-                   final isSelected = catId == category['id'].toString();
-                  return ListTile(
-  dense: true, // Reduces ListTile height
-  contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2), // Less padding
-  visualDensity: VisualDensity.compact, // Makes it even more compact
-  title: Text(
-    category['name'],
-    style: const TextStyle(fontSize: 15),
-  ),
-  onTap: () {
-    setState(() {
-      catId = category['id'].toString();
-      nameofegg = category['name'];
-      showCategoryDropdown = false;
-    });
-  },
-);
-
-                 },
-               ),
-             ),
-             Padding(
-               padding: const EdgeInsets.all(6.0),
-               child: SizedBox(
-                 width: double.infinity,
-                 child: ElevatedButton(
-                   onPressed: () {
-                     setState(() {
-                       showCategoryDropdown = false;
-                     });
-                   },
-                   style: ElevatedButton.styleFrom(
-                     backgroundColor: Design.primaryColorOrange,
-                     shape: RoundedRectangleBorder(
-                       borderRadius: BorderRadius.circular(5),
-                     ),
-                   ),
-                   child: const Text(
-                     "Done",
-                     style: TextStyle(color: Colors.white),
-                   ),
-                 ),
-               ),
-             ),
-           ],
-         ),
-       ),
-   ],
- ),
-),
-                         // const Text('Tags', style: TextStyle(fontSize: 16)),
-                         const SizedBox(height: 18),
-                         
-       Container(
   decoration: BoxDecoration(
-    color: Design.lightPurple,
+    color: Design.white,
     borderRadius: BorderRadius.circular(5),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.grey.withOpacity(0.3),
+        spreadRadius: 1,
+        blurRadius: 6,
+        offset: const Offset(0, 3),
+      ),
+    ],
   ),
   child: Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
+      // 👇 Top field - apply rounded corners only to top
       GestureDetector(
-        key: _tagsFieldKey,
+        key: _categoryFieldKey,
         onTap: () {
           setState(() {
-            showTagsDropdown = !showTagsDropdown;
-            tagSearchQuery = ''; // Reset the search query when opening
+            showCategoryDropdown = !showCategoryDropdown;
           });
         },
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
-          decoration: BoxDecoration(
-            color: Design.lightPurple,
-            borderRadius: BorderRadius.circular(5),
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+          decoration: const BoxDecoration(
+            color: Design.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(5),
+              topRight: Radius.circular(5),
+            ),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                selectedTags.isEmpty
-                    ? "Select Tags"
-                    : selectedTags
-                        .map((id) => tags.firstWhere(
-                              (tag) => tag['id'].toString() == id,
-                              orElse: () => {'name': 'Unknown'},
-                            )['name'])
-                        .join(", "),
+                nameofegg.isEmpty ? "Select Category" : nameofegg,
                 style: const TextStyle(fontSize: 15),
+              ),
+              Icon(
+                showCategoryDropdown ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+                color: Colors.grey,
+              ),
+            ],
+          ),
+        ),
+      ),
+
+      // 👇 Dropdown container - apply only bottom radius, no margin
+      if (showCategoryDropdown)
+        Container(
+          constraints: BoxConstraints(
+            maxHeight: 38.0 * 5,
+          ),
+          decoration: const BoxDecoration(
+            color: Design.white,
+            borderRadius: BorderRadius.only(
+              bottomLeft: Radius.circular(5),
+              bottomRight: Radius.circular(5),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Scrollbar(
+                  thumbVisibility: true,
+                  child: ListView.builder(
+                    padding: EdgeInsets.zero,
+                    shrinkWrap: true,
+                    itemCount: allCategory.length,
+                    itemBuilder: (context, index) {
+                      final category = allCategory[index];
+                      final isSelected = catId == category['id'].toString();
+                      return InkWell(
+                        onTap: () {
+                          setState(() {
+                            catId = category['id'].toString();
+                            nameofegg = category['name'];
+                            showCategoryDropdown = false;
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+                          color: isSelected
+                              ? Design.primaryColorOrange.withOpacity(0.1)
+                              : Colors.transparent,
+                          child: Text(
+                            category['name'],
+                            style: const TextStyle(fontSize: 15),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              // Padding(
+              //   padding: const EdgeInsets.all(6.0),
+              //   child: SizedBox(
+              //     width: double.infinity,
+              //     child: ElevatedButton(
+              //       onPressed: () {
+              //         setState(() {
+              //           showCategoryDropdown = false;
+              //         });
+              //       },
+              //       style: ElevatedButton.styleFrom(
+              //         backgroundColor: Design.primaryColorOrange,
+              //         shape: RoundedRectangleBorder(
+              //           borderRadius: BorderRadius.circular(5),
+              //         ),
+              //         padding: const EdgeInsets.symmetric(vertical: 8),
+              //       ),
+              //       child: const Text(
+              //         "Done",
+              //         style: TextStyle(color: Colors.white),
+              //       ),
+              //     ),
+              //   ),
+              // ),
+            ],
+          ),
+        ),
+    ],
+  ),
+),
+
+
+                         // const Text('Tags', style: TextStyle(fontSize: 16)),
+                         const SizedBox(height: 18),
+                         
+     Container(
+  decoration: BoxDecoration(
+    color: Design.lightPurple,
+    borderRadius: BorderRadius.circular(5),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.grey.withOpacity(0.3),
+        spreadRadius: 1,
+        blurRadius: 6,
+        offset: const Offset(0, 3),
+      ),
+    ],
+  ),
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      // Dropdown Field
+      GestureDetector(
+        key: _tagsFieldKey,
+        onTap: () {
+          setState(() {
+            showTagsDropdown = !showTagsDropdown;
+            tagSearchQuery = '';
+          });
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+          decoration: BoxDecoration(
+            color: Design.white,
+            borderRadius: BorderRadius.circular(5),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Flexible(
+                child: Text(
+                  selectedTags.isEmpty
+                      ? "Select Tags"
+                      : selectedTags
+                          .map((id) => tags.firstWhere(
+                                (tag) => tag['id'].toString() == id,
+                                orElse: () => {'name': 'Unknown'},
+                              )['name'])
+                          .join(", "),
+                  style: const TextStyle(fontSize: 15),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
               Icon(
                 showTagsDropdown ? Icons.arrow_drop_up : Icons.arrow_drop_down,
@@ -910,14 +933,16 @@ Container(
           ),
         ),
       ),
+
+      // Dropdown Items
       if (showTagsDropdown)
         Container(
-          constraints: BoxConstraints(
-            maxHeight: 38 * 7 + 48, // 6 items (32px each) + search bar height (~48px)
+          constraints: const BoxConstraints(
+            maxHeight: 38.0 * 6 + 48, // 6 items + search bar
           ),
-          decoration: BoxDecoration(
-            color: Design.lightPurple,
-            borderRadius: const BorderRadius.only(
+          decoration: const BoxDecoration(
+            color: Design.white,
+            borderRadius: BorderRadius.only(
               bottomLeft: Radius.circular(5),
               bottomRight: Radius.circular(5),
             ),
@@ -925,16 +950,12 @@ Container(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Search bar
+              // Search Bar
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 6),
                 child: Row(
                   children: [
-                    const Icon(
-                      Icons.search,
-                      color: Colors.grey,
-                      size: 15,
-                    ),
+                    const Icon(Icons.search, color: Colors.grey, size: 16),
                     const SizedBox(width: 8),
                     Expanded(
                       child: TextField(
@@ -942,6 +963,7 @@ Container(
                           hintText: "Search tags...",
                           hintStyle: TextStyle(color: Colors.grey, fontSize: 14),
                           border: InputBorder.none,
+                          isDense: true,
                           contentPadding: EdgeInsets.zero,
                         ),
                         onChanged: (value) {
@@ -951,69 +973,85 @@ Container(
                         },
                       ),
                     ),
-                    const Icon(
-                      Icons.arrow_back,
-                      color: Colors.grey,
-                      size: 20,
-                    ),
                   ],
                 ),
               ),
-              // List of filtered tags
-              Builder(
-                builder: (context) {
-                  final filteredTags = tags.where((tag) {
-                    final tagName = tag['name'].toString().toLowerCase();
-                    return tagName.contains(tagSearchQuery.toLowerCase());
-                  }).toList();
-                  return Flexible(
-                    child: ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: filteredTags.length,
-                      itemBuilder: (context, index) {
-                        final tag = filteredTags[index];
-                        final isSelected =
-                            selectedTags.contains(tag['id'].toString());
-                     return ListTile(
-  dense: true, // Reduces height
-  contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 1), // Reduced spacing
-  visualDensity: VisualDensity.compact, // Even more compact
-  title: Text(
-    tag['name'],
-    style: TextStyle(
-      fontSize: 15, // Slightly bigger text for better readability
-      color: isSelected ? Design.primaryColorOrange : Colors.black, // Orange when selected
-      fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal, // Medium weight for selected
-    ),
-  ),
-  trailing: isSelected
-      ? Icon(Icons.check, color: Design.primaryColorOrange, size: 18) // Orange tick
-      : null,
-  onTap: () {
-    setState(() {
-      if (selectedTags.contains(tag['id'].toString())) {
-        selectedTags.remove(tag['id'].toString());
-      } else {
-        if (selectedTags.length >= 5) {
-          Fluttertoast.showToast(msg: "You can select up to 5 tags!");
-          return;
-        }
-        selectedTags.add(tag['id'].toString());
-      }
-    });
-  },
-);
 
+              // Filtered Tag List
+              Flexible(
+                child: Scrollbar(
+                  thumbVisibility: true,
+                  child: ListView.builder(
+                    padding: EdgeInsets.zero,
+                    shrinkWrap: true,
+                    itemCount: tags
+                        .where((tag) => tag['name']
+                            .toLowerCase()
+                            .contains(tagSearchQuery.toLowerCase()))
+                        .length,
+                    itemBuilder: (context, index) {
+                      final filteredTags = tags
+                          .where((tag) => tag['name']
+                              .toLowerCase()
+                              .contains(tagSearchQuery.toLowerCase()))
+                          .toList();
+                      final tag = filteredTags[index];
+                      final isSelected =
+                          selectedTags.contains(tag['id'].toString());
 
-                      },
-                    ),
-                  );
-                },
+                      return InkWell(
+                        onTap: () {
+                          setState(() {
+                            final tagId = tag['id'].toString();
+                            if (selectedTags.contains(tagId)) {
+                              selectedTags.remove(tagId);
+                            } else {
+                              if (selectedTags.length >= 5) {
+                                Fluttertoast.showToast(
+                                    msg: "You can select up to 5 tags!");
+                                return;
+                              }
+                              selectedTags.add(tagId);
+                            }
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 6),
+                          color: isSelected
+                              ? Design.primaryColorOrange.withOpacity(0.1)
+                              : Colors.transparent,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                tag['name'],
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color: isSelected
+                                      ? Design.primaryColorOrange
+                                      : Colors.black,
+                                  fontWeight: isSelected
+                                      ? FontWeight.w500
+                                      : FontWeight.normal,
+                                ),
+                              ),
+                              if (isSelected)
+                                Icon(Icons.check,
+                                    size: 18,
+                                    color: Design.primaryColorOrange),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
               ),
-              // Done button
+
+              // Done Button
               Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                padding: const EdgeInsets.all(6.0),
                 child: SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -1027,12 +1065,11 @@ Container(
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(5),
                       ),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
                     ),
                     child: const Text(
                       "Done",
-                      style:
-                          TextStyle(color: Colors.white, fontSize: 14),
+                      style: TextStyle(color: Colors.white, fontSize: 14),
                     ),
                   ),
                 ),
@@ -1043,6 +1080,7 @@ Container(
     ],
   ),
 ),
+
 
 
 
@@ -1100,8 +1138,16 @@ Container(
                          const SizedBox(height: 18),
                       Container(
  decoration: BoxDecoration(
-   color: Design.lightPurple,
+   color: Design.white,
    borderRadius: BorderRadius.circular(5),
+     boxShadow: [
+      BoxShadow(
+        color: Colors.grey.withOpacity(0.3),
+        spreadRadius: 1,
+        blurRadius: 6,
+        offset: const Offset(0, 3),
+      ),
+    ],
  ),
  child: Column(
    crossAxisAlignment: CrossAxisAlignment.start,
@@ -1119,7 +1165,7 @@ Container(
            vertical: 15,
          ),
          decoration: BoxDecoration(
-           color: Design.lightPurple,
+           color: Design.white,
            borderRadius: BorderRadius.circular(5),
          ),
          child: Row(
@@ -1149,7 +1195,7 @@ Container(
            maxHeight: 32 * 6 + 48, // 6 items (32px each) + search bar height (~48px)
          ),
          decoration: BoxDecoration(
-           color: Design.lightPurple,
+           color: Design.white,
            borderRadius: const BorderRadius.only(
              bottomLeft: Radius.circular(5),
              bottomRight: Radius.circular(5),

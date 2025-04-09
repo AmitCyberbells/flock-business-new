@@ -55,7 +55,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
       return;
     }
 
-    final url = Uri.parse("http://165.232.152.77/mobi/api/vendor/profile/delete");
+    final url = Uri.parse("http://165.232.152.77/api/vendor/profile/delete");
 
     // Adjust keys if your backend expects different field names
     final body = {
