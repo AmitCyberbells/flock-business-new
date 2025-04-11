@@ -127,8 +127,42 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<void> _selectImage() async {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) {
+        return Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Wrap(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Choose from Gallery'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage(ImageSource.gallery);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Take a Photo'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage(ImageSource.camera);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
     final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    final XFile? image = await picker.pickImage(source: source);
     if (image != null) {
       setState(() {
         _selectedImage = File(image.path);
@@ -145,8 +179,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     if (firstName.isEmpty ||
         lastName.isEmpty ||
-        email.isEmpty ||
-        contact.isEmpty) {
+        email.isEmpty ) {
       Fluttertoast.showToast(msg: "Please fill in all fields");
       return;
     }
@@ -165,9 +198,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       return;
     }
 
-    final url = Uri.parse(
-      "http://165.232.152.77/api/vendor/profile/update",
-    );
+    final url = Uri.parse("http://165.232.152.77/api/vendor/profile/update");
 
     try {
       final request = http.MultipartRequest('POST', url);
@@ -246,7 +277,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child:
                   _isLoading
-                      ? const Center(child: CircularProgressIndicator())
+                      ? Container(
+                        color: Colors.white.withOpacity(0.19),
+                        child: Center(
+                          child: Image.asset(
+                            'assets/Bird_Full_Eye_Blinking.gif',
+                            width: 100, // Adjust size as needed
+                            height: 100,
+                          ),
+                        ),
+                      )
                       : SingleChildScrollView(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.center,
@@ -257,7 +297,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                   onTap: () => Navigator.of(context).pop(),
                                   child: const Icon(
                                     Icons.arrow_back,
-                                    color: Colors.blue,
+                                    color: Color.fromRGBO(255, 130, 16, 1.0),
                                   ),
                                 ),
                                 const Expanded(
@@ -350,15 +390,81 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             ),
                             const SizedBox(height: 25),
 
-                            AppConstants.emailField(
+                            TextField(
                               controller: emailController,
-                               readOnly: true,
+                              readOnly: true,
+                              keyboardType: TextInputType.emailAddress,
+                              style: const TextStyle(
+                                color: Colors.grey,
+                                fontSize: 14.0,
+                                fontFamily: 'YourFontFamily',
+                              ),
+                              decoration: InputDecoration(
+                                hintText: 'Enter email address',
+                                hintStyle: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 14.0,
+                                  fontFamily: 'YourFontFamily',
+                                ),
+                                filled: true,
+                                fillColor: Colors.grey.shade100,
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 15,
+                                  vertical: 15,
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                  borderSide: BorderSide.none,
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                  borderSide: BorderSide.none,
+                                ),
+                                disabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                  borderSide: BorderSide.none,
+                                ),
+                              ),
                             ),
+
                             const SizedBox(height: 25),
-                            AppConstants.phoneField(
+                            TextField(
                               controller: phoneController,
-                            readOnly: true,
+                              readOnly: true,
+                              keyboardType: TextInputType.phone,
+                              style: const TextStyle(
+                                color: Colors.grey,
+                                fontSize: 14.0,
+                                fontFamily: 'YourFontFamily',
+                              ),
+                              decoration: InputDecoration(
+                                hintText: 'Enter phone number',
+                                hintStyle: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 14.0,
+                                  fontFamily: 'YourFontFamily',
+                                ),
+                                filled: true,
+                                fillColor: Colors.grey.shade100,
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 15,
+                                  vertical: 15,
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                  borderSide: BorderSide.none,
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                  borderSide: BorderSide.none,
+                                ),
+                                disabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                  borderSide: BorderSide.none,
+                                ),
+                              ),
                             ),
+
                             const SizedBox(height: 25),
                             // AppConstants.passwordField(
                             //   controller: passwordController,
@@ -383,7 +489,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               height: 48,
                               child: ElevatedButton(
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color.fromRGBO(255, 130, 16, 1),
+                                  backgroundColor: const Color.fromRGBO(
+                                    255,
+                                    130,
+                                    16,
+                                    1,
+                                  ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10),
                                   ),
@@ -407,8 +518,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ),
           if (_isUpdating)
             Container(
-              color: Colors.white54,
-              child: const Center(child: CircularProgressIndicator()),
+              color: Colors.white.withOpacity(0.19),
+              child: Center(
+                child: Image.asset(
+                  'assets/Bird_Full_Eye_Blinking.gif',
+                  width: 100, // Adjust size as needed
+                  height: 100,
+                ),
+              ),
             ),
         ],
       ),

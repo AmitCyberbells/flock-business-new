@@ -5,7 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'addStaffMember.dart';
 import 'package:intl/intl.dart'; // Add this import
- // <-- New screen for editing
+// <-- New screen for editing
 
 class StaffManagementScreen extends StatefulWidget {
   const StaffManagementScreen({Key? key}) : super(key: key);
@@ -24,7 +24,8 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
     super.initState();
     _loadTokenAndFetchStaff();
   }
-String formatDateTime(String? dateTimeStr) {
+
+  String formatDateTime(String? dateTimeStr) {
     if (dateTimeStr == null || dateTimeStr.isEmpty) {
       return 'Not available';
     }
@@ -36,6 +37,7 @@ String formatDateTime(String? dateTimeStr) {
       return dateTimeStr; // Return original string if parsing fails
     }
   }
+
   Future<void> _loadTokenAndFetchStaff() async {
     final prefs = await SharedPreferences.getInstance();
     _authToken = prefs.getString('access_token');
@@ -64,16 +66,17 @@ String formatDateTime(String? dateTimeStr) {
         final data = response.data;
         if (data != null && data['data'] != null) {
           final List<dynamic> rawList = data['data'];
-          final List<Map<String, String>> loadedStaff = rawList.map<Map<String, String>>((item) {
-            return {
-              "id": item["id"]?.toString() ?? '',
-              "firstName": item["first_name"] ?? '',
-              "lastName": item["last_name"] ?? '',
-              "email": item["email"] ?? '',
-              "phone": item["contact"] ?? '',
-              "createdAt": item["created_at"] ?? '',
-            };
-          }).toList();
+          final List<Map<String, String>> loadedStaff =
+              rawList.map<Map<String, String>>((item) {
+                return {
+                  "id": item["id"]?.toString() ?? '',
+                  "firstName": item["first_name"] ?? '',
+                  "lastName": item["last_name"] ?? '',
+                  "email": item["email"] ?? '',
+                  "phone": item["contact"] ?? '',
+                  "createdAt": item["created_at"] ?? '',
+                };
+              }).toList();
 
           setState(() {
             staffMembers = loadedStaff;
@@ -95,9 +98,7 @@ String formatDateTime(String? dateTimeStr) {
   Future<void> addMember() async {
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const AddMemberScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const AddMemberScreen()),
     );
     if (result == true) {
       await fetchStaffMembers();
@@ -147,19 +148,21 @@ String formatDateTime(String? dateTimeStr) {
         });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Member deleted successfully!")),
-      );
+        );
       } else {
         final errorMessage = response.data['message'] ?? 'Unknown error';
-        debugPrint("Delete request failed with status: ${response.statusCode}, message: $errorMessage");
+        debugPrint(
+          "Delete request failed with status: ${response.statusCode}, message: $errorMessage",
+        );
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Failed to delete member: $errorMessage")),
         );
       }
     } catch (e) {
       debugPrint("Exception while deleting staff member: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error deleting member: $e")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error deleting member: $e")));
     }
   }
 
@@ -168,7 +171,7 @@ String formatDateTime(String? dateTimeStr) {
     return Stack(
       children: [
         Scaffold(
-         backgroundColor: Colors.white,
+          backgroundColor: Colors.white,
           body: SafeArea(
             child: LayoutBuilder(
               builder: (context, constraints) {
@@ -177,7 +180,9 @@ String formatDateTime(String? dateTimeStr) {
                     bottom: MediaQuery.of(context).viewInsets.bottom + 16,
                   ),
                   child: ConstrainedBox(
-                    constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                    constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight,
+                    ),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       child: Column(
@@ -190,113 +195,146 @@ String formatDateTime(String? dateTimeStr) {
                               children: [
                                 InkWell(
                                   onTap: () => Navigator.of(context).pop(),
-                                  child: const Icon(Icons.arrow_back, color: Colors.black),
+                                  child: const Icon(
+                                    Icons.arrow_back,
+                                    color: Color.fromRGBO(255, 130, 16, 1.0),
+                                  ),
                                 ),
-                                const SizedBox(width: 16),
                                 const Expanded(
-                                  child: Text(
-                                    "Staff Members",
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w600,
+                                  child: Center(
+                                    child: Text(
+                                      "Staff Members",
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.black,
+                                      ),
                                     ),
                                   ),
                                 ),
-                                InkWell(
-                                  onTap: addMember,
-                                  child: Row(
-                                    children: const [
-                                      Icon(Icons.add_circle, color: Colors.orange),
-                                      SizedBox(width: 4),
-                                      Text(
-                                        "Add Member",
-                                        style: TextStyle(
-                                          color: Colors.orange,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
+                                const SizedBox(width: 24),
                               ],
                             ),
                           ),
 
+                          const SizedBox(height: 16),
+                          InkWell(
+                            onTap: addMember,
+                            child: Padding(
+                              padding: const EdgeInsets.only(
+                                right: 10.0,
+                              ), // <-- Adjust the value as needed
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: const [
+                                  Icon(Icons.add_circle, color: Colors.orange),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    "Add Member",
+                                    style: TextStyle(
+                                      color: Colors.orange,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 16),
+
                           // Loading indicator
-                          if (_isLoading) const Center(child: CircularProgressIndicator()),
+                          if (_isLoading)
+                            Container(
+                              color: Colors.white.withOpacity(0.19),
+                              child: Center(
+                                child: Image.asset(
+                                  'assets/Bird_Full_Eye_Blinking.gif',
+                                  width: 100, // Adjust size as needed
+                                  height: 100,
+                                ),
+                              ),
+                            ),
 
                           // Staff list or empty state
                           staffMembers.isEmpty && !_isLoading
                               ? const Padding(
-                                  padding: EdgeInsets.only(top: 16.0),
-                                  child: Text(
-                                    "No Member Found...",
-                                    style: TextStyle(color: Colors.grey, fontSize: 16),
+                                padding: EdgeInsets.only(top: 16.0),
+                                child: Text(
+                                  "No Member Found...",
+                                  style: TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 16,
                                   ),
-                                )
-                              : ListView.builder(
-                                  shrinkWrap: true,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  itemCount: staffMembers.length,
-                                  itemBuilder: (context, index) {
-                                    final member = staffMembers[index];
-                                    return Card(
-                                      color: Colors.white,
-                                      elevation: 2,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: ListTile(
-                                        title: Text(
-                                          '${member["firstName"]} ${member["lastName"]}',
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 16,
-                                          ),
-                                        ),
-                                        subtitle: Text(
-                                          formatDateTime(member["createdAt"]),
-                                          style: TextStyle(
-                                            color: Colors.grey.shade600,
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                        trailing: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            // Edit
-                                            IconButton(
-                                              icon: Image.asset(
-                'assets/edit.png', // Path to your custom image
-                width: 20, // Match the size of the previous icon
-                height: 20,
-                color: Colors.black, // Optional: tint the image like the original
-              ),
-                                              onPressed: () {
-                                                final id = member["id"] ?? "";
-                                                if (id.isNotEmpty) {
-                                                  editMember(id);
-                                                }
-                                              },
-                                            ),
-                                            // Delete
-                                            IconButton(
-                                               icon: Image.asset(
-                'assets/closebtn.png', // Path to your custom image
-                width: 20, // Match the size of the previous icon
-                height: 20,
-                // color: const Color.fromRGBO(255, 130, 16, 1), // Optional: tint the image like the original
-              ),
-                                              onPressed: () {
-                                                deleteMember(index);
-                                              },
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                  },
                                 ),
+                              )
+                              : ListView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: staffMembers.length,
+                                itemBuilder: (context, index) {
+                                  final member = staffMembers[index];
+                                  return Card(
+                                    color: Colors.white,
+                                    elevation: 2,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: ListTile(
+                                      title: Text(
+                                        '${member["firstName"]} ${member["lastName"]}',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                      subtitle: Text(
+                                        formatDateTime(member["createdAt"]),
+                                        style: TextStyle(
+                                          color: Colors.grey.shade600,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      trailing: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          // Edit
+                                          IconButton(
+                                            icon: Image.asset(
+                                              'assets/edit.png', // Path to your custom image
+                                              width:
+                                                  20, // Match the size of the previous icon
+                                              height: 20,
+                                              color:
+                                                  Colors
+                                                      .black, // Optional: tint the image like the original
+                                            ),
+                                            onPressed: () {
+                                              final id = member["id"] ?? "";
+                                              if (id.isNotEmpty) {
+                                                editMember(id);
+                                              }
+                                            },
+                                          ),
+                                          // Delete
+                                          IconButton(
+                                            icon: Image.asset(
+                                              'assets/closebtn.png', // Path to your custom image
+                                              width:
+                                                  20, // Match the size of the previous icon
+                                              height: 20,
+                                              // color: const Color.fromRGBO(255, 130, 16, 1), // Optional: tint the image like the original
+                                            ),
+                                            onPressed: () {
+                                              deleteMember(index);
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
                         ],
                       ),
                     ),
@@ -310,6 +348,3 @@ String formatDateTime(String? dateTimeStr) {
     );
   }
 }
-
-
-

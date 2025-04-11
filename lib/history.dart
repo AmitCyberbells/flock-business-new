@@ -80,6 +80,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     // Format the timestamp to "yyyy-MM-dd hh:mm a" (e.g., "2025-03-13 05:20 pm")
     final timestamp = DateTime.parse(item['datetime']);
     final formattedTime = DateFormat('yyyy-MM-dd hh:mm a').format(timestamp);
+    final image=item['image'] as String; 
 
     // Determine points sign and color based on transaction_type
     final points = item['feather_points'] as int;
@@ -130,10 +131,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 const SizedBox(height: 4),
                 Text(
                   formattedTime,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
-                  ),
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
                 ),
               ],
             ),
@@ -155,7 +153,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
   @override
   Widget build(BuildContext context) {
     return CustomScaffold(
-      currentIndex: 2, // Assuming History is accessible from Check Ins (index 2)
+      currentIndex:
+          2, // Assuming History is accessible from Check-Ins (index 2)
       body: SafeArea(
         child: Stack(
           children: [
@@ -163,13 +162,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
               children: [
                 // Header
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   child: Row(
                     children: [
                       IconButton(
                         icon: const Icon(
                           Icons.arrow_back,
-                          color: Colors.blue,
+                          color: Color.fromRGBO(255, 130, 16, 1.0),
                         ),
                         onPressed: () => Navigator.pop(context),
                       ),
@@ -190,26 +192,42 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 ),
                 // Body
                 Expanded(
-                  child: loader
-                      ? const Center(child: CircularProgressIndicator())
-                      : historyData.isEmpty
+                  child:
+                      loader
+                          ? Container(
+                            color: Colors.white.withOpacity(0.19),
+                            child: Center(
+                              child: Image.asset(
+                                'assets/Bird_Full_Eye_Blinking.gif',
+                                width: 100, // Adjust size as needed
+                                height: 100,
+                              ),
+                            ),
+                          )
+                          : historyData.isEmpty
                           ? const Center(child: Text('No History Found'))
                           : ListView.builder(
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              itemCount: historyData.length,
-                              itemBuilder: (context, index) {
-                                final item = historyData[index];
-                                return buildHistoryItem(item);
-                              },
-                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            itemCount: historyData.length,
+                            itemBuilder: (context, index) {
+                              final item = historyData[index];
+                              return buildHistoryItem(item);
+                            },
+                          ),
                 ),
               ],
             ),
-            if (loader)
-              Container(
-                color: Colors.black26,
-                child: const Center(child: CircularProgressIndicator()),
-              ),
+            //             if (loader)
+            //               Container(
+            //   color: Colors.white.withOpacity(0.19),
+            //   child: Center(
+            //     child: Image.asset(
+            //       'assets/Bird_Full_Eye_Blinking.gif',
+            //       width: 100, // Adjust size as needed
+            //       height: 100,
+            //     ),
+            //   ),
+            // ),
           ],
         ),
       ),

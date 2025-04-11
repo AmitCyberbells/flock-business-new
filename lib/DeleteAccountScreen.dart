@@ -12,12 +12,15 @@ class DeleteAccountScreen extends StatefulWidget {
 }
 
 class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
-  final TextEditingController _nameController =
-      TextEditingController(text: "Amit Kumar");
-  final TextEditingController _emailController =
-      TextEditingController(text: "iitianamit2019@gmail.com");
-  final TextEditingController _phoneController =
-      TextEditingController(text: "0987654321");
+  final TextEditingController _nameController = TextEditingController(
+    text: "Amit Kumar",
+  );
+  final TextEditingController _emailController = TextEditingController(
+    text: "iitianamit2019@gmail.com",
+  );
+  final TextEditingController _phoneController = TextEditingController(
+    text: "0987654321",
+  );
   final TextEditingController _reasonController = TextEditingController();
 
   bool _isDeleting = false;
@@ -112,7 +115,10 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
             child: SingleChildScrollView(
               // Allows scrolling if needed
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -121,20 +127,27 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                       children: [
                         InkWell(
                           onTap: () => Navigator.of(context).pop(),
-                          child: const Icon(Icons.arrow_back, color: Colors.black),
-                        ),
-                        const SizedBox(width: 16),
-                        const Text(
-                          "Delete Account",
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black,
+                          child: const Icon(
+                            Icons.arrow_back,
+                            color: Color.fromRGBO(255, 130, 16, 1.0),
                           ),
                         ),
+                        const Expanded(
+                          child: Center(
+                            child: Text(
+                              "Delete Account",
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 24),
                       ],
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 24),
 
                     // Show error if any
                     if (_errorMessage.isNotEmpty)
@@ -223,10 +236,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                         ),
                         child: const Text(
                           "Continue",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                          ),
+                          style: TextStyle(color: Colors.white, fontSize: 16),
                         ),
                       ),
                     ),
@@ -240,8 +250,14 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
           // Loading overlay
           if (_isDeleting)
             Container(
-              color: Colors.white54,
-              child: const Center(child: CircularProgressIndicator()),
+              color: Colors.white.withOpacity(0.19),
+              child: Center(
+                child: Image.asset(
+                  'assets/Bird_Full_Eye_Blinking.gif',
+                  width: 100, // Adjust size as needed
+                  height: 100,
+                ),
+              ),
             ),
         ],
       ),

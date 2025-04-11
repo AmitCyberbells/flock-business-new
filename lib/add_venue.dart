@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flock/constants.dart';
 import 'package:flock/location.dart';
 import 'package:flutter/material.dart';
@@ -382,17 +383,21 @@ void handleTagChange(List<int?> selectedValues) {
  }
 
 
- Future<void> pickFromGallery() async {
-   final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-   if (image != null) {
-     setState(() {
-       photos.add(image);
-     });
-   }
-   setState(() {
-     dialogAlert = false;
-   });
- }
+
+
+Future<void> pickFromGallery() async {
+  final List<XFile>? selectedImages = await _picker.pickMultiImage();
+
+  if (selectedImages != null && selectedImages.isNotEmpty) {
+    setState(() {
+      photos.addAll(selectedImages);
+    });
+  }
+
+  setState(() {
+    dialogAlert = false;
+  });
+}
 
 
  void removePhoto(int index) {
@@ -736,6 +741,8 @@ Future<void> _launchURL(String url) async {
                          AppConstants.customTextField(
                            controller: nameController,
                            hintText: 'Enter venue name',
+                             textInputAction: TextInputAction.next, // or .done, .search, etc.
+
                          ),
 
 
@@ -1423,7 +1430,7 @@ Container(
                                ),
                              ),
                              child: const Text(
-                               "Continue",
+                               "Save Venue",
                                style: TextStyle(
                                  fontSize: 16,
                                  color: Colors.white,
@@ -1441,10 +1448,16 @@ Container(
            ),
          ),
          if (loader)
-           Container(
-             color: Colors.black12,
-             child: const Center(child: CircularProgressIndicator()),
-           ),
+          Container(
+  color: Colors.white.withOpacity(0.19),
+  child: Center(
+    child: Image.asset(
+      'assets/Bird_Full_Eye_Blinking.gif',
+      width: 100, // Adjust size as needed
+      height: 100,
+    ),
+  ),
+),
          if (dialogAlert)
            Center(
              child: Container(
@@ -1469,17 +1482,18 @@ Container(
                      ),
                    ),
                    const Divider(height: 20),
-                   InkWell(
-                     onTap: pickFromGallery,
-                     child: Row(
-                       children: const [
-                         Icon(Icons.photo_library, size: 24),
-                         SizedBox(width: 10),
-                         Text("Photo from Gallery"),
-                       ],
-                     ),
-                   ),
-                   const SizedBox(height: 18),
+                 InkWell(
+  onTap: pickFromGallery,
+  child: Row(
+    children: const [
+      Icon(Icons.photo_library, size: 24),
+      SizedBox(width: 10),
+      Text("Choose from Gallery"),
+    ],
+  ),
+),
+
+               
                    Align(
                      alignment: Alignment.centerRight,
                      child: TextButton(

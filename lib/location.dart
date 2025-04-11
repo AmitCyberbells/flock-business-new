@@ -87,48 +87,47 @@ class _LocationPickerState extends State<LocationPicker> {
       print('Error getting address: $e');
     }
   }
-
-  Future<void> _searchPlaces(String query) async {
-    if (query.isEmpty) {
-      setState(() {
-        _suggestions = [];
-        _isLoadingSuggestions = false;
-      });
-      return;
-    }
-
+Future<void> _searchPlaces(String query) async {
+  if (query.isEmpty) {
     setState(() {
-      _isLoadingSuggestions = true;
+      _suggestions = [];
+      _isLoadingSuggestions = false;
     });
-
-    try {
-      final url = Uri.parse(
-        'https://maps.googleapis.com/maps/api/place/autocomplete/json'
-        '?input=$query'
-        '&components=country:in'
-        '&key=$_googleApiKey');
-
-      final response = await http.get(url);
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data['status'] == 'OK') {
-          final predictions = data['predictions'] as List;
-          await _fetchPlaceDetails(predictions);
-        } else {
-          setState(() {
-            _suggestions = [];
-            _isLoadingSuggestions = false;
-          });
-        }
-      }
-    } catch (e) {
-      print('Error searching places: $e');
-      setState(() {
-        _suggestions = [];
-        _isLoadingSuggestions = false;
-      });
-    }
+    return;
   }
+
+  setState(() {
+    _isLoadingSuggestions = true;
+  });
+
+  try {
+    final url = Uri.parse(
+      'https://maps.googleapis.com/maps/api/place/autocomplete/json'
+      '?input=$query'
+      '&key=$_googleApiKey' // Removed '&components=country:in'
+    );
+
+    final response = await http.get(url);
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      if (data['status'] == 'OK') {
+        final predictions = data['predictions'] as List;
+        await _fetchPlaceDetails(predictions);
+      } else {
+        setState(() {
+          _suggestions = [];
+          _isLoadingSuggestions = false;
+        });
+      }
+    }
+  } catch (e) {
+    print('Error searching places: $e');
+    setState(() {
+      _suggestions = [];
+      _isLoadingSuggestions = false;
+    });
+  }
+}
 
   Future<void> _fetchPlaceDetails(List predictions) async {
     List<Map<String, dynamic>> newSuggestions = [];
@@ -221,12 +220,28 @@ class _LocationPickerState extends State<LocationPicker> {
         children: [
           GoogleMap(
             initialCameraPosition: CameraPosition(
-              target: _currentPosition ?? const LatLng(20.5937, 78.9629),
-              zoom: 5,
-            ),
+  target: widget.initialPosition ?? _currentPosition ?? const LatLng(20.5937, 78.9629),
+  zoom: 14,
+),
+markers: _currentPosition != null
+    ? {
+        Marker(
+          markerId: const MarkerId('selected-location'),
+          position: _currentPosition!,
+        ),
+      }
+    : {},
+
+
             onMapCreated: (GoogleMapController controller) {
-              _mapController = controller;
-            },
+  _mapController = controller;
+  if (widget.initialPosition != null) {
+    _mapController?.animateCamera(
+      CameraUpdate.newLatLngZoom(widget.initialPosition!, 14),
+    );
+  }
+},
+
             myLocationEnabled: true,
             myLocationButtonEnabled: false,
             onTap: (LatLng position) async {

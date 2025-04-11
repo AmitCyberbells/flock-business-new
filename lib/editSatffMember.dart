@@ -28,6 +28,9 @@ class _EditStaffMemberScreenState extends State<EditStaffMemberScreen> {
   List<String> _selectedPermissions = [];
   List<dynamic> _venueList = [];
   List<dynamic> _permissionList = [];
+  String? _currentImageUrl;
+
+
 
   File? _pickedImage;
   bool _obscurePassword = true;
@@ -44,6 +47,7 @@ class _EditStaffMemberScreenState extends State<EditStaffMemberScreen> {
   final prefs = await SharedPreferences.getInstance();
   final token = prefs.getString('access_token') ?? '';
   final dio = Dio();
+  
 
   try {
     // 1) Fetch existing staff data
@@ -65,6 +69,7 @@ class _EditStaffMemberScreenState extends State<EditStaffMemberScreen> {
       _lastNameController.text  = data["last_name"] ?? '';
       _emailController.text     = data["email"] ?? '';
       _phoneController.text     = data["contact"] ?? '';
+_currentImageUrl = data["image"]; // or data["profile_image"] depending on API response
 
       // 🔹 Convert venue IDs and permission IDs to Strings
     _selectedVenues = (data["assigned_venues"] as List<dynamic>?)
@@ -121,14 +126,46 @@ _selectedPermissions = (data["permissions"] as List<dynamic>?)
 }
 
   Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        _pickedImage = File(pickedFile.path);
-      });
-    }
-  }
+  showModalBottomSheet(
+    context: context,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+    ),
+    builder: (_) => SafeArea(
+      child: Wrap(
+        children: [
+          ListTile(
+            leading: const Icon(Icons.photo_camera),
+            title: const Text('Take a Photo'),
+            onTap: () async {
+              Navigator.pop(context);
+              final pickedFile = await ImagePicker().pickImage(source: ImageSource.camera);
+              if (pickedFile != null) {
+                setState(() {
+                  _pickedImage = File(pickedFile.path);
+                });
+              }
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.photo_library),
+            title: const Text('Choose from Gallery'),
+            onTap: () async {
+              Navigator.pop(context);
+              final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+              if (pickedFile != null) {
+                setState(() {
+                  _pickedImage = File(pickedFile.path);
+                });
+              }
+            },
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
 
   Future<void> _submitForm() async {
     // Check minimal fields
@@ -219,7 +256,17 @@ FormData formData = FormData.fromMap(formDataMap);
         title: 'Edit Member',
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? Container(
+  color: Colors.white.withOpacity(0.19),
+  child: Center(
+    child: Image.asset(
+      'assets/Bird_Full_Eye_Blinking.gif',
+      width: 100, // Adjust size as needed
+      height: 100,
+    ),
+  ),
+)
+
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -230,18 +277,23 @@ FormData formData = FormData.fromMap(formDataMap);
                     child: Stack(
                       clipBehavior: Clip.none,
                       children: [
-                        CircleAvatar(
-                          radius: 50,
-                          backgroundColor: Colors.grey[300],
-                          backgroundImage:
-                              _pickedImage != null ? FileImage(_pickedImage!) : null,
-                          child: _pickedImage == null
-                              ? const Icon(Icons.person, size: 60, color: Colors.grey)
-                              : null,
-                        ),
+                     CircleAvatar(
+  radius: 50,
+  backgroundColor: Colors.grey[300],
+  backgroundImage: _pickedImage != null
+      ? FileImage(_pickedImage!)
+      : (_currentImageUrl != null
+          ? NetworkImage(_currentImageUrl!) as ImageProvider
+          : null),
+  child: (_pickedImage == null && _currentImageUrl == null)
+      ? const Icon(Icons.person, size: 60, color: Colors.grey)
+      : null,
+),
+
+
                         Positioned(
-                          bottom: -10,
-                          right: -10,
+                          bottom: -4,
+                          right: -7,
                           child: CircleAvatar(
                             radius: 18,
                             backgroundColor: const Color.fromRGBO(255, 130, 16, 1),

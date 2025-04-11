@@ -8,7 +8,8 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flock/constants.dart'; // Assuming this contains Design, Server, etc.
+import 'package:flock/constants.dart'; // Assumed to contain Design, Server, etc.
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class EditVenueScreen extends StatefulWidget {
   final Map<String, dynamic> venueData;
@@ -40,6 +41,7 @@ class _EditVenueScreenState extends State<EditVenueScreen> {
   List<dynamic> _allCategories = [];
   List<dynamic> _allTags = [];
   List<dynamic> _allAmenities = [];
+  List<String> _existingImageUrls = [];
 
   // Selected values
   String? _selectedCategoryId;
@@ -50,11 +52,14 @@ class _EditVenueScreenState extends State<EditVenueScreen> {
   String _tagSearchText = '';
   String _amenitySearchText = '';
 
-  // Image picker
+  // Image picker and selected images list
   final ImagePicker _picker = ImagePicker();
-  XFile? _selectedImage;
+  List<XFile> _selectedImages = [];
 
   bool _isLoading = false;
+
+  // Dropdown toggle flag
+  bool _showVenueDropdown = false;
 
   @override
   void initState() {
@@ -113,6 +118,12 @@ class _EditVenueScreenState extends State<EditVenueScreen> {
     _fetchCategories();
     _fetchTags();
     _fetchAmenities();
+
+     if (widget.venueData['images'] != null) {
+    _existingImageUrls = (widget.venueData['images'] as List)
+        .map((img) => img['image'].toString())
+        .toList();
+  }
   }
 
   Future<void> _fetchCategories() async {
@@ -205,25 +216,27 @@ class _EditVenueScreenState extends State<EditVenueScreen> {
     super.dispose();
   }
 
+  // Updated: Pick multiple images from gallery and add to _selectedImages
   Future<void> _pickImageFromGallery() async {
     try {
-      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-      if (image != null) {
+      final List<XFile>? images = await _picker.pickMultiImage();
+      if (images != null && images.isNotEmpty) {
         setState(() {
-          _selectedImage = image;
+          _selectedImages.addAll(images);
         });
       }
     } catch (e) {
-      Fluttertoast.showToast(msg: 'Error picking image: $e');
+      Fluttertoast.showToast(msg: 'Error picking images: $e');
     }
   }
 
+  // Updated: Pick a single image from camera and add to _selectedImages
   Future<void> _pickImageFromCamera() async {
     try {
       final XFile? image = await _picker.pickImage(source: ImageSource.camera);
       if (image != null) {
         setState(() {
-          _selectedImage = image;
+          _selectedImages.add(image);
         });
       }
     } catch (e) {
@@ -231,6 +244,7 @@ class _EditVenueScreenState extends State<EditVenueScreen> {
     }
   }
 
+  // Updated: Show image picker sheet (gallery & camera)
   void _showImagePickerSheet() {
     showModalBottomSheet(
       context: context,
@@ -259,12 +273,185 @@ class _EditVenueScreenState extends State<EditVenueScreen> {
         );
       },
     );
+    
+  }
+  void _openImageViewer(String imageUrl) {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => Scaffold(
+        backgroundColor: Colors.black,
+        appBar: AppBar(
+          backgroundColor: Colors.black,
+          iconTheme: const IconThemeData(color: Colors.white),
+        ),
+        body: Center(
+          child: InteractiveViewer(
+            child: Image.network(imageUrl),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+void _openLocalImageViewer(File imageFile) {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => Scaffold(
+        backgroundColor: Colors.black,
+        appBar: AppBar(
+          backgroundColor: Colors.black,
+          iconTheme: const IconThemeData(color: Colors.white),
+        ),
+        body: Center(
+          child: InteractiveViewer(
+            child: Image.file(imageFile),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+Widget _buildSelectedImages() {
+  List<Widget> imageWidgets = [];
+
+  // Existing images
+  for (int i = 0; i < _existingImageUrls.length; i++) {
+    String url = _existingImageUrls[i];
+
+    imageWidgets.add(
+      Padding(
+        padding: const EdgeInsets.only(right: 8.0),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            GestureDetector(
+              onTap: () => _openImageViewer(url),
+              child: Container(
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: Colors.grey.shade400,
+                    width: 1,
+                  ),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: Image.network(
+                    url,
+                    width: 80,
+                    height: 80,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              top: 2,
+              right: 2,
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _existingImageUrls.removeAt(i);
+                  });
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    color: const Color.fromRGBO(255, 130, 16, 1),
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  child: const Icon(
+                    Icons.close,
+                    color: Colors.white,
+                    size: 14,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
-  /// Custom Category Dropdown Widget:
-  /// When tapped, this opens a dialog with a simple list of categories.
+   // New images picked by user
+  for (int i = 0; i < _selectedImages.length; i++) {
+    XFile xfile = _selectedImages[i];
+    File imageFile = File(xfile.path);
+
+    imageWidgets.add(
+      Padding(
+        padding: const EdgeInsets.only(right: 8.0),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            GestureDetector(
+              onTap: () => _openLocalImageViewer(imageFile),
+              child: Container(
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: Colors.grey.shade400,
+                    width: 1,
+                  ),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: Image.file(
+                    imageFile,
+                    width: 80,
+                    height: 80,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              top: -6,
+              right: -6,
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _selectedImages.removeAt(i);
+                  });
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: const Color.fromRGBO(255, 130, 16, 1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.close,
+                    color: Colors.white,
+                    size: 14,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+    if (imageWidgets.isEmpty) return const SizedBox();
+
+  return SizedBox(
+    height: 80,
+    child: ListView(
+      scrollDirection: Axis.horizontal,
+      children: imageWidgets,
+    ),
+  );
+}
+
+
+  /// Custom Category Dropdown Widget
   Widget _buildCategoryDropdown() {
-    // Determine the name for the currently selected category.
     final selectedCategory = _allCategories.firstWhere(
       (cat) => cat['id'].toString() == _selectedCategoryId,
       orElse: () => {'name': 'Select Category'},
@@ -276,15 +463,19 @@ class _EditVenueScreenState extends State<EditVenueScreen> {
       child: InputDecorator(
         decoration: InputDecoration(
           labelText: 'Category',
-          border: OutlineInputBorder(
-            borderSide: BorderSide(color: Design.primaryColorOrange),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderSide: BorderSide(
-              color: Design.primaryColorOrange,
-              width: 20.0,
-            ),
-          ),
+           border: OutlineInputBorder(
+      borderSide: BorderSide(color: Design.primaryColorOrange),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderSide: BorderSide(color: Design.black),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderSide: BorderSide(color: Design.primaryColorOrange, width: 2.0),
+    ),
+    errorBorder: OutlineInputBorder(
+      borderSide: const BorderSide(color: Colors.red, width: 2.0),
+    ),
+          // You may adjust focusedBorder properties as needed.
         ),
         child: Text(
           selectedCategoryName,
@@ -294,114 +485,121 @@ class _EditVenueScreenState extends State<EditVenueScreen> {
     );
   }
 
-  /// The dialog opens with a list of categories.
- void _showCategorySelectionDialog() {
-  String localSearchText = '';
-  List filteredCategories = _allCategories;
-
-  showDialog(
-    context: context,
-    builder: (context) {
-      return StatefulBuilder(builder: (context, setStateDialog) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          title: const Text(
-            "Select Category",
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          content: SizedBox(
-            width: double.maxFinite,
-            height: 220,
-            child: Column(
-              children: [
-                TextField(
-                  style: const TextStyle(fontSize: 12),
-                  decoration: InputDecoration(
-                    labelText: 'Search Categories',
-                    labelStyle: const TextStyle(fontSize: 14),
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(
-                      vertical: 8,
-                      horizontal: 10,
-                    ),
-                    border: OutlineInputBorder(
-                      borderSide: BorderSide(
-                        color: Design.primaryColorOrange,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(
-                        color: Design.primaryColorOrange,
-                        width: 2.0,
-                      ),
-                    ),
-                  ),
-                  onChanged: (value) {
-                    setStateDialog(() {
-                      localSearchText = value;
-                      filteredCategories = _allCategories
-                          .where((cat) => cat['name']
-                              .toString()
-                              .toLowerCase()
-                              .contains(value.toLowerCase()))
-                          .toList();
-                    });
-                  },
-                ),
-                const SizedBox(height: 10),
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: filteredCategories.length,
-                    itemBuilder: (context, index) {
-                      final category = filteredCategories[index];
-                      final catId = category['id'].toString();
-                      final catName = category['name'].toString();
-                      final isSelected = _selectedCategoryId == catId;
-
-                      return InkWell(
-                        onTap: () {
-                          setState(() {
-                            _selectedCategoryId = catId;
-                          });
-                          Navigator.of(context).pop();
-                        },
-                        child: Container(
-                          color: isSelected
-                              ? Design.primaryColorOrange.withOpacity(0.1)
-                              : Colors.transparent,
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 10, horizontal: 8),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  catName,
-                                  style: const TextStyle(fontSize: 14),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              if (isSelected)
-                                Icon(Icons.check,
-                                    color: Design.primaryColorOrange, size: 18),
-                            ],
+  /// Dialog to select a category with search functionality.
+  void _showCategorySelectionDialog() {
+    String localSearchText = '';
+    List filteredCategories = _allCategories;
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              title: const Text(
+                "Select Category",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+              content: SizedBox(
+                width: double.maxFinite,
+                height: 220,
+                child: Column(
+                  children: [
+                    TextField(
+                      style: const TextStyle(fontSize: 12),
+                      decoration: InputDecoration(
+                        labelText: 'Search Categories',
+                        labelStyle: const TextStyle(fontSize: 14),
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 8,
+                          horizontal: 10,
+                        ),
+                        border: OutlineInputBorder(
+                          borderSide: BorderSide(
+                            color: Design.primaryColorOrange,
                           ),
                         ),
-                      );
-                    },
-                  ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(
+                            color: Design.primaryColorOrange,
+                            width: 2.0,
+                          ),
+                        ),
+                      ),
+                      onChanged: (value) {
+                        setStateDialog(() {
+                          localSearchText = value;
+                          filteredCategories =
+                              _allCategories
+                                  .where(
+                                    (cat) => cat['name']
+                                        .toString()
+                                        .toLowerCase()
+                                        .contains(value.toLowerCase()),
+                                  )
+                                  .toList();
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 10),
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: filteredCategories.length,
+                        itemBuilder: (context, index) {
+                          final category = filteredCategories[index];
+                          final catId = category['id'].toString();
+                          final catName = category['name'].toString();
+                          final isSelected = _selectedCategoryId == catId;
+                          return InkWell(
+                            onTap: () {
+                              setState(() {
+                                _selectedCategoryId = catId;
+                              });
+                              Navigator.of(context).pop();
+                            },
+                            child: Container(
+                              color:
+                                  isSelected
+                                      ? Design.primaryColorOrange.withOpacity(
+                                        0.1,
+                                      )
+                                      : Colors.transparent,
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 10,
+                                horizontal: 8,
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      catName,
+                                      style: const TextStyle(fontSize: 14),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  if (isSelected)
+                                    Icon(
+                                      Icons.check,
+                                      color: Design.primaryColorOrange,
+                                      size: 18,
+                                    ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
-      });
-    },
-  );
-}
-
+      },
+    );
+  }
 
   Widget _buildTagsDropdown() {
     final selectedTagNames =
@@ -424,45 +622,39 @@ class _EditVenueScreenState extends State<EditVenueScreen> {
                           tag['name']?.toString().toLowerCase() ?? '';
                       return tagName.contains(localSearchText.toLowerCase());
                     }).toList();
-
                 return AlertDialog(
                   backgroundColor: Colors.white,
-                 title: const Text(
-  "Select Tags",
-  style: TextStyle(
-    fontSize: 18, // or whatever size you want
-    fontWeight: FontWeight.w600, // optional
-  ),
-),
-
+                  title: const Text(
+                    "Select Tags",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                  ),
                   content: SizedBox(
                     width: double.maxFinite,
                     height: 200,
                     child: Column(
                       children: [
                         TextField(
-                          style: const TextStyle(fontSize: 12), // Smaller text
+                          style: const TextStyle(fontSize: 12),
                           decoration: InputDecoration(
                             labelText: 'Search Tags',
-                            labelStyle: const TextStyle(
-                              fontSize: 14,
-                            ), // Smaller label
-                            isDense: true, // Reduces vertical height
+                            labelStyle: const TextStyle(fontSize: 14),
+                            isDense: true,
                             contentPadding: const EdgeInsets.symmetric(
                               vertical: 8,
                               horizontal: 10,
-                            ), // Tight padding
-                            border: OutlineInputBorder(
-                              borderSide: BorderSide(
-                                color: Design.primaryColorOrange,
-                              ),
                             ),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(
-                                color: Design.primaryColorOrange,
-                                width: 2.0,
-                              ),
-                            ),
+                           border: OutlineInputBorder(
+      borderSide: BorderSide(color: Design.primaryColorOrange),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderSide: BorderSide(color: Design.black),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderSide: BorderSide(color: Design.primaryColorOrange, width: 2.0),
+    ),
+    errorBorder: OutlineInputBorder(
+      borderSide: const BorderSide(color: Colors.red, width: 2.0),
+    ),
                           ),
                           onChanged: (value) {
                             setStateDialog(() {
@@ -470,7 +662,6 @@ class _EditVenueScreenState extends State<EditVenueScreen> {
                             });
                           },
                         ),
-
                         const SizedBox(height: 10),
                         Expanded(
                           child: ListView.builder(
@@ -489,7 +680,7 @@ class _EditVenueScreenState extends State<EditVenueScreen> {
                                 child: Row(
                                   children: [
                                     Transform.scale(
-                                      scale: 0.75, // Shrinks the checkbox
+                                      scale: 0.75,
                                       child: Checkbox(
                                         value: isSelected,
                                         activeColor: Design.primaryColorOrange,
@@ -512,9 +703,7 @@ class _EditVenueScreenState extends State<EditVenueScreen> {
                                         },
                                       ),
                                     ),
-                                    const SizedBox(
-                                      width: 8,
-                                    ), // Small spacing between checkbox and text
+                                    const SizedBox(width: 8),
                                     Expanded(
                                       child: Text(
                                         tagName,
@@ -551,15 +740,19 @@ class _EditVenueScreenState extends State<EditVenueScreen> {
       child: InputDecorator(
         decoration: InputDecoration(
           labelText: "Tags",
-          border: OutlineInputBorder(
-            borderSide: BorderSide(color: Design.primaryColorOrange),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderSide: BorderSide(
-              color: Design.primaryColorOrange,
-              width: 2.0,
-            ),
-          ),
+           border: OutlineInputBorder(
+      borderSide: BorderSide(color: Design.primaryColorOrange),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderSide: BorderSide(color: Design.black),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderSide: BorderSide(color: Design.primaryColorOrange, width: 2.0),
+    ),
+    errorBorder: OutlineInputBorder(
+      borderSide: const BorderSide(color: Colors.red, width: 2.0),
+    ),
+
         ),
         child: Text(
           selectedTagNames.isNotEmpty
@@ -570,238 +763,247 @@ class _EditVenueScreenState extends State<EditVenueScreen> {
       ),
     );
   }
-// Updated Amenities Dropdown Widget
-// Updated Amenities Dropdown Widget
-Widget _buildAmenitiesDropdown() {
-  final selectedAmenityNames = _allAmenities
-      .where((am) => _selectedAmenityIds.contains(am['id']))
-      .map((am) => am['name'].toString())
-      .toList();
 
-  return InkWell(
-    onTap: () async {
-      await showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          String localSearchText = _amenitySearchText;
-          return StatefulBuilder(
-            builder: (context, setStateDialog) {
-              final filteredAmenities = _allAmenities.where((am) {
-                final name = am['name']?.toString().toLowerCase() ?? '';
-                return name.contains(localSearchText.toLowerCase());
-              }).toList();
+  /// Updated Amenities Dropdown Widget (using a similar style as Tags)
+  Widget _buildAmenitiesDropdown() {
+    final selectedAmenityNames =
+        _allAmenities
+            .where((am) => _selectedAmenityIds.contains(am['id']))
+            .map((am) => am['name'].toString())
+            .toList();
 
-              return AlertDialog(
-                backgroundColor: Colors.white,
-                   title: const Text(
-  "Select Amenities",
-  style: TextStyle(
-    fontSize: 18, // or whatever size you want
-    fontWeight: FontWeight.w600, // optional
-  ),
-),
-
-                content: SizedBox(
-                  width: double.maxFinite,
-                  height: 200,
-                  child: Column(
-                    children: [
-                      TextField(
-                        style: const TextStyle(fontSize: 12),
-                        decoration: InputDecoration(
-                          labelText: 'Search Amenities',
-                          labelStyle: const TextStyle(fontSize: 14),
-                          isDense: true,
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 8,
-                            horizontal: 10,
+    return InkWell(
+      onTap: () async {
+        await showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            String localSearchText = _amenitySearchText;
+            return StatefulBuilder(
+              builder: (context, setStateDialog) {
+                final filteredAmenities =
+                    _allAmenities.where((am) {
+                      final name = am['name']?.toString().toLowerCase() ?? '';
+                      return name.contains(localSearchText.toLowerCase());
+                    }).toList();
+                return AlertDialog(
+                  backgroundColor: Colors.white,
+                  title: const Text(
+                    "Select Amenities",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                  ),
+                  content: SizedBox(
+                    width: double.maxFinite,
+                    height: 200,
+                    child: Column(
+                      children: [
+                        TextField(
+                          style: const TextStyle(fontSize: 12),
+                          decoration: InputDecoration(
+                            labelText: 'Search Amenities',
+                            labelStyle: const TextStyle(fontSize: 14),
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 8,
+                              horizontal: 10,
+                            ),
+                           border: OutlineInputBorder(
+      borderSide: BorderSide(color: Design.primaryColorOrange),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderSide: BorderSide(color: Design.black),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderSide: BorderSide(color: Design.primaryColorOrange, width: 2.0),
+    ),
+    errorBorder: OutlineInputBorder(
+      borderSide: const BorderSide(color: Colors.red, width: 2.0),
+    ),
                           ),
-                          border: OutlineInputBorder(
-                            borderSide:
-                                BorderSide(color: Design.primaryColorOrange),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                                color: Design.primaryColorOrange, width: 2.0),
-                          ),
-                        ),
-                        onChanged: (value) {
-                          setStateDialog(() {
-                            localSearchText = value;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 10),
-                      Expanded(
-                        child: ListView.builder(
-                          itemCount: filteredAmenities.length,
-                          itemBuilder: (context, index) {
-                            final amenity = filteredAmenities[index];
-                            final amenityId = amenity['id'] as int;
-                            final amenityName = amenity['name'].toString();
-                            final isSelected =
-                                _selectedAmenityIds.contains(amenityId);
-                            return Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 1),
-                              child: Row(
-                                children: [
-                                  Transform.scale(
-                                    scale: 0.75, // Shrink the checkbox
-                                    child: Checkbox(
-                                      value: isSelected,
-                                      activeColor: Design.primaryColorOrange,
-                                      visualDensity: const VisualDensity(
-                                        vertical: -4,
-                                        horizontal: -4,
-                                      ),
-                                      materialTapTargetSize:
-                                          MaterialTapTargetSize.shrinkWrap,
-                                      onChanged: (bool? value) {
-                                        setStateDialog(() {
-                                          setState(() {
-                                            if (value == true) {
-                                              _selectedAmenityIds.add(amenityId);
-                                            } else {
-                                              _selectedAmenityIds
-                                                  .remove(amenityId);
-                                            }
-                                          });
-                                        });
-                                      },
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      amenityName,
-                                      style: const TextStyle(fontSize: 15),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
+                          onChanged: (value) {
+                            setStateDialog(() {
+                              localSearchText = value;
+                            });
                           },
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 10),
+                        Expanded(
+                          child: ListView.builder(
+                            itemCount: filteredAmenities.length,
+                            itemBuilder: (context, index) {
+                              final amenity = filteredAmenities[index];
+                              final amenityId = amenity['id'] as int;
+                              final amenityName = amenity['name'].toString();
+                              final isSelected = _selectedAmenityIds.contains(
+                                amenityId,
+                              );
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 1,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Transform.scale(
+                                      scale: 0.75,
+                                      child: Checkbox(
+                                        value: isSelected,
+                                        activeColor: Design.primaryColorOrange,
+                                        visualDensity: const VisualDensity(
+                                          vertical: -4,
+                                          horizontal: -4,
+                                        ),
+                                        materialTapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
+                                        onChanged: (bool? value) {
+                                          setStateDialog(() {
+                                            setState(() {
+                                              if (value == true) {
+                                                _selectedAmenityIds.add(
+                                                  amenityId,
+                                                );
+                                              } else {
+                                                _selectedAmenityIds.remove(
+                                                  amenityId,
+                                                );
+                                              }
+                                            });
+                                          });
+                                        },
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        amenityName,
+                                        style: const TextStyle(fontSize: 15),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      setState(() {
-                        _amenitySearchText = localSearchText;
-                      });
-                      Navigator.pop(context);
-                    },
-                    child: const Text("OK"),
-                  ),
-                ],
-              );
-            },
-          );
-        },
-      );
-    },
-    child: InputDecorator(
-      decoration: InputDecoration(
-        labelText: "Amenities",
-        border: OutlineInputBorder(
-          borderSide: BorderSide(color: Design.primaryColorOrange),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderSide:
-              BorderSide(color: Design.primaryColorOrange, width: 2.0),
-        ),
-      ),
-      child: Text(
-        selectedAmenityNames.isNotEmpty
-            ? selectedAmenityNames.join(", ")
-            : "Select Amenities",
-        style: const TextStyle(color: Colors.black),
-      ),
-    ),
-  );
-}
-
-
-
-
-
-// Updated Amenities Selection Dialog
-void _showAmenitiesSelectionDialog() {
-  showDialog(
-    context: context,
-    barrierDismissible: true, // Allows dismissal without an explicit "OK" button
-    builder: (context) {
-      return AlertDialog(
-        title: const Text('Select Amenities'),
-        content: Container(
-          width: double.maxFinite,
-          height: 300, // Adjust to display 4 items at a time (2 rows in a 2-column grid)
-          child: StatefulBuilder(
-            builder: (context, setStateDialog) {
-              return GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2, // 2 columns
-                  childAspectRatio: 3, // Shorter card height
-                  crossAxisSpacing: 8,
-                  mainAxisSpacing: 8,
-                ),
-                itemCount: _allAmenities.length,
-                itemBuilder: (context, index) {
-                  final amenity = _allAmenities[index];
-                  final amenityId = amenity['id'];
-                  final amenityName = amenity['name'].toString();
-                  final isSelected = _selectedAmenityIds.contains(amenityId);
-                  return InkWell(
-                    onTap: () {
-                      setStateDialog(() {
+                  actions: [
+                    TextButton(
+                      onPressed: () {
                         setState(() {
-                          if (isSelected) {
-                            _selectedAmenityIds.remove(amenityId);
-                          } else {
-                            _selectedAmenityIds.add(amenityId);
-                          }
+                          _amenitySearchText = localSearchText;
                         });
-                      });
-                    },
-                    child: Card(
-                      margin: EdgeInsets.zero,
-                      color: isSelected 
-                          ? Design.primaryColorOrange.withOpacity(0.2)
-                          : Colors.white,
-                      child: Center(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                          child: Text(
-                            amenityName,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: isSelected 
-                                  ? Design.primaryColorOrange 
-                                  : Colors.black,
+                        Navigator.pop(context);
+                      },
+                      child: const Text("OK"),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        );
+      },
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: "Amenities",
+         border: OutlineInputBorder(
+      borderSide: BorderSide(color: Design.primaryColorOrange),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderSide: BorderSide(color: Design.black),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderSide: BorderSide(color: Design.primaryColorOrange, width: 2.0),
+    ),
+    errorBorder: OutlineInputBorder(
+      borderSide: const BorderSide(color: Colors.red, width: 2.0),
+    ),
+        ),
+        child: Text(
+          selectedAmenityNames.isNotEmpty
+              ? selectedAmenityNames.join(", ")
+              : "Select Amenities",
+          style: const TextStyle(color: Colors.black),
+        ),
+      ),
+    );
+  }
+
+  // (Optional) Use _showAmenitiesSelectionDialog if you want the grid style.
+  // Currently, _buildAmenitiesDropdown uses a list style similar to tags.
+  void _showAmenitiesSelectionDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Select Amenities'),
+          content: Container(
+            width: double.maxFinite,
+            height: 300,
+            child: StatefulBuilder(
+              builder: (context, setStateDialog) {
+                return GridView.builder(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    childAspectRatio: 3,
+                    crossAxisSpacing: 8,
+                    mainAxisSpacing: 8,
+                  ),
+                  itemCount: _allAmenities.length,
+                  itemBuilder: (context, index) {
+                    final amenity = _allAmenities[index];
+                    final amenityId = amenity['id'];
+                    final amenityName = amenity['name'].toString();
+                    final isSelected = _selectedAmenityIds.contains(amenityId);
+                    return InkWell(
+                      onTap: () {
+                        setStateDialog(() {
+                          setState(() {
+                            if (isSelected) {
+                              _selectedAmenityIds.remove(amenityId);
+                            } else {
+                              _selectedAmenityIds.add(amenityId);
+                            }
+                          });
+                        });
+                      },
+                      child: Card(
+                        margin: EdgeInsets.zero,
+                        color:
+                            isSelected
+                                ? Design.primaryColorOrange.withOpacity(0.2)
+                                : Colors.white,
+                        child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8.0,
+                            ),
+                            child: Text(
+                              amenityName,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color:
+                                    isSelected
+                                        ? Design.primaryColorOrange
+                                        : Colors.black,
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  );
-                },
-              );
-            },
+                    );
+                  },
+                );
+              },
+            ),
           ),
-        ),
-      );
-    },
-  );
-}
-
-
-
+        );
+      },
+    );
+  }
 
   Future<void> _updateVenue() async {
     if (_nameController.text.isEmpty ||
@@ -857,19 +1059,19 @@ void _showAmenitiesSelectionDialog() {
       request.fields['tag_ids'] = jsonEncode(_selectedTagIds);
       request.fields['amenity_ids'] = jsonEncode(_selectedAmenityIds);
 
-      // Attach image if selected
-      print('Debugging fields: ${request.fields}');
-
-      if (_selectedImage != null) {
-        final stream = http.ByteStream(_selectedImage!.openRead());
-        final length = await _selectedImage!.length();
-        final multipartFile = http.MultipartFile(
-          'images[]',
-          stream,
-          length,
-          filename: _selectedImage!.name,
-        );
-        request.files.add(multipartFile);
+      // Attach images from _selectedImages
+      if (_selectedImages.isNotEmpty) {
+        for (var image in _selectedImages) {
+          final stream = http.ByteStream(image.openRead());
+          final length = await image.length();
+          final multipartFile = http.MultipartFile(
+            'images[]',
+            stream,
+            length,
+            filename: image.name,
+          );
+          request.files.add(multipartFile);
+        }
       }
 
       final response = await request.send();
@@ -915,15 +1117,7 @@ void _showAmenitiesSelectionDialog() {
 
   @override
   Widget build(BuildContext context) {
-    final selectedImageWidget =
-        _selectedImage != null
-            ? Image.file(
-              File(_selectedImage!.path),
-              width: 80,
-              height: 80,
-              fit: BoxFit.cover,
-            )
-            : const SizedBox();
+    final selectedImagesWidget = _buildSelectedImages();
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -940,23 +1134,28 @@ void _showAmenitiesSelectionDialog() {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Venue Name
-                  TextField(
-                    controller: _nameController,
-                    decoration: InputDecoration(
-                      labelText: 'Venue Name',
-                      border: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: Design.primaryColorOrange,
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: Design.primaryColorOrange,
-                          width: 2.0,
-                        ),
-                      ),
-                    ),
-                  ),
+           TextField(
+  controller: _nameController,
+  decoration: InputDecoration(
+    labelText: 'Venue Name',
+    border: OutlineInputBorder(
+      borderSide: BorderSide(color: Design.black),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderSide: BorderSide(color: Design.black),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderSide: BorderSide(color: Design.primaryColorOrange, width: 2.0),
+    ),
+    errorBorder: OutlineInputBorder(
+      borderSide: const BorderSide(color: Colors.red, width: 2.0),
+    ),
+  ),
+),
+
+
+
+
                   const SizedBox(height: 16),
                   // Custom Category Dropdown
                   _buildCategoryDropdown(),
@@ -966,135 +1165,157 @@ void _showAmenitiesSelectionDialog() {
                     controller: _suburbController,
                     decoration: InputDecoration(
                       labelText: 'Suburb',
-                      border: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: Design.primaryColorOrange,
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: Design.primaryColorOrange,
-                          width: 2.0,
-                        ),
-                      ),
+                     border: OutlineInputBorder(
+      borderSide: BorderSide(color: Design.black),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderSide: BorderSide(color: Design.black),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderSide: BorderSide(color: Design.primaryColorOrange, width: 2.0),
+    ),
+    errorBorder: OutlineInputBorder(
+      borderSide: const BorderSide(color: Colors.red, width: 2.0),
+    ),
                     ),
                   ),
                   const SizedBox(height: 16),
                   // Description
-                  TextField(
-                    controller: _descriptionController,
-                    decoration: InputDecoration(
-                      labelText: 'Description',
-                      border: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: Design.primaryColorOrange,
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: Design.primaryColorOrange,
-                          width: 2.0,
-                        ),
-                      ),
-                    ),
-                    maxLines: 3,
-                  ),
-                  const SizedBox(height: 16),
-                  // Location
-                TextField(
-  controller: _locationController,
-  readOnly: true, // Prevent manual editing
-  onTap: () async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => LocationPicker()),
-    );
-
-    if (result != null && result is Map<String, dynamic>) {
-      _locationController.text = result['address'] ?? '';
-      // You can also access lat/lng here:
-      // double lat = result['lat'];
-      // double lng = result['lng'];
-    }
-  },
+                 TextField(
+  controller: _descriptionController,
   decoration: InputDecoration(
-    labelText: 'Location',
+    labelText: 'Description',
     border: OutlineInputBorder(
       borderSide: BorderSide(color: Design.primaryColorOrange),
     ),
+    enabledBorder: OutlineInputBorder(
+      borderSide: BorderSide(color: Design.black),
+    ),
     focusedBorder: OutlineInputBorder(
-      borderSide: BorderSide(
-        color: Design.primaryColorOrange,
-        width: 2.0,
-      ),
+      borderSide: BorderSide(color: Design.primaryColorOrange, width: 2.0),
+    ),
+    errorBorder: OutlineInputBorder(
+      borderSide: const BorderSide(color: Colors.red, width: 2.0),
     ),
   ),
+  maxLines: 3,
 ),
 
+
+
+
                   const SizedBox(height: 16),
-                  // Latitude and Longitude Row
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _latController,
-                          decoration: InputDecoration(
-                            labelText: 'Latitude',
-                            border: OutlineInputBorder(
-                              borderSide: BorderSide(
-                                color: Design.primaryColorOrange,
-                              ),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(
-                                color: Design.primaryColorOrange,
-                                width: 2.0,
-                              ),
-                            ),
+                  // Location (read-only with onTap for LocationPicker)
+                  TextField(
+                    controller: _locationController,
+                    readOnly: true,
+                    onTap: () async {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => LocationPicker(
+                            initialPosition: _latController.text.isNotEmpty && _lonController.text.isNotEmpty
+            ? LatLng(
+                double.parse(_latController.text),
+                double.parse(_lonController.text),
+              )
+            : null,
                           ),
-                          keyboardType: TextInputType.number,
                         ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: TextField(
-                          controller: _lonController,
-                          decoration: InputDecoration(
-                            labelText: 'Longitude',
-                            border: OutlineInputBorder(
-                              borderSide: BorderSide(
-                                color: Design.primaryColorOrange,
-                              ),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(
-                                color: Design.primaryColorOrange,
-                                width: 2.0,
-                              ),
-                            ),
-                          ),
-                          keyboardType: TextInputType.number,
-                        ),
-                      ),
-                    ],
+                      );
+                      if (result != null && result is Map<String, dynamic>) {
+                        setState(() {
+                          _locationController.text = result['address'] ?? '';
+                          _latController.text = result['lat']?.toString() ?? '';
+                          _lonController.text = result['lng']?.toString() ?? '';
+                        });
+                      }
+                    },
+                    decoration: InputDecoration(
+                      labelText: 'Location',
+                       border: OutlineInputBorder(
+      borderSide: BorderSide(color: Design.primaryColorOrange),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderSide: BorderSide(color: Design.black),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderSide: BorderSide(color: Design.primaryColorOrange, width: 2.0),
+    ),
+    errorBorder: OutlineInputBorder(
+      borderSide: const BorderSide(color: Colors.red, width: 2.0),
+    ),
+                    ),
                   ),
                   const SizedBox(height: 16),
+                  // Latitude and Longitude Row
+    //               Row(
+    //                 children: [
+    //                   Expanded(
+    //                     child: TextField(
+    //                       controller: _latController,
+    //                       decoration: InputDecoration(
+    //                         labelText: 'Latitude',
+    //                         border: OutlineInputBorder(
+    //   borderSide: BorderSide(color: Design.primaryColorOrange),
+    // ),
+    // enabledBorder: OutlineInputBorder(
+    //   borderSide: BorderSide(color: Design.black),
+    // ),
+    // focusedBorder: OutlineInputBorder(
+    //   borderSide: BorderSide(color: Design.primaryColorOrange, width: 2.0),
+    // ),
+    // errorBorder: OutlineInputBorder(
+    //   borderSide: const BorderSide(color: Colors.red, width: 2.0),
+    // ),
+                           
+    //                       ),
+    //                       keyboardType: TextInputType.number,
+    //                     ),
+    //                   ),
+    //                   const SizedBox(width: 16),
+    //                   Expanded(
+    //                     child: TextField(
+    //                       controller: _lonController,
+    //                       decoration: InputDecoration(
+    //                         labelText: 'Longitude',
+    //                          border: OutlineInputBorder(
+    //   borderSide: BorderSide(color: Design.primaryColorOrange),
+    // ),
+    // enabledBorder: OutlineInputBorder(
+    //   borderSide: BorderSide(color: Design.black),
+    // ),
+    // focusedBorder: OutlineInputBorder(
+    //   borderSide: BorderSide(color: Design.primaryColorOrange, width: 2.0),
+    // ),
+    // errorBorder: OutlineInputBorder(
+    //   borderSide: const BorderSide(color: Colors.red, width: 2.0),
+    // ),
+                          
+    //                       ),
+    //                       keyboardType: TextInputType.number,
+    //                     ),
+    //                   ),
+    //                 ],
+    //               ),
+    //               const SizedBox(height: 16),
                   // Notice
                   TextField(
                     controller: _noticeController,
                     decoration: InputDecoration(
                       labelText: 'Notice',
-                      border: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: Design.primaryColorOrange,
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: Design.primaryColorOrange,
-                          width: 2.0,
-                        ),
-                      ),
+                     border: OutlineInputBorder(
+      borderSide: BorderSide(color: Design.primaryColorOrange),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderSide: BorderSide(color: Design.black),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderSide: BorderSide(color: Design.primaryColorOrange, width: 2.0),
+    ),
+    errorBorder: OutlineInputBorder(
+      borderSide: const BorderSide(color: Colors.red, width: 2.0),
+    ),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -1107,16 +1328,17 @@ void _showAmenitiesSelectionDialog() {
                           decoration: InputDecoration(
                             labelText: 'Feather Points',
                             border: OutlineInputBorder(
-                              borderSide: BorderSide(
-                                color: Design.primaryColorOrange,
-                              ),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(
-                                color: Design.primaryColorOrange,
-                                width: 2.0,
-                              ),
-                            ),
+      borderSide: BorderSide(color: Design.primaryColorOrange),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderSide: BorderSide(color: Design.black),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderSide: BorderSide(color: Design.primaryColorOrange, width: 2.0),
+    ),
+    errorBorder: OutlineInputBorder(
+      borderSide: const BorderSide(color: Colors.red, width: 2.0),
+    ),
                           ),
                           keyboardType: TextInputType.number,
                         ),
@@ -1128,16 +1350,17 @@ void _showAmenitiesSelectionDialog() {
                           decoration: InputDecoration(
                             labelText: 'Venue Points',
                             border: OutlineInputBorder(
-                              borderSide: BorderSide(
-                                color: Design.primaryColorOrange,
-                              ),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(
-                                color: Design.primaryColorOrange,
-                                width: 2.0,
-                              ),
-                            ),
+      borderSide: BorderSide(color: Design.primaryColorOrange),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderSide: BorderSide(color: Design.black),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderSide: BorderSide(color: Design.primaryColorOrange, width: 2.0),
+    ),
+    errorBorder: OutlineInputBorder(
+      borderSide: const BorderSide(color: Colors.red, width: 2.0),
+    ),
                           ),
                           keyboardType: TextInputType.number,
                         ),
@@ -1152,25 +1375,84 @@ void _showAmenitiesSelectionDialog() {
                   _buildAmenitiesDropdown(),
                   const SizedBox(height: 16),
                   // Image Picker Row
-                  Row(
-                    children: [
-                      ElevatedButton(
-                        onPressed: _showImagePickerSheet,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Design.primaryColorOrange,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: const Text(
-                          'Pick Image',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      selectedImageWidget,
-                    ],
-                  ),
+             Column(
+  crossAxisAlignment: CrossAxisAlignment.start,
+  children: [
+    // 🔝 Label with camera icon
+ 
+   
+    Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+ElevatedButton(
+  onPressed: _showImagePickerSheet,
+  style: ElevatedButton.styleFrom(
+    backgroundColor: Design.white,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(10),
+    ),
+    padding: EdgeInsets.zero, // Remove inner padding to align icon properly
+  ),
+  child: Stack(
+   children: [
+     
+  Padding(
+    padding: const EdgeInsets.symmetric(vertical:4,horizontal: 2),
+    child: Container(
+     
+      decoration: BoxDecoration(
+        // color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.4), // 👈 Grey shadow
+            blurRadius: 6,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(10),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            'Add Image(s)',
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.black87,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Image.asset(
+            'assets/camera.png',
+            height: 30,
+            width: 36,
+            fit: BoxFit.contain,
+            color: const Color.fromRGBO(255, 130, 16, 1),
+          ),
+        ],
+      ),
+    ),
+  ),
+],
+
+  ),
+),
+
+
+
+        const SizedBox(width: 16),
+        // 🖼 Image preview list
+        Expanded(child: _buildSelectedImages()),
+      ],
+    ),
+  ],
+),
+
+
+
+
                   const SizedBox(height: 24),
                   // Save Changes Button
                   SizedBox(
@@ -1199,9 +1481,15 @@ void _showAmenitiesSelectionDialog() {
           ),
           if (_isLoading)
             Container(
-              color: Colors.black26,
-              child: const Center(child: CircularProgressIndicator()),
-            ),
+  color: Colors.white.withOpacity(0.19),
+  child: Center(
+    child: Image.asset(
+      'assets/Bird_Full_Eye_Blinking.gif',
+      width: 100, // Adjust size as needed
+      height: 100,
+    ),
+  ),
+),
         ],
       ),
     );

@@ -54,12 +54,14 @@ class _CheckInsScreenState extends State<CheckInsScreen> {
         'Content-Type': 'application/json',
       };
 
-      final queryParams = selectedDate != null
-          ? {'date': DateFormat('yyyy-MM-dd').format(selectedDate!)}
-          : null;
+      final queryParams =
+          selectedDate != null
+              ? {'date': DateFormat('yyyy-MM-dd').format(selectedDate!)}
+              : null;
 
-      final uri = Uri.parse('http://165.232.152.77/api/vendor/venues-checkins')
-          .replace(queryParameters: queryParams);
+      final uri = Uri.parse(
+        'http://165.232.152.77/api/vendor/venues-checkins',
+      ).replace(queryParameters: queryParams);
 
       final response = await http
           .get(uri, headers: headers)
@@ -119,22 +121,23 @@ class _CheckInsScreenState extends State<CheckInsScreen> {
               ClipRRect(
                 borderRadius: BorderRadius.circular(50),
                 child: Image.network(
-                  item['category_image'] ?? 'https://picsum.photos/50',
+                  item['image'] ?? 'https://picsum.photos/50',
                   width: 50,
                   height: 50,
                   fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    width: 50,
-                    height: 50,
-                    color: Colors.grey[300],
-                    child: const Icon(Icons.image_not_supported),
-                  ),
+                  errorBuilder:
+                      (context, error, stackTrace) => Container(
+                        width: 50,
+                        height: 50,
+                        color: Colors.grey[300],
+                        child: const Icon(Icons.image_not_supported),
+                      ),
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: Text(
-                  item['category_name'] ?? 'Unknown',
+                  item['name'] ?? 'Unknown',
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
@@ -147,7 +150,7 @@ class _CheckInsScreenState extends State<CheckInsScreen> {
           const SizedBox(height: 12),
           const Divider(),
           const SizedBox(height: 12),
-          // Bottom row: "Today's Check Ins" + "Feathers Earn"
+          // Bottom row: "Today's Check-Ins" + "Feathers Earn"
           Row(
             children: [
               Expanded(
@@ -155,7 +158,7 @@ class _CheckInsScreenState extends State<CheckInsScreen> {
                   children: [
                     const Icon(
                       Icons.check_circle,
-                      color: Colors.blue,
+                      color: Color.fromRGBO(255, 130, 16, 1.0),
                       size: 20,
                     ),
                     const SizedBox(width: 8),
@@ -164,11 +167,8 @@ class _CheckInsScreenState extends State<CheckInsScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            "Today's Check Ins",
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey,
-                            ),
+                            "Today's Check-Ins",
+                            style: TextStyle(fontSize: 12, color: Colors.grey),
                             overflow: TextOverflow.ellipsis,
                           ),
                           Text(
@@ -206,11 +206,8 @@ class _CheckInsScreenState extends State<CheckInsScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            "Feathers earn",
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey,
-                            ),
+                            "Feathers Allotted",
+                            style: TextStyle(fontSize: 12, color: Colors.grey),
                             overflow: TextOverflow.ellipsis,
                           ),
                           Text(
@@ -246,12 +243,9 @@ class _CheckInsScreenState extends State<CheckInsScreen> {
                 const SizedBox(height: 16),
                 // Title centered
                 const Text(
-                  "Check Ins",
+                  "Check-Ins",
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
                 ),
                 // Date selector aligned to the right
                 Align(
@@ -266,9 +260,11 @@ class _CheckInsScreenState extends State<CheckInsScreen> {
                           Text(
                             selectedDate == null
                                 ? "Choose Date"
-                                : DateFormat('MMM d, yyyy').format(selectedDate!),
+                                : DateFormat(
+                                  'MMM d, yyyy',
+                                ).format(selectedDate!),
                             style: const TextStyle(
-                              color: Colors.blue,
+                              color: Color.fromRGBO(255, 130, 16, 1.0),
                               fontSize: 16,
                             ),
                             overflow: TextOverflow.ellipsis,
@@ -276,7 +272,7 @@ class _CheckInsScreenState extends State<CheckInsScreen> {
                           const SizedBox(width: 4),
                           const Icon(
                             Icons.arrow_drop_down,
-                            color: Colors.blue,
+                            color: Color.fromRGBO(255, 130, 16, 1.0),
                           ),
                         ],
                       ),
@@ -286,27 +282,43 @@ class _CheckInsScreenState extends State<CheckInsScreen> {
                 const SizedBox(height: 8),
                 // Body
                 Expanded(
-                  child: loader
-                      ? const Center(child: CircularProgressIndicator())
-                      : checkInData.isEmpty
+                  child:
+                      loader
+                          ? Container(
+                            color: Colors.white.withOpacity(0.19),
+                            child: Center(
+                              child: Image.asset(
+                                'assets/Bird_Full_Eye_Blinking.gif',
+                                width: 100, // Adjust size as needed
+                                height: 100,
+                              ),
+                            ),
+                          )
+                          : checkInData.isEmpty
                           ? const Center(child: Text('No Check-Ins Found'))
                           : ListView.builder(
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              itemCount: checkInData.length,
-                              itemBuilder: (context, index) {
-                                final item = checkInData[index];
-                                return buildCheckInItem(item);
-                              },
-                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            itemCount: checkInData.length,
+                            itemBuilder: (context, index) {
+                              final item = checkInData[index];
+                              return buildCheckInItem(item);
+                            },
+                          ),
                 ),
               ],
             ),
             // Loader overlay if needed
-            // if (loader)
-            //   Container(
-            //     color: Colors.black26,
-            //     child: const Center(child: CircularProgressIndicator()),
+            //             if (loader)
+            //              Container(
+            //   color: Colors.white.withOpacity(0.19),
+            //   child: Center(
+            //     child: Image.asset(
+            //       'assets/Bird_Full_Eye_Blinking.gif',
+            //       width: 100, // Adjust size as needed
+            //       height: 100,
+            //     ),
             //   ),
+            // ),
           ],
         ),
       ),

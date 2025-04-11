@@ -93,7 +93,17 @@ class _QRScanScreenState extends State<QRScanScreen> {
                               }
                             },
                           )
-                        : const Center(child: CircularProgressIndicator()),
+                        : Container(
+  color: Colors.white.withOpacity(0.19),
+  child: Center(
+    child: Image.asset(
+      'assets/Bird_Full_Eye_Blinking.gif',
+      width: 100, // Adjust size as needed
+      height: 100,
+    ),
+  ),
+)
+
                   ),
                   Container(
                     width: 250,

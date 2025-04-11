@@ -26,14 +26,14 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
 
   // Venues stored as a list of maps: [{'id': 1, 'name': 'Venue 1'}, ...]
   List<Map<String, dynamic>> _venues = [
-    {'id': null, 'name': 'Select Venue'}
+    {'id': null, 'name': 'Select Venue'},
   ];
   // Currently selected venue map
   Map<String, dynamic>? _selectedVenue;
 
   // Checkboxes for redeem type
   bool _useVenuePoints = false; // "feather_points"
-  bool _useAppPoints = false;   // "venue_points"
+  bool _useAppPoints = false; // "venue_points"
 
   // Image picking
   XFile? _pickedImage;
@@ -97,7 +97,7 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
         if (data['status'] == 'success' && data['data'] != null) {
           final List<dynamic> venuesData = data['data'];
           List<Map<String, dynamic>> fetchedVenues = [
-            {'id': null, 'name': 'Select Venue'}
+            {'id': null, 'name': 'Select Venue'},
           ];
 
           for (var v in venuesData) {
@@ -150,8 +150,10 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
     // final fee = _feeController.text.trim();
     final description = _descriptionController.text.trim();
 
-    final venuePoints = _venuePointsController.text.trim(); // user input for "Venue Points"
-    final appPoints = _appPointsController.text.trim();    // user input for "App Points"
+    final venuePoints =
+        _venuePointsController.text.trim(); // user input for "Venue Points"
+    final appPoints =
+        _appPointsController.text.trim(); // user input for "App Points"
 
     // Validation
     // if (name.isEmpty || fee.isEmpty || description.isEmpty) {
@@ -223,21 +225,21 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
       //   "feather_points,venue_points" if both
       String redeemBy = '';
       if (_useVenuePoints && _useAppPoints) {
-        redeemBy = 'feather_points,venue_points';
+        redeemBy = 'both';
       } else if (_useVenuePoints) {
-        redeemBy = 'feather_points';
-      } else if (_useAppPoints) {
         redeemBy = 'venue_points';
+      } else if (_useAppPoints) {
+        redeemBy = 'feathers_points';
       }
       request.fields['redeem_by'] = redeemBy;
 
       // If user checked "Venue Points", we send it in "feather_points"
       if (_useVenuePoints) {
-        request.fields['feather_points'] = venuePoints;
+        request.fields['venue_points'] = venuePoints;
       }
       // If user checked "App Points", we send it in "venue_points"
       if (_useAppPoints) {
-        request.fields['venue_points'] = appPoints;
+        request.fields['feather_points'] = appPoints;
       }
 
       // If user picked an image, attach it
@@ -258,26 +260,28 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
         final responseData = jsonDecode(response.body);
         if (responseData['status'] == 'success' ||
             (responseData['message'] != null &&
-                responseData['message']
-                    .toString()
-                    .toLowerCase()
-                    .contains('success'))) {
+                responseData['message'].toString().toLowerCase().contains(
+                  'success',
+                ))) {
           // Show success dialog
           showDialog(
             context: context,
-            builder: (_) => AlertDialog(
-              title: const Text('Success'),
-              content: const Text('Offer added successfully!'),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context); // Dismiss dialog
-                    Navigator.pop(context); // Go back to the previous screen
-                  },
-                  child: const Text('OK'),
-                )
-              ],
-            ),
+            builder:
+                (_) => AlertDialog(
+                  title: const Text('Success'),
+                  content: const Text('Offer added successfully!'),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context); // Dismiss dialog
+                        Navigator.pop(
+                          context,
+                        ); // Go back to the previous screen
+                      },
+                      child: const Text('OK'),
+                    ),
+                  ],
+                ),
           );
         } else {
           setState(() {
@@ -288,7 +292,8 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
         // Handle 422 or other errors
         final responseData = jsonDecode(response.body);
         setState(() {
-          _errorMessage = 'Error ${response.statusCode}: '
+          _errorMessage =
+              'Error ${response.statusCode}: '
               '${responseData['message'] ?? 'Unable to add offer.'}';
         });
       }
@@ -307,12 +312,12 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-     appBar: AppConstants.customAppBar(
-    context: context,
-    title: 'Add New Offer',
-    // Optionally, if you want a different back icon, you can pass:
-    // backIconAsset: 'assets/your_custom_back.png',
-  ),// 'back' is a String holding the asset path, e.g., 'assets/images/back_icon.png'
+      appBar: AppConstants.customAppBar(
+        context: context,
+        title: 'Add New Offer',
+        // Optionally, if you want a different back icon, you can pass:
+        // backIconAsset: 'assets/your_custom_back.png',
+      ), // 'back' is a String holding the asset path, e.g., 'assets/images/back_icon.png'
 
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -321,246 +326,258 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
           children: [
             const Text(
               "Enter Details",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
 
             // Name of Offer
-         const Text(
-  "Title of Offer",
-  style: TextStyle(fontSize: 16, color: Colors.black),
-),
+            const Text(
+              "Title of Offer",
+              style: TextStyle(fontSize: 16, color: Colors.black),
+            ),
 
- const SizedBox(height: 8),
-                          AppConstants.customTextField(controller: _nameController,
-                           hintText: 'Enter Title of Offer',),
-            
+            const SizedBox(height: 8),
+            AppConstants.customTextField(
+              controller: _nameController,
+              hintText: 'Enter Title of Offer',
+                textInputAction: TextInputAction.next, // or .done, .search, etc.
+
+            ),
 
             const SizedBox(height: 8),
 
             // Venue dropdown
-            const Text(
-              "Venue",
-              style: TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 8),
-          Container(
-  decoration: BoxDecoration(
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(10),
-    border: Border.all(color: Colors.grey.shade300),
-    boxShadow: [
-      BoxShadow(
-        color: Colors.grey.withOpacity(0.1),
-        spreadRadius: 1,
-        blurRadius: 2,
-        offset: const Offset(0, 1),
-      ),
-    ],
-  ),
-  child: _isVenuesLoading
-      ? Padding(
-          padding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 16.0),
-          child: Row(
-            children: [
-              SizedBox(
-                height: 10,
-                width: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Design.primaryColorOrange),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                "Loading venues...",
-                style: const TextStyle(
-                  color: Colors.grey,
-                  fontSize: 14.0,
-                  fontFamily: 'YourFontFamily',
-                ),
-              ),
-            ],
-          ),
-        )
-      : DropdownButtonHideUnderline(
-          child: ButtonTheme(
-            alignedDropdown: true,
-            child: DropdownButton<Map<String, dynamic>>(
-              value: _selectedVenue,
-              isExpanded: true,
-              icon: Icon(
-                Icons.keyboard_arrow_down, 
-                color: Design.primaryColorOrange,
-                size: 22,
-              ),
-              hint: Text(
-                "Select Venue",
-                style: TextStyle(
-                  color: Colors.grey.shade500,
-                  fontSize: 14.0,
-                  fontFamily: 'YourFontFamily',
-                ),
-              ),
-              items: _venues.map((venueMap) {
-                return DropdownMenuItem<Map<String, dynamic>>(
-                  value: venueMap,
-                  child: Text(
-                    venueMap['name'] ?? 'Unnamed',
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 14.0,
-                      fontFamily: 'YourFontFamily',
-                    ),
-                  ),
-                );
-              }).toList(),
-              onChanged: (newValue) {
-                setState(() {
-                  _selectedVenue = newValue;
-                });
-              },
-              underline: Container(),
-              dropdownColor: Colors.white,
-              itemHeight: 50,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              borderRadius: BorderRadius.circular(10),
-              elevation: 3,
-            ),
-          ),
-        ),
-),
-            const SizedBox(height: 8),
-
-            // Redeem Type - using Checkboxes
-         
-const Text(
-  "Redeem Type",
-  style: TextStyle(fontSize: 16),
-),
-
-const SizedBox(height: 2),
-Row(
-  children: [
-    // Venue Points Checkbox and label with compact layout
-    Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Checkbox(
-          activeColor: Colors.orange,
-          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          visualDensity: VisualDensity.compact,
-          value: _useVenuePoints,
-          onChanged: (value) {
-            setState(() {
-              _useVenuePoints = value ?? false;
-            });
-          },
-        ),
-        const Text("Venue Points"),
-      ],
-    ),
-    const SizedBox(width: 32), // Adjust the spacing between the two options
-    // App Points Checkbox and label with compact layout
-    Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Checkbox(
-          activeColor: Colors.orange,
-          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          visualDensity: VisualDensity.compact,
-          value: _useAppPoints,
-          onChanged: (value) {
-            setState(() {
-              _useAppPoints = value ?? false;
-            });
-          },
-        ),
-        const Text("App Points"),
-      ],
-    ),
-  ],
-),
-
-
-         const SizedBox(height: 5),
-if (_useVenuePoints || _useAppPoints)
-  Row(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      if (_useVenuePoints)
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextField(
-                controller: _venuePointsController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  hintText: "Enter Venue Points",
-                  hintStyle: const TextStyle(fontSize: 12), // Reduced hint font size
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 8),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      if (_useVenuePoints && _useAppPoints)
-        const SizedBox(width: 16),
-      if (_useAppPoints)
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextField(
-                controller: _appPointsController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  hintText: "Enter App Points",
-                  hintStyle: const TextStyle(fontSize: 12), // Reduced hint font size
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 8),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-    ],
-  ),
-
-
-if (_useVenuePoints || _useAppPoints)
-  const SizedBox(height: 16),
-
-
-            // Description
-            const Text(
-              "Description",
-              style: TextStyle(fontSize: 16),
-            ),
+            const Text("Venue", style: TextStyle(fontSize: 16)),
             const SizedBox(height: 8),
             Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.grey.shade300),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.1),
+                    spreadRadius: 1,
+                    blurRadius: 2,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+              ),
+              child:
+                  _isVenuesLoading
+                      ? Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 14.0,
+                          horizontal: 16.0,
+                        ),
+                        child: Row(
+                          children: [
+                            SizedBox(
+                              height: 10,
+                              width: 20,
+                              child: Container(
+                                color: Colors.white.withOpacity(0.19),
+                                child: Center(
+                                  child: Image.asset(
+                                    'assets/Bird_Full_Eye_Blinking.gif',
+                                    width: 100, // Adjust size as needed
+                                    height: 100,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              "Loading venues...",
+                              style: const TextStyle(
+                                color: Colors.grey,
+                                fontSize: 14.0,
+                                fontFamily: 'YourFontFamily',
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                      : DropdownButtonHideUnderline(
+                        child: ButtonTheme(
+                          alignedDropdown: true,
+                          child: DropdownButton<Map<String, dynamic>>(
+                            value: _selectedVenue,
+                            isExpanded: true,
+                            icon: Icon(
+                              Icons.keyboard_arrow_down,
+                              color: Design.primaryColorOrange,
+                              size: 22,
+                            ),
+                            hint: Text(
+                              "Select Venue",
+                              style: TextStyle(
+                                color: Colors.grey.shade500,
+                                fontSize: 14.0,
+                                fontFamily: 'YourFontFamily',
+                              ),
+                            ),
+                            items:
+                                _venues.map((venueMap) {
+                                  return DropdownMenuItem<Map<String, dynamic>>(
+                                    value: venueMap,
+                                    child: Text(
+                                      venueMap['name'] ?? 'Unnamed',
+                                      style: const TextStyle(
+                                        color: Colors.black,
+                                        fontSize: 14.0,
+                                        fontFamily: 'YourFontFamily',
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                            onChanged: (newValue) {
+                              setState(() {
+                                _selectedVenue = newValue;
+                              });
+                            },
+                            underline: Container(),
+                            dropdownColor: Colors.white,
+                            itemHeight: 50,
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            borderRadius: BorderRadius.circular(10),
+                            elevation: 3,
+                          ),
+                        ),
+                      ),
+            ),
+            const SizedBox(height: 8),
+
+            // Type - using Checkboxes
+            const Text("Redeem Type", style: TextStyle(fontSize: 16)),
+
+            const SizedBox(height: 2),
+            Row(
+              children: [
+                // Venue Points Checkbox and label with compact layout
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Checkbox(
+                      activeColor: Colors.orange,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      visualDensity: VisualDensity.compact,
+                      value: _useVenuePoints,
+                      onChanged: (value) {
+                        setState(() {
+                          _useVenuePoints = value ?? false;
+                        });
+                      },
+                    ),
+                    const Text("Venue Points"),
+                  ],
+                ),
+                const SizedBox(
+                  width: 32,
+                ), // Adjust the spacing between the two options
+                // App Points Checkbox and label with compact layout
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Checkbox(
+                      activeColor: Colors.orange,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      visualDensity: VisualDensity.compact,
+                      value: _useAppPoints,
+                      onChanged: (value) {
+                        setState(() {
+                          _useAppPoints = value ?? false;
+                        });
+                      },
+                    ),
+                    const Text("App Points"),
+                  ],
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 5),
+            if (_useVenuePoints || _useAppPoints)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (_useVenuePoints)
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          TextField(
+                            controller: _venuePointsController,
+                            keyboardType: TextInputType.number,
+                            decoration: InputDecoration(
+                              hintText: "Enter Venue Points",
+                              hintStyle: const TextStyle(
+                                fontSize: 12,
+                              ), // Reduced hint font size
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 8,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  if (_useVenuePoints && _useAppPoints)
+                    const SizedBox(width: 16),
+                  if (_useAppPoints)
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          TextField(
+                            controller: _appPointsController,
+                            keyboardType: TextInputType.number,
+                            decoration: InputDecoration(
+                              hintText: "Enter App Points",
+                              hintStyle: const TextStyle(
+                                fontSize: 12,
+                              ), // Reduced hint font size
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 8,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+
+            if (_useVenuePoints || _useAppPoints) const SizedBox(height: 16),
+
+            // Description
+            const Text("Description", style: TextStyle(fontSize: 16)),
+            const SizedBox(height: 8),
+            Container(
+              
               decoration: BoxDecoration(
                 border: Border.all(color: Colors.grey.shade400),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: TextField(
+                  textInputAction: TextInputAction.next, // or .done, .search, etc.
+
                 controller: _descriptionController,
                 maxLines: 4,
                 decoration: const InputDecoration(
                   hintText: "",
-                  contentPadding:
-                      EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
                   border: InputBorder.none,
                 ),
               ),
@@ -568,37 +585,34 @@ if (_useVenuePoints || _useAppPoints)
             const SizedBox(height: 16),
 
             // Upload Pictures
-            const Text(
-              "Upload Pictures",
-              style: TextStyle(fontSize: 16),
-            ),
+            const Text("Upload Pictures", style: TextStyle(fontSize: 16)),
             const SizedBox(height: 8),
             _pickedImage == null
                 ? Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade100,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey.shade400),
-                    ),
-                    child: IconButton(
-                      icon: const Icon(Icons.camera_alt, size: 30),
-                      onPressed: _pickImage,
-                    ),
-                  )
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey.shade400),
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.camera_alt, size: 30),
+                    onPressed: _pickImage,
+                  ),
+                )
                 : InkWell(
-                    onTap: _pickImage,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.file(
-                        File(_pickedImage!.path),
-                        width: 80,
-                        height: 80,
-                        fit: BoxFit.cover,
-                      ),
+                  onTap: _pickImage,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.file(
+                      File(_pickedImage!.path),
+                      width: 80,
+                      height: 80,
+                      fit: BoxFit.cover,
                     ),
                   ),
+                ),
             const SizedBox(height: 80),
 
             // Show error message if any
@@ -628,23 +642,25 @@ if (_useVenuePoints || _useAppPoints)
               ),
             ),
             onPressed: _isSubmitting ? null : _submitOffer,
-            child: _isSubmitting
-                ? const CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  )
-                : const Text(
-                    "Continue",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
+            child:
+                _isSubmitting
+                    ? Container(
+                      color: Colors.white.withOpacity(0.19),
+                      child: Center(
+                        // child: Image.asset(
+                        //   'assets/Bird_Full_Eye_Blinking.gif',
+                        //   width: 100, // Adjust size as needed
+                        //   height: 100,
+                        // ),
+                      ),
+                    )
+                    : const Text(
+                      "Save Offer",
+                      style: TextStyle(color: Colors.white, fontSize: 16),
                     ),
-                  ),
           ),
         ),
       ),
     );
   }
 }
-
-
-

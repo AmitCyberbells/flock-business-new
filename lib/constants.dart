@@ -3,6 +3,8 @@ import 'package:multi_select_flutter/chip_display/multi_select_chip_display.dart
 import 'package:multi_select_flutter/dialog/multi_select_dialog_field.dart';
 import 'package:multi_select_flutter/util/multi_select_item.dart';
 
+// Reusable Dropdown for assigning venues.
+import 'package:multi_select_flutter/multi_select_flutter.dart';
 class AppConstants {
 // Base method for password fields.
 
@@ -155,6 +157,42 @@ static Widget confirmPasswordField({
     ),
   );
 
+  // Disabled Reusable InputDecoration for TextFields
+ static final InputDecoration textFieldDecorationDisabled = InputDecoration(
+  hintText: 'Enter email address',
+  hintStyle: TextStyle(
+    color: Colors.grey,
+    fontSize: 14.0,
+    fontFamily: 'YourFontFamily',
+  ),
+  filled: true,
+  fillColor: Colors.grey.shade100, // Light grey background
+
+  contentPadding: EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+
+  enabledBorder: OutlineInputBorder(
+    borderRadius: BorderRadius.circular(5.0),
+    borderSide: BorderSide.none, // No border
+  ),
+  focusedBorder: OutlineInputBorder(
+    borderRadius: BorderRadius.circular(5.0),
+    borderSide: BorderSide.none, // Prevent black border on focus
+  ),
+  disabledBorder: OutlineInputBorder(
+    borderRadius: BorderRadius.circular(5.0),
+    borderSide: BorderSide.none,
+  ),
+  errorBorder: OutlineInputBorder(
+    borderRadius: BorderRadius.circular(5.0),
+    borderSide: BorderSide(color: Colors.red, width: 1),
+  ),
+  focusedErrorBorder: OutlineInputBorder(
+    borderRadius: BorderRadius.circular(5.0),
+    borderSide: BorderSide(color: Colors.red, width: 1),
+  ),
+);
+
+
   // BoxDecoration with BoxShadow to be used in a Container wrapping the TextField
   static final BoxDecoration textFieldBoxDecoration = BoxDecoration(
     color: Colors.white, // Ensure background is white.
@@ -167,6 +205,20 @@ static Widget confirmPasswordField({
         offset: Offset(0, 3),
       ),
     ],
+  );
+// for disabled:
+
+  static final BoxDecoration textFieldBoxDecorationDisabled = BoxDecoration(
+    color: Colors.white, // Ensure background is white.
+   
+    // boxShadow: [
+    //   BoxShadow(
+    //     color: Colors.black.withOpacity(0.1), // Subtle shadow.
+    //     spreadRadius: 1,
+    //     blurRadius: 5,
+    //     offset: Offset(0, 3),
+    //   ),
+    // ],
   );
 
   // Reusable full-width button.
@@ -216,7 +268,28 @@ static Widget emailField({
 }
 
 
-
+static Widget disabledemailField({
+  required TextEditingController controller,
+  bool readOnly = false,
+}) {
+  return Container(
+    decoration: textFieldBoxDecorationDisabled,
+    child: TextField(
+      
+      controller: controller,
+      readOnly: readOnly,
+      keyboardType: TextInputType.emailAddress,
+      style: const TextStyle(
+        color: Colors.grey,
+        fontSize: 14.0,
+        fontFamily: 'YourFontFamily',
+      ),
+      decoration: textFieldDecorationDisabled.copyWith(
+        hintText: 'Enter email address',
+      ),
+    ),
+  );
+}
   // Reusable Password Field widget.
   static Widget passwordField({
     required TextEditingController controller,
@@ -309,6 +382,28 @@ static Widget emailField({
     ),
   );
 }
+// disabled phone field
+ static Widget disbaledphoneField({
+  required TextEditingController controller,
+  bool readOnly = false,
+}) {
+  return Container(
+    decoration: textFieldBoxDecorationDisabled,
+    child: TextField(
+      controller: controller,
+      readOnly: readOnly,
+      keyboardType: TextInputType.phone,
+      style: const TextStyle(
+        color: Colors.grey,
+        fontSize: 14.0,
+        fontFamily: 'YourFontFamily',
+      ),
+      decoration: textFieldDecorationDisabled.copyWith(
+        hintText: 'Enter phone number',
+      ),
+    ),
+  );
+}
 
 
   // Reusable Date of Birth Field widget.
@@ -364,51 +459,34 @@ static Widget locationField({
     ),
   );
 }
-
-
-// Reusable Dropdown for assigning venues.
 static Widget assignVenuesDropdown({
   required List<dynamic> venueList,
   required List<String> selectedVenues,
   required ValueChanged<List<String>> onConfirm,
 }) {
+  final orange = const Color.fromRGBO(255, 130, 16, 1);
+
   return Container(
     decoration: BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(10),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.1),
-          blurRadius: 5.0,
-          offset: Offset(0, 2),
-        ),
-      ],
+      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 5, offset: Offset(0, 2))],
     ),
     child: MultiSelectDialogField<String>(
-      items: venueList.map((venue) {
-        return MultiSelectItem<String>(
-          venue["id"].toString(),
-          venue["name"].toString(),
-        );
-      }).toList(),
+      items: venueList.map((v) => MultiSelectItem<String>(v["id"].toString(), v["name"].toString())).toList(),
       initialValue: selectedVenues,
       onConfirm: onConfirm,
       chipDisplay: MultiSelectChipDisplay<String>(
-        chipColor: Colors.orange,
+        chipColor: orange,
         textStyle: TextStyle(color: Colors.white),
       ),
-      buttonText: Text(
-        "Assign venues",
-        style: TextStyle(color: Colors.grey),
-      ),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
-      ),
+      selectedColor: orange,
+      buttonText: Text("Assign venues", style: TextStyle(color: Colors.grey)),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(10)),
       buttonIcon: Icon(Icons.arrow_drop_down, color: Colors.grey),
     ),
   );
 }
-
 // Reusable Dropdown for assigning permissions.
 static Widget assignPermissionsDropdown({
   required List<dynamic> permissionList,
@@ -436,25 +514,33 @@ static Widget assignPermissionsDropdown({
       }).toList(),
       initialValue: selectedPermissions,
       onConfirm: onConfirm,
+      selectedColor: const Color.fromRGBO(255, 130, 16, 1),
       chipDisplay: MultiSelectChipDisplay<String>(
-        chipColor: Colors.orange,
-        textStyle: TextStyle(color: Colors.white),
+        chipColor: const Color.fromRGBO(255, 130, 16, 1),
+        textStyle: const TextStyle(color: Colors.white),
       ),
-      buttonText: Text(
+      buttonText: const Text(
         "Assign permissions",
         style: TextStyle(color: Colors.grey),
       ),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
       ),
-      buttonIcon: Icon(Icons.arrow_drop_down, color: Colors.grey),
+      buttonIcon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
+      title: const Text(
+        "Select Permissions",
+        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+      ),
+      // Use itemBuilder if available in your version to reduce spacing
+      // Removed the unsupported 'itemBuilder' parameter and its code.
+      // Note: 'dialog' and 'listBuilder' are not supported in older versions
     ),
   );
 }
 // Reusable "Enter Venue Name" field
 static Widget customTextField({
   required TextEditingController controller,
-  required String hintText,
+  required String hintText, required TextInputAction textInputAction,
 }) {
   return Container(
     decoration: textFieldBoxDecoration,

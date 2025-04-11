@@ -241,6 +241,7 @@ Future<void> endOffer() async {
      context,
      MaterialPageRoute(
        builder: (context) => Scaffold(
+        backgroundColor: Colors.white,
          appBar: AppBar(title: const Text('Scan QR Code')),
          body: MobileScanner(
            controller: _scannerController,
@@ -397,14 +398,18 @@ Future<void> endOffer() async {
    showDialog(
      context: context,
      builder: (ctx) => AlertDialog(
-       title: const Text('Remove Offer'),
+       title: const Text('Delete Offer'),
        content: const Text('Are you sure you want to remove this offer?'),
        actions: [
-         TextButton(onPressed: removeOffer, child: const Text('Yes')),
-         TextButton(
+          TextButton(
            onPressed: () => Navigator.pop(context),
-           child: const Text('No'),
+           child: const Text('CANCEL',
+             style: TextStyle(color: Colors.grey),
+           ),
          ),
+         TextButton(onPressed: removeOffer, child: const Text('OK')),
+
+       
        ],
      ),
    );
@@ -418,11 +423,15 @@ Future<void> endOffer() async {
        title: const Text('End Offer'),
        content: const Text('Are you sure you want to end this offer?'),
        actions: [
-         TextButton(onPressed: endOffer, child: const Text('Yes')),
-         TextButton(
+        TextButton(
            onPressed: () => Navigator.pop(context),
-           child: const Text('No'),
+           child:  Text('CANCEL',
+            style: TextStyle(color: Colors.grey.shade700),
+
+           ),
          ),
+         TextButton(onPressed: endOffer, child: const Text('OK')),
+         
        ],
      ),
    );
@@ -437,7 +446,9 @@ Future<void> endOffer() async {
    return Stack(
      children: [
        Scaffold(
+        backgroundColor: Colors.white,
          appBar: AppBar(
+          backgroundColor: Colors.white,
            title: const Text('Offer Detail'),
            leading: IconButton(
              icon: const Icon(Icons.arrow_back),
@@ -490,79 +501,119 @@ Future<void> endOffer() async {
                    fontWeight: FontWeight.bold,
                  ),
                ),
-               const SizedBox(height: 16),
-               Row(
-                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                 children: [
-                   Column(
-                     crossAxisAlignment: CrossAxisAlignment.start,
-                     children: [
-                       const Text(
-                         'Redeemed in:',
-                         style: TextStyle(color: Colors.grey),
-                       ),
-                       Text(
-                         venueName,
-                         style: const TextStyle(fontWeight: FontWeight.bold),
-                       ),
-                     ],
-                   ),
-                   InkWell(
-                     onTap: showRedeemedPeopleDialog,
-                     child: Column(
-                       crossAxisAlignment: CrossAxisAlignment.start,
-                       children: [
-                         const Text(
-                           'Redeemed by:',
-                           style: TextStyle(color: Colors.grey),
-                         ),
-                         Text(
-                           '$redeemed_count People',
-                           style: const TextStyle(fontWeight: FontWeight.bold),
-                         ),
-                       ],
-                     ),
-                   ),
-                 ],
-               ),
-               const SizedBox(height: 16),
-               const Text(
-                 'Description',
-                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-               ),
-               const SizedBox(height: 8),
+              //  const SizedBox(height: 16),
+              //           const Text(
+              //    'Description',
+              //    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              //  ),
+              //  const SizedBox(height: 8),
                Text(description, textAlign: TextAlign.justify),
+                  const SizedBox(height: 8),
+           Row(
+  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  children: [
+    // 👈 Offered by section
+    Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Image.asset(
+              'assets/orange_hotel.png',
+              color: Colors.grey,
+              width: 16,
+              height: 16,
+            ),
+            const SizedBox(width: 6),
+            const Text(
+              'Offered by:',
+              style: TextStyle(color: Colors.grey),
+            ),
+          ],
+        ),
+        const SizedBox(height: 3),
+        Text(
+          venueName,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+      ],
+    ),
+
+    // 👈 Add spacing between the two sections
+    const SizedBox(width: 16),
+
+    // 👈 Redeemed by section
+    InkWell(
+      onTap: showRedeemedPeopleDialog,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Image.asset(
+                'assets/people.png',
+                color: Colors.grey,
+                width: 16,
+                height: 16,
+              ),
+              const SizedBox(width: 6),
+              const Text(
+                'Redeemed by:',
+                style: TextStyle(color: Colors.grey),
+              ),
+            ],
+          ),
+          const SizedBox(height: 3),
+          Text(
+            '$redeemed_count People',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+    ),
+  ],
+),
+
+               const SizedBox(height: 16),
+      
                const SizedBox(height: 32),
                Row(
                  children: [
-                   Expanded(
-                     child: OutlinedButton(
-                       onPressed: showRemoveDialogFunc,
-                       child: const Text(
-                         'Remove',
-                         style: TextStyle(color: Colors.blue),
-                       ),
-                     ),
-                   ),
-                   const SizedBox(width: 16),
-                   Expanded(
-                     child: isExpired
-                         ? ElevatedButton(
-                             onPressed: null, // Disable the button
-                             style: ElevatedButton.styleFrom(
-                               backgroundColor: Colors.grey, // Indicate disabled state
-                             ),
-                             child: const Text('Expired'),
-                           )
-                         : ElevatedButton(
-                             onPressed: showEndDialogFunc,
-                             style: ElevatedButton.styleFrom(
-                               backgroundColor: const Color.fromRGBO(255, 130, 16, 1),
-                             ),
-                             child: const Text('End Offer'),
-                           ),
-                   ),
-                 ],
+  Expanded(
+    child: ElevatedButton(
+      onPressed: showRemoveDialogFunc,
+      style: ElevatedButton.styleFrom(
+        backgroundColor:Colors.red, // Orange background
+      ),
+      child: const Text(
+        'Delete Offer',
+        style: TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    ),
+  ),
+  const SizedBox(width: 16),
+  Expanded(
+    child: isExpired
+        ? ElevatedButton(
+            onPressed: null, // Disable the button
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.grey, // Indicate disabled state
+            ),
+            child: const Text('Expired'),
+          )
+        : ElevatedButton(
+            onPressed: showEndDialogFunc,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color.fromRGBO(255, 130, 16, 1),
+            ),
+            child: const Text('End Offer'),
+          ),
+  ),
+],
+
                ),
                if (errorMessage.isNotEmpty) ...[
                  const SizedBox(height: 16),
@@ -578,10 +629,16 @@ Future<void> endOffer() async {
          ),
        ),
        if (isLoading)
-         Container(
-           color: Colors.black26,
-           child: const Center(child: CircularProgressIndicator()),
-         ),
+        Container(
+  color: Colors.white.withOpacity(0.19),
+  child: Center(
+    child: Image.asset(
+      'assets/Bird_Full_Eye_Blinking.gif',
+      width: 100, // Adjust size as needed
+      height: 100,
+    ),
+  ),
+),
      ],
    );
  }

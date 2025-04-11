@@ -92,10 +92,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       isValid = false;
     }
     // Validate Date of Birth
-    if (dob.isEmpty) {
-      _dobError = 'Date of birth is required';
-      isValid = false;
-    }
+    // if (dob.isEmpty) {
+    //   _dobError = 'Date of birth is required';
+    //   isValid = false;
+    // }
     // Validate Email
     if (email.isEmpty) {
       _emailError = 'Email is required';
@@ -105,13 +105,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
       isValid = false;
     }
     // Validate Phone Number
-    if (phone.isEmpty) {
-      _phoneError = 'Phone number is required';
-      isValid = false;
-    } else if (!isValidPhone(phone)) {
-      _phoneError = 'Please enter a valid 10-digit phone number';
-      isValid = false;
-    }
+    // if (phone.isEmpty) {
+    //   _phoneError = 'Phone number is required';
+    //   isValid = false;
+    // } else if (!isValidPhone(phone)) {
+    //   _phoneError = 'Please enter a valid 10-digit phone number';
+    //   isValid = false;
+    // }
     // Validate Password
     if (password.isEmpty) {
       _passwordError = 'Password is required';
@@ -365,13 +365,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 25),
                   _buildTextField(
                     controller: _phoneController,
-                    hintText: 'Enter phone number',
+                    hintText: 'Enter phone number (optional)',
                     errorText: _phoneError,
                   ),
                   const SizedBox(height: 25),
                  _buildTextField(
   controller: _dobController,
-  hintText: 'Date of Birth',
+  hintText: 'Date of Birth (optional)',
   errorText: _dobError,
   onTap: () async {
     DateTime? pickedDate = await showDatePicker(

@@ -1,7 +1,9 @@
+import 'package:flock/videoPlayer.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class TutorialsScreen extends StatefulWidget {
   const TutorialsScreen({Key? key}) : super(key: key);
@@ -23,7 +25,9 @@ class _TutorialsScreenState extends State<TutorialsScreen> {
 
   Future<String?> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('access_token'); // Changed from 'token' to 'access_token'
+    return prefs.getString(
+      'access_token',
+    ); // Changed from 'token' to 'access_token'
   }
 
   Future<void> _fetchTutorials() async {
@@ -88,10 +92,9 @@ class _TutorialsScreenState extends State<TutorialsScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Card(
+        color: Colors.white,
         elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -110,10 +113,7 @@ class _TutorialsScreenState extends State<TutorialsScreen> {
                   const SizedBox(height: 4),
                   Text(
                     tutorial['description'] ?? 'No description',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey,
-                    ),
+                    style: const TextStyle(fontSize: 14, color: Colors.grey),
                   ),
                 ],
               ),
@@ -129,11 +129,13 @@ class _TutorialsScreenState extends State<TutorialsScreen> {
               ),
               child: Center(
                 child: IconButton(
-                  icon: const Icon(
-                    Icons.play_circle_fill,
-                    size: 40,
-                    color: Colors.white,
-                  ),
+                icon: Image.asset(
+  'assets/tutorials.png',
+  width: 40,
+  height: 40,
+  fit: BoxFit.contain,
+),
+
                   onPressed: () {
                     _playTutorial(tutorial['url'] ?? '');
                   },
@@ -146,16 +148,34 @@ class _TutorialsScreenState extends State<TutorialsScreen> {
     );
   }
 
-  void _playTutorial(String videoUrl) {
-    if (videoUrl.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No video available')),
-      );
-      return;
-    }
-    // TODO: Implement video playback
-    print('Playing tutorial: $videoUrl');
+void _playTutorial(String rawUrl) {
+  if (rawUrl.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('No video available')),
+    );
+    return;
   }
+
+  // If backend returns: http://IP/storage/https://actual-url.com/video.mp4
+  String videoUrl;
+  if (rawUrl.contains('https://')) {
+    final split = rawUrl.split('https://');
+    videoUrl = 'https://${split.last}';
+  } else {
+    videoUrl = rawUrl;
+  }
+
+  debugPrint('Final video URL: $videoUrl');
+
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => VideoPlayerScreen(videoUrl: videoUrl),
+    ),
+  );
+}
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -170,81 +190,117 @@ class _TutorialsScreenState extends State<TutorialsScreen> {
                 children: [
                   InkWell(
                     onTap: () => Navigator.of(context).pop(),
-                    child: const Icon(Icons.arrow_back, color: Colors.black),
+                    child: const Icon(
+                      Icons.arrow_back,
+                      color: Color.fromRGBO(255, 130, 16, 1.0),
+                    ),
                   ),
-                  const SizedBox(width: 16),
                   const Expanded(
-                    child: Text(
-                      "Tutorials",
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black,
+                    child: Center(
+                      child: Text(
+                        "Tutorials",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black,
+                        ),
                       ),
                     ),
                   ),
+                  const SizedBox(width: 24),
                 ],
               ),
             ),
             const SizedBox(height: 16),
             Expanded(
-              child: isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : errorMessage.isNotEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                errorMessage,
-                                style: const TextStyle(color: Colors.red),
-                              ),
-                              if (!errorMessage.contains('login'))
-                                const SizedBox(height: 16),
-                              if (!errorMessage.contains('login'))
-                                ElevatedButton(
-                                  onPressed: _fetchTutorials,
-                                  child: const Text('Retry'),
-                                ),
-                            ],
+              child:
+                  isLoading
+                      ? Container(
+                        color: Colors.white.withOpacity(0.19),
+                        child: Center(
+                          child: Image.asset(
+                            'assets/Bird_Full_Eye_Blinking.gif',
+                            width: 100, // Adjust size as needed
+                            height: 100,
                           ),
-                        )
-                      : tutorials.isEmpty
-                          ? const Center(child: Text('No tutorials available'))
-                          : ListView.builder(
-                              itemCount: tutorials.length,
-                              itemBuilder: (context, index) {
-                                final tutorial = tutorials[index] as Map<String, dynamic>;
-                                return _buildTutorialCard(tutorial);
-                              },
+                        ),
+                      )
+                      : errorMessage.isNotEmpty
+                      ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              errorMessage,
+                              style: const TextStyle(color: Colors.red),
                             ),
+                            if (!errorMessage.contains('login'))
+                              const SizedBox(height: 16),
+                            if (!errorMessage.contains('login'))
+                              ElevatedButton(
+                                onPressed: _fetchTutorials,
+                                child: const Text('Retry'),
+                              ),
+                          ],
+                        ),
+                      )
+                      : tutorials.isEmpty
+                      ? const Center(child: Text('No tutorials available'))
+                      : ListView.builder(
+                        itemCount: tutorials.length,
+                        itemBuilder: (context, index) {
+                          final tutorial =
+                              tutorials[index] as Map<String, dynamic>;
+                          return _buildTutorialCard(tutorial);
+                        },
+                      ),
             ),
             const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: () {
-                    // Handle "Learn More" action here
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: const Text(
-                    "Learn More",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-              ),
-            ),
+          Padding(
+  padding: const EdgeInsets.all(16),
+  child: SizedBox(
+    width: double.infinity,
+    height: 48,
+    child: ElevatedButton(
+      onPressed: () async {
+        final url = Uri.parse('https://getflock.io/business/');
+        debugPrint('Attempting to launch URL: $url');
+        try {
+          final launched = await launchUrl(
+            url,
+            mode: LaunchMode.externalApplication,
+          );
+          debugPrint('Launch result: $launched');
+          if (!launched) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Could not open the link')),
+              );
+            }
+          }
+        } catch (e) {
+          debugPrint('Error launching URL: $e');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Error launching URL: $e')),
+            );
+          }
+        }
+      },
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.orange,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
+      child: const Text(
+        "Learn More",
+        style: TextStyle(color: Colors.white, fontSize: 16),
+      ),
+    ),
+  ),
+),
+
           ],
         ),
       ),

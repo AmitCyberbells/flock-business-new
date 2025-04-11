@@ -44,7 +44,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     }
     if (newPassword != confirmPassword) {
       Fluttertoast.showToast(
-          msg: "New password and confirm password do not match");
+        msg: "New password and confirm password do not match",
+      );
       return;
     }
 
@@ -82,7 +83,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
           Navigator.pop(context);
         } else {
           Fluttertoast.showToast(
-              msg: data['message'] ?? "Failed to change password");
+            msg: data['message'] ?? "Failed to change password",
+          );
         }
       } else {
         Fluttertoast.showToast(msg: "Error: ${response.statusCode}");
@@ -117,44 +119,54 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 children: [
                   InkWell(
                     onTap: () => Navigator.of(context).pop(),
-                    child: const Icon(Icons.arrow_back, color: Colors.black),
-                  ),
-                  const SizedBox(width: 16),
-                  const Text(
-                    "Change password",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
+                    child: const Icon(
+                      Icons.arrow_back,
+                      color: Color.fromRGBO(255, 130, 16, 1.0),
                     ),
                   ),
+                  const Expanded(
+                    child: Center(
+                      child: Text(
+                        "Change Password",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 24),
                 ],
               ),
               const SizedBox(height: 30),
 
-             AppConstants.currentPasswordField(
-      controller: _currentPasswordController,
-      obscureText: !_currentPasswordVisible,
-      toggleObscure: () => setState(() {
-        _currentPasswordVisible = !_currentPasswordVisible;
-      }),
-    ),
-    SizedBox(height: 15),
-    AppConstants.newPasswordField(
-      controller: _newPasswordController,
-      obscureText: !_newPasswordVisible,
-      toggleObscure: () => setState(() {
-        _newPasswordVisible = !_newPasswordVisible;
-      }),
-    ),
-    SizedBox(height: 15),
-    AppConstants.confirmPasswordField(
-      controller: _confirmPasswordController,
-      obscureText: !_confirmPasswordVisible,
-      toggleObscure: () => setState(() {
-        _confirmPasswordVisible = !_confirmPasswordVisible;
-      }),
-    ),
+              AppConstants.currentPasswordField(
+                controller: _currentPasswordController,
+                obscureText: !_currentPasswordVisible,
+                toggleObscure:
+                    () => setState(() {
+                      _currentPasswordVisible = !_currentPasswordVisible;
+                    }),
+              ),
+              SizedBox(height: 15),
+              AppConstants.newPasswordField(
+                controller: _newPasswordController,
+                obscureText: !_newPasswordVisible,
+                toggleObscure:
+                    () => setState(() {
+                      _newPasswordVisible = !_newPasswordVisible;
+                    }),
+              ),
+              SizedBox(height: 15),
+              AppConstants.confirmPasswordField(
+                controller: _confirmPasswordController,
+                obscureText: !_confirmPasswordVisible,
+                toggleObscure:
+                    () => setState(() {
+                      _confirmPasswordVisible = !_confirmPasswordVisible;
+                    }),
+              ),
               const Spacer(),
 
               // Update Password button
@@ -171,10 +183,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   ),
                   child: const Text(
                     "Update Password",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                    ),
+                    style: TextStyle(color: Colors.white, fontSize: 16),
                   ),
                 ),
               ),
@@ -199,7 +208,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       decoration: InputDecoration(
         hintText: hintText,
         hintStyle: const TextStyle(fontSize: 16),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
         suffixIcon: IconButton(
           icon: Icon(
             isObscured ? Icons.visibility_off : Icons.visibility,
@@ -207,9 +219,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
           ),
           onPressed: onToggle,
         ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
   }

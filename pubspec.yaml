@@ -3,7 +3,7 @@ description: "A new Flutter project."
 
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
-version: 1.7.2
+version: 1.7.5
 
 environment:
   sdk: ^3.7.2
@@ -43,6 +43,10 @@ dependencies:
   permission_handler_apple: ^9.4.6
   flutter_html: ^3.0.0
   timezone: ^0.10.0
+  file_picker: ^10.0.0
+  flutter_multi_select_items: ^0.4.3
+  video_player: ^2.9.5
+  chewie: ^1.7.4
 
 dev_dependencies:
   flutter_test:
@@ -62,15 +66,19 @@ flutter_icons:
 flutter:
   assets:
     - assets/bird.png
+    - assets/tutorials.png
     - assets/login_back.jpg
     - assets/business_checkin.png
     - assets/business_eggs.png
     - assets/statistics.png
+    - assets/view.png
     - assets/side_arrow.png
     - assets/scan_qr.png
+    - assets/orange_hotel.png
     - assets/business_logo.png
     - assets/bottom_bird.png
     - assets/profile.png
+    - assets/people.png
     - assets/back.png
     - assets/back.png
     - assets/location.png

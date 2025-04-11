@@ -263,7 +263,7 @@ class _TabProfileState extends State<TabProfile> {
                       child: ElevatedButton(
                         onPressed: logoutButton,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color.fromRGBO(255, 152, 0, 1),
+                          backgroundColor: const Color.fromRGBO(255, 130, 16, 1),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),

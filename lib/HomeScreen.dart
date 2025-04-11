@@ -35,9 +35,9 @@ class _TabDashboardState extends State<TabDashboard>
   List<Map<String, dynamic>> hotelList = [
     {
       'id': 1,
-      'slug': 'check_ins',
-      'category': 'Check Ins',
-      'title': 'Total Check Ins Today',
+      'slug': 'Check-Ins',
+      'category': 'Check-Ins',
+      'title': 'Total Check-Ins Today',
       'points': '',
       'img': 'assets/business_checkin.png',
     },
@@ -97,28 +97,37 @@ class _TabDashboardState extends State<TabDashboard>
 
   Future<void> fetchName() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      firstName = prefs.getString('firstName') ?? '';
-      lastName = prefs.getString('lastName') ?? '';
-    });
+    if (mounted) {
+      setState(() {
+        firstName = prefs.getString('firstName') ?? '';
+        lastName = prefs.getString('lastName') ?? '';
+      });
+    }
   }
 
   Future<void> getUserId() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     userId = prefs.getString('userid') ?? '';
-    dashboardApi();
-    getVenueList();
+    if (averageFeathers.isEmpty && venueList.isEmpty) {
+      // Only fetch if data is not already loaded
+      await dashboardApi();
+      await getVenueList();
+    }
   }
 
   void startLoader() {
-    setState(() {
-      loader = true;
-    });
+    if (mounted) {
+      setState(() {
+        loader = true;
+      });
+    }
     _timer?.cancel();
     _timer = Timer(Duration(seconds: 1), () {
-      setState(() {
-        loader = false;
-      });
+      if (mounted) {
+        setState(() {
+          loader = false;
+        });
+      }
     });
   }
 
@@ -128,7 +137,7 @@ class _TabDashboardState extends State<TabDashboard>
     final token = prefs.getString('access_token');
     if (token == null || token.isEmpty) {
       Fluttertoast.showToast(msg: 'No token found, please login again.');
-      setState(() => loader = false);
+      if (mounted) setState(() => loader = false);
       return;
     }
     final url = Uri.parse("http://165.232.152.77/api/vendor/dashboard");
@@ -140,22 +149,32 @@ class _TabDashboardState extends State<TabDashboard>
           'Content-Type': 'application/json',
         },
       );
-      setState(() {
-        loader = false;
-      });
+      if (mounted) {
+        setState(() {
+          loader = false;
+        });
+      }
       if (response.statusCode == 200) {
         final responseJson = json.decode(response.body);
         if (responseJson != null && responseJson['status'] == 'success') {
           final data = responseJson['data'];
-          setState(() {
-            averageFeathers = data['averageFeathers']?.toString() ?? '';
-            totalFeathers = data['totalFeathers']?.toString() ?? '';
-            todayFeathers = data['today_feathers'] ?? 0;
-            todayVenuePoints = data['today_venue_points'] ?? 0;
-            hotelList[0]['points'] = '${data['checkin_count'] ?? 0} ';
-            hotelList[1]['points'] = '${data['offers_count'] ?? 0} ';
-            hotelList[2]['points'] = '${data['venues_count'] ?? 0}';
-          });
+          if (mounted) {
+            setState(() {
+              averageFeathers = data['averageFeathers']?.toString() ?? '';
+              totalFeathers = data['totalFeathers']?.toString() ?? '';
+              todayFeathers =
+                  int.tryParse(data['today_feathers']?.toString() ?? '0') ?? 0;
+              todayVenuePoints =
+                  int.tryParse(data['today_venue_points']?.toString() ?? '0') ??
+                  0;
+              hotelList[0]['points'] =
+                  '${int.tryParse(data['checkin_count']?.toString() ?? '0') ?? 0}';
+              hotelList[1]['points'] =
+                  '${int.tryParse(data['offers_count']?.toString() ?? '0') ?? 0}';
+              hotelList[2]['points'] =
+                  '${int.tryParse(data['venues_count']?.toString() ?? '0') ?? 0}';
+            });
+          }
         } else {
           Fluttertoast.showToast(msg: responseJson['message'] ?? 'Error');
         }
@@ -163,9 +182,11 @@ class _TabDashboardState extends State<TabDashboard>
         Fluttertoast.showToast(msg: 'Error ${response.statusCode}');
       }
     } catch (e) {
-      setState(() {
-        loader = false;
-      });
+      if (mounted) {
+        setState(() {
+          loader = false;
+        });
+      }
       Fluttertoast.showToast(msg: 'Error: $e');
     }
   }
@@ -226,7 +247,7 @@ class _TabDashboardState extends State<TabDashboard>
     switch (field) {
       case "offers":
         return "create_offer";
-      case "check_ins":
+      case "Check-Ins":
         return "checkins_history";
       case "feathers":
         return "feathers_history";
@@ -245,7 +266,7 @@ class _TabDashboardState extends State<TabDashboard>
     String slug = item['slug'];
     if (slug == "offers") {
       Navigator.pushNamed(context, '/offers');
-    } else if (slug == "check_ins") {
+    } else if (slug == "Check-Ins") {
       Navigator.pushNamed(context, '/tab_checkin');
     } else if (slug == "feathers") {
       await totalFeatherApi();
