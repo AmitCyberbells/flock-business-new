@@ -256,17 +256,26 @@ FormData formData = FormData.fromMap(formDataMap);
         title: 'Edit Member',
       ),
       body: _isLoading
-          ? Container(
-  color: Colors.white.withOpacity(0.19),
-  child: Center(
-    child: Image.asset(
-      'assets/Bird_Full_Eye_Blinking.gif',
-      width: 100, // Adjust size as needed
-      height: 100,
+          ?      Stack(
+  children: [
+    // Semi-transparent dark overlay
+    Container(
+      color: Colors.black.withOpacity(0.14), // Dark overlay
     ),
-  ),
-)
 
+    // Your original container with white tint and loader
+    Container(
+      color: Colors.white10,
+      child: Center(
+        child: Image.asset(
+          'assets/Bird_Full_Eye_Blinking.gif',
+          width: 100, // Adjust size as needed
+          height: 100,
+        ),
+      ),
+    ),
+  ],
+)
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(

@@ -4,7 +4,7 @@ import 'package:flock/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
-import 'otp_verification_screen.dart'; // replace with actual path
+import 'reset_otp.dart'; // replace with actual path
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({Key? key}) : super(key: key);
@@ -47,7 +47,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
              Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => OtpVerificationScreen(
+        builder: (context) => OtpVerificationScreen1(
           email: email,
         ),
       ),
@@ -192,16 +192,26 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             ),
           ),
           if (_isLoading)
-           Container(
-  color: Colors.white.withOpacity(0.19),
-  child: Center(
-    child: Image.asset(
-      'assets/Bird_Full_Eye_Blinking.gif',
-      width: 100, // Adjust size as needed
-      height: 100,
+               Stack(
+  children: [
+    // Semi-transparent dark overlay
+    Container(
+      color: Colors.black.withOpacity(0.14), // Dark overlay
     ),
-  ),
-),
+
+    // Your original container with white tint and loader
+    Container(
+      color: Colors.white10,
+      child: Center(
+        child: Image.asset(
+          'assets/Bird_Full_Eye_Blinking.gif',
+          width: 100, // Adjust size as needed
+          height: 100,
+        ),
+      ),
+    ),
+  ],
+)
         ],
       ),
     );

@@ -91,17 +91,26 @@ class _TermsAndConditionsPageState extends State<TermsAndConditionsPage> {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: _isLoading
-            ?Container(
-  color: Colors.white.withOpacity(0.19),
-  child: Center(
-    child: Image.asset(
-      'assets/Bird_Full_Eye_Blinking.gif',
-      width: 100, // Adjust size as needed
-      height: 100,
+            ?     Stack(
+  children: [
+    // Semi-transparent dark overlay
+    Container(
+      color: Colors.black.withOpacity(0.14), // Dark overlay
     ),
-  ),
-)
 
+    // Your original container with white tint and loader
+    Container(
+      color: Colors.white10,
+      child: Center(
+        child: Image.asset(
+          'assets/Bird_Full_Eye_Blinking.gif',
+          width: 100, // Adjust size as needed
+          height: 100,
+        ),
+      ),
+    ),
+  ],
+)
             : termsHtml.isEmpty
                 ? const Center(
                     child: Text("No Terms and Conditions available."))

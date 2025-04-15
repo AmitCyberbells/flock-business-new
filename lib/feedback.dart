@@ -11,6 +11,8 @@ class Design {
   static const Color primaryColorOrange = Color.fromRGBO(255, 130, 16, 1);
 
   static var font14;
+
+  static var white;
 }
 
 void main() {
@@ -536,10 +538,13 @@ class _ReportScreenState extends State<ReportScreen> {
                   children: [
                     InkWell(
                       onTap: () => Navigator.of(context).pop(),
-                      child: const Icon(
-                        Icons.arrow_back,
-                        color: Color.fromRGBO(255, 130, 16, 1.0),
-                      ),
+                        child: Image.asset(
+    'assets/back_updated.png',
+    height: 40,
+    width: 34,
+    fit: BoxFit.contain,
+    // color: const Color.fromRGBO(255, 130, 16, 1.0), // Orange tint
+  ),
                     ),
                     const Expanded(
                       child: Center(

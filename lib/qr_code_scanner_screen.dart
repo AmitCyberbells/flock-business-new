@@ -3,23 +3,28 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-void _handleScannedQRCode(String qrCode) {
-  print('Scanned QR Code: $qrCode');
-}
-
 class QRScanScreen extends StatefulWidget {
   const QRScanScreen({super.key});
 
   @override
   _QRScanScreenState createState() => _QRScanScreenState();
 }
+
 class _QRScanScreenState extends State<QRScanScreen> {
   bool _isPermissionGranted = false;
+  bool _isScanned = false;
+  MobileScannerController _scannerController = MobileScannerController();
 
   @override
   void initState() {
     super.initState();
     _checkPermission();
+  }
+
+  @override
+  void dispose() {
+    _scannerController.dispose();
+    super.dispose();
   }
 
   Future<void> _checkPermission() async {
@@ -35,7 +40,6 @@ class _QRScanScreenState extends State<QRScanScreen> {
         msg: 'Camera permission is required. Please enable it in settings.',
       );
       await openAppSettings();
-      // Re-check permission when returning
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         var newStatus = await Permission.camera.status;
         if (newStatus.isGranted) {
@@ -43,8 +47,41 @@ class _QRScanScreenState extends State<QRScanScreen> {
         }
       });
     } else {
-      Navigator.pop(context); // Go back if permission is denied
+      Navigator.pop(context);
       Fluttertoast.showToast(msg: 'Camera Permission Denied!');
+    }
+  }
+
+  void _handleScannedQRCode(String qrCode, BuildContext screenContext) {
+    print('Scanned QR Code: $qrCode');
+    if (mounted && !_isScanned) {
+      setState(() {
+        _isScanned = true;
+      });
+      _scannerController.stop(); // Stop scanner to prevent multiple triggers
+      try {
+        showDialog(
+          context: screenContext,
+          barrierDismissible: false,
+          builder: (dialogContext) => AlertDialog(
+            title: const Text('QR Code Scanned'),
+            content: Text('QR Code scanned successfully: $qrCode'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  print('Dialog OK button pressed');
+                  Navigator.of(dialogContext).pop(); // Close dialog
+                  Navigator.of(screenContext).pop(); // Pop QRScanScreen
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      } catch (e, stackTrace) {
+        print('Error showing dialog: $e\n$stackTrace');
+        Navigator.of(screenContext).pop(); // Fallback navigation
+      }
     }
   }
 
@@ -55,7 +92,10 @@ class _QRScanScreenState extends State<QRScanScreen> {
         backgroundColor: const Color(0xFF2A4CE1),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            print('AppBar back button pressed');
+            Navigator.pop(context);
+          },
         ),
         title: const Text('Scan QR Code', style: TextStyle(color: Colors.white)),
         centerTitle: true,
@@ -84,26 +124,34 @@ class _QRScanScreenState extends State<QRScanScreen> {
                     borderRadius: BorderRadius.circular(10),
                     child: _isPermissionGranted
                         ? MobileScanner(
+                            controller: _scannerController,
                             onDetect: (capture) {
-                              final barcodes = capture.barcodes;
-                              if (barcodes.isNotEmpty) {
-                                Navigator.pop(context);
-                                final qrCode = barcodes.first.rawValue ?? '';
-                                _handleScannedQRCode(qrCode);
+                              if (!_isScanned) {
+                                final barcodes = capture.barcodes;
+                                if (barcodes.isNotEmpty) {
+                                  final qrCode = barcodes.first.rawValue ?? '';
+                                  _handleScannedQRCode(qrCode, context);
+                                }
                               }
                             },
                           )
-                        : Container(
-  color: Colors.white.withOpacity(0.19),
-  child: Center(
-    child: Image.asset(
-      'assets/Bird_Full_Eye_Blinking.gif',
-      width: 100, // Adjust size as needed
-      height: 100,
-    ),
-  ),
-)
-
+                        : Stack(
+                            children: [
+                              Container(
+                                color: Colors.black.withOpacity(0.14),
+                              ),
+                              Container(
+                                color: Colors.white10,
+                                child: Center(
+                                  child: Image.asset(
+                                    'assets/Bird_Full_Eye_Blinking.gif',
+                                    width: 100,
+                                    height: 100,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                   ),
                   Container(
                     width: 250,
@@ -129,7 +177,11 @@ class _QRScanScreenState extends State<QRScanScreen> {
             const SizedBox(height: 20),
             const Text(
               'Scanning Code ...',
-              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 190),
           ],

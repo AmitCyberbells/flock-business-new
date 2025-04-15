@@ -129,15 +129,25 @@ class _OffersScreenState extends State<OffersScreen> {
       appBar: AppConstants.customAppBar(context: context, title: 'Offers'),
       body:
           isLoading
-              ? Container(
-                color: Colors.white.withOpacity(0.19),
-                child: Center(
-                  child: Image.asset(
-                    'assets/Bird_Full_Eye_Blinking.gif',
-                    width: 100, // Adjust size as needed
-                    height: 100,
+              ? Stack(
+                children: [
+                  // Semi-transparent dark overlay
+                  Container(
+                    color: Colors.black.withOpacity(0.14), // Dark overlay
                   ),
-                ),
+
+                  // Your original container with white tint and loader
+                  Container(
+                    color: Colors.white10,
+                    child: Center(
+                      child: Image.asset(
+                        'assets/Bird_Full_Eye_Blinking.gif',
+                        width: 100, // Adjust size as needed
+                        height: 100,
+                      ),
+                    ),
+                  ),
+                ],
               )
               : errorMessage.isNotEmpty
               ? Center(
@@ -296,82 +306,94 @@ class _OffersScreenState extends State<OffersScreen> {
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: [
                                 // 🔴 Delete button (now on the left)
-                              Container(
-  decoration: BoxDecoration(
-  
-  ),
-  child: SizedBox(
-    height: 30,
-    width: 66,
-    child: cardWrapper(
-      borderRadius: 5,
-      elevation: 2,
-      color: Colors.red,
-      child: InkWell(
-        onTap: () {
-          showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                title: const Text('Confirm Deletion'),
-                content: const Text(
-                  'Are you sure you want to delete this offer?',
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: const Text(
-                      'CANCEL',
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      removeOffer(offerId);
-                    },
-                    child: const Text(
-                      'OK',
-                      style: TextStyle(
-                        color: Color.fromRGBO(255, 130, 16, 1.0),
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            },
-          );
-        },
-        child: const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 4),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.delete,
-                size: 14,
-                color: Colors.white,
-              ),
-              SizedBox(width: 4),
-              Text(
-                'Delete',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    ),
-  ),
-),
+                                Container(
+                                  decoration: BoxDecoration(),
+                                  child: SizedBox(
+                                    height: 30,
+                                    width: 66,
+                                    child: cardWrapper(
+                                      borderRadius: 5,
+                                      elevation: 2,
+                                      color: Colors.red,
+                                      child: InkWell(
+                                        onTap: () {
+                                          showDialog(
+                                            context: context,
+                                            builder: (BuildContext context) {
+                                              return AlertDialog(
+                                                title: const Text(
+                                                  'Confirm Deletion',
+                                                ),
+                                                content: const Text(
+                                                  'Are you sure you want to delete this offer?',
+                                                ),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () {
+                                                      Navigator.of(
+                                                        context,
+                                                      ).pop();
+                                                    },
+                                                    child: const Text(
+                                                      'CANCEL',
+                                                      style: TextStyle(
+                                                        color: Colors.grey,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  TextButton(
+                                                    onPressed: () {
+                                                      Navigator.of(
+                                                        context,
+                                                      ).pop();
+                                                      removeOffer(offerId);
+                                                    },
+                                                    child: const Text(
+                                                      'OK',
+                                                      style: TextStyle(
+                                                        color: Color.fromRGBO(
+                                                          255,
+                                                          130,
+                                                          16,
+                                                          1.0,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              );
+                                            },
+                                          );
+                                        },
+                                        child: const Padding(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 4,
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                Icons.delete,
+                                                size: 14,
+                                                color: Colors.white,
+                                              ),
+                                              SizedBox(width: 4),
+                                              Text(
+                                                'Delete',
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
 
-// Space between buttons
-
+                                // Space between buttons
 
                                 // 🟠 See Details button (now on the right)
                                 ElevatedButton(
@@ -387,7 +409,7 @@ class _OffersScreenState extends State<OffersScreen> {
                                   },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.orange,
-                                   
+
                                     minimumSize: const Size(60, 30),
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 8,

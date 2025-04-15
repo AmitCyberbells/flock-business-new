@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:flock/constants.dart';
 import 'package:flock/edit_venue.dart'; // This file should contain your EditVenueScreen implementation.
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -339,41 +340,48 @@ class _TabEggScreenState extends State<TabEggScreen> {
       );
     }
   }
+// In venue.dart, replace the editVenue method with this:
 
-  void editVenue(Map<String, dynamic> item) {
-    if (!UserPermissions.hasPermission('edit_venue')) {
-      Fluttertoast.showToast(msg: "You don't have access to this feature!");
-      return;
-    }
-    final categoryId =
-        item['category_id']?.toString() ??
-        categoryList[cardPosition]['id'].toString();
+void editVenue(Map<String, dynamic> item) {
+  if (!UserPermissions.hasPermission('edit_venue')) {
+    Fluttertoast.showToast(msg: "You don't have access to this feature!");
+    return;
+  }
+  final categoryId = item['category_id']?.toString() ??
+      categoryList[cardPosition]['id'].toString();
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder:
-            (context) => EditVenueScreen(
-              venueData: Map<String, dynamic>.from(item),
-              categoryId: categoryId,
-            ),
+
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => EditVenueScreen(
+        venueData: Map<String, dynamic>.from(item),
+        categoryId: categoryId,
       ),
-    ).then((updatedVenue) {
-      if (updatedVenue != null && updatedVenue is Map<String, dynamic>) {
+    ),
+  ).then((updatedVenue) {
+    if (updatedVenue != null && updatedVenue is Map<String, dynamic>) {
+      setState(() {
         final index = allData.indexWhere(
-          (v) => v['id']?.toString() == item['id']?.toString(),
+          (v) => v['id'].toString() == updatedVenue['id'].toString(),
         );
         if (index != -1) {
-          setState(() {
-            allData[index] = Map<String, dynamic>.from(allData[index])
-              ..addAll(updatedVenue);
-          });
+          // Update existing venue
+          allData[index] = Map<String, dynamic>.from(updatedVenue);
         } else {
-          getUserId().then((uid) => getVenueData(uid, categoryId));
+          // Add new venue if not found (edge case)
+          allData.add(Map<String, dynamic>.from(updatedVenue));
         }
-      }
-    });
-  }
+      });
+      // Optional: Refresh venue data to ensure consistency with backend
+      getUserId().then((uid) => getVenueData(uid, categoryId));
+    }
+  });
+}
+
+
+
+
 
   void qrCodeBtn(Map<String, dynamic> item) {
     final String qrData = item['qrData'] ?? item['id'].toString();
@@ -640,8 +648,7 @@ class _TabEggScreenState extends State<TabEggScreen> {
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         // Edit Info button with shadow
-
-                            Container(
+                        Container(
                           decoration: BoxDecoration(
                             boxShadow: [
                               BoxShadow(
@@ -654,7 +661,7 @@ class _TabEggScreenState extends State<TabEggScreen> {
                           child: cardWrapper(
                             borderRadius: 5,
                             elevation: 2,
-  color: Colors.red,
+                            color: Colors.red,
                             child: InkWell(
                               onTap: () {
                                 if (!UserPermissions.hasPermission(
@@ -689,7 +696,7 @@ class _TabEggScreenState extends State<TabEggScreen> {
                                       'Delete',
                                       style: TextStyle(
                                         fontSize: Design.font13,
-                                        color:Colors.white,
+                                        color: Colors.white,
                                       ),
                                     ),
                                   ],
@@ -727,7 +734,12 @@ class _TabEggScreenState extends State<TabEggScreen> {
                                       'assets/edit.png',
                                       width: 16,
                                       height: 16,
-                                      color: const Color.fromRGBO(255,255, 255, 1),
+                                      color: const Color.fromRGBO(
+                                        255,
+                                        255,
+                                        255,
+                                        1,
+                                      ),
                                     ),
                                     const SizedBox(width: 4),
                                     const Text(
@@ -735,7 +747,12 @@ class _TabEggScreenState extends State<TabEggScreen> {
                                       textAlign: TextAlign.center,
                                       style: TextStyle(
                                         fontSize: Design.font13,
-                                        color: const Color.fromRGBO(255,255, 255, 1),
+                                        color: const Color.fromRGBO(
+                                          255,
+                                          255,
+                                          255,
+                                          1,
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -745,10 +762,7 @@ class _TabEggScreenState extends State<TabEggScreen> {
                           ),
                         ),
 
-                        
-
                         // Remove button with shadow
-                    
                       ],
                     ),
                   ],
@@ -782,12 +796,20 @@ class _TabEggScreenState extends State<TabEggScreen> {
                         ),
                         child: Row(
                           children: [
+                          
                             InkWell(
                               onTap: () => Navigator.of(context).pop(),
-                              child: const Icon(
-                                Icons.arrow_back,
-                                color: Color.fromRGBO(255, 130, 16, 1.0),
-                              ),
+                             child: Container(
+  color: Colors.white, // White background
+  child: Image.asset(
+    'assets/back_updated.png',
+    height: 40,
+    width: 34,
+    fit: BoxFit.contain,
+    // color: const Color.fromRGBO(255, 130, 16, 1.0), // Orange tint
+  ),
+),
+
                             ),
                             const Expanded(
                               child: Center(
@@ -873,15 +895,27 @@ class _TabEggScreenState extends State<TabEggScreen> {
                 Expanded(
                   child:
                       loader && allData.isEmpty
-                          ? Container(
-                            color: Colors.white.withOpacity(0.19),
-                            child: Center(
-                              child: Image.asset(
-                                'assets/Bird_Full_Eye_Blinking.gif',
-                                width: 100,
-                                height: 100,
+                          ? Stack(
+                            children: [
+                              // Semi-transparent dark overlay
+                              Container(
+                                color: Colors.black.withOpacity(
+                                  0.1,
+                                ), // Dark overlay
                               ),
-                            ),
+
+                              // Your original container with white tint and loader
+                              Container(
+                                color: Colors.white10,
+                                child: Center(
+                                  child: Image.asset(
+                                    'assets/Bird_Full_Eye_Blinking.gif',
+                                    width: 100, // Adjust size as needed
+                                    height: 100,
+                                  ),
+                                ),
+                              ),
+                            ],
                           )
                           : allData.isEmpty
                           ? Center(
@@ -952,82 +986,94 @@ class _TabEggScreenState extends State<TabEggScreen> {
               ],
             ),
             if (dialogAlert)
-              Center(
-                child: Container(
-                  width: MediaQuery.of(context).size.width * 0.8,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Design.white,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-               child: Column(
-  mainAxisSize: MainAxisSize.min,
-  crossAxisAlignment: CrossAxisAlignment.start,
-  children: [
-  const Text(
-    'Confirm Deletion',
-    style: TextStyle(
-      fontSize: 16,
-      fontWeight: FontWeight.bold,
-    ),
-  ),
-  const SizedBox(height: 10),
-  const Text(
-    'Are you sure you want to remove venue?',
-    textAlign: TextAlign.left,
-    style: TextStyle(
-      fontSize: Design.font15,
-      fontWeight: FontWeight.w500,
-    ),
-  ),
-  const SizedBox(height: 20),
-  Row(
+              if (dialogAlert)
+  Stack(
     children: [
-      Expanded(
-        child: OutlinedButton(
-          onPressed: () => setState(() => dialogAlert = false),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: Colors.grey,
-            side: const BorderSide(color: Colors.grey),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(6),
-            ),
-            padding: const EdgeInsets.symmetric(vertical: 12),
-          ),
-          child: const Text(
-            'Cancel',
-            style: TextStyle(fontWeight: FontWeight.w500),
-          ),
+      // 🔘 Background overlay
+      Positioned.fill(
+        child: Container(
+          color: Colors.black.withOpacity(0.4), // Darkens background
         ),
       ),
-      const SizedBox(width: 12),
-      Expanded(
-        child: ElevatedButton(
-          onPressed: removeVenueBtn,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Design.primaryColorOrange,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(6),
-            ),
-            padding: const EdgeInsets.symmetric(vertical: 12),
+
+      // 🔲 Dialog box
+      Center(
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.8,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Design.white,
+            borderRadius: BorderRadius.circular(10),
           ),
-          child: const Text(
-            'OK',
-            style: TextStyle(
-              fontWeight: FontWeight.w500,
-              color: Colors.white,
-            ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Confirm Deletion',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Are you sure you want to remove venue?',
+                textAlign: TextAlign.left,
+                style: TextStyle(
+                  fontSize: Design.font15,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => setState(() => dialogAlert = false),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.grey,
+                        side: const BorderSide(color: Colors.grey),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: removeVenueBtn,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Design.primaryColorOrange,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: const Text(
+                        'OK',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ),
     ],
   ),
-],
 
-),
-
-                ),
-              ),
             // if (loader)
             //   Container(color: Colors.black26, child: const Center(child: CircularProgressIndicator())),
           ],

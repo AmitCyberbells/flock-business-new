@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flock/constants.dart';
 import 'package:flock/custom_scaffold.dart';
 import 'package:flock/venue.dart';
 import 'package:flutter/material.dart';
@@ -233,95 +234,80 @@ class _CheckInsScreenState extends State<CheckInsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return CustomScaffold(
-      currentIndex: 2,
-      body: SafeArea(
-        child: Stack(
-          children: [
-            Column(
-              children: [
-                const SizedBox(height: 16),
-                // Title centered
-                const Text(
-                  "Check-Ins",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
-                ),
-                // Date selector aligned to the right
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Padding(
-                    padding: const EdgeInsets.only(right: 16, top: 8),
-                    child: TextButton(
-                      onPressed: () => _selectDate(context),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            selectedDate == null
-                                ? "Choose Date"
-                                : DateFormat(
-                                  'MMM d, yyyy',
-                                ).format(selectedDate!),
-                            style: const TextStyle(
-                              color: Color.fromRGBO(255, 130, 16, 1.0),
-                              fontSize: 16,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(width: 4),
-                          const Icon(
-                            Icons.arrow_drop_down,
-                            color: Color.fromRGBO(255, 130, 16, 1.0),
-                          ),
-                        ],
+   return CustomScaffold(
+  currentIndex: 2,
+  body: SafeArea(
+    child: Column(
+      children: [
+        // 👇 Manually include the app bar as a widget
+        AppConstants.customAppBar(context: context, title: 'Check-Ins'),
+
+        // Date selector aligned to the right
+        Align(
+          alignment: Alignment.centerRight,
+          child: Padding(
+            padding: const EdgeInsets.only(right: 16, top: 8),
+            child: TextButton(
+              onPressed: () => _selectDate(context),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    selectedDate == null
+                        ? "Choose Date"
+                        : DateFormat('MMM d, yyyy').format(selectedDate!),
+                    style: const TextStyle(
+                      color: Color.fromRGBO(255, 130, 16, 1.0),
+                      fontSize: 16,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(
+                    Icons.arrow_drop_down,
+                    color: Color.fromRGBO(255, 130, 16, 1.0),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 8),
+
+        // Main content area
+        Expanded(
+          child: loader
+              ? Stack(
+                  children: [
+                    Container(color: Colors.black.withOpacity(0.14)),
+                    Container(
+                      color: Colors.white10,
+                      child: Center(
+                        child: Image.asset(
+                          'assets/Bird_Full_Eye_Blinking.gif',
+                          width: 100,
+                          height: 100,
+                        ),
                       ),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                // Body
-                Expanded(
-                  child:
-                      loader
-                          ? Container(
-                            color: Colors.white.withOpacity(0.19),
-                            child: Center(
-                              child: Image.asset(
-                                'assets/Bird_Full_Eye_Blinking.gif',
-                                width: 100, // Adjust size as needed
-                                height: 100,
-                              ),
-                            ),
-                          )
-                          : checkInData.isEmpty
-                          ? const Center(child: Text('No Check-Ins Found'))
-                          : ListView.builder(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            itemCount: checkInData.length,
-                            itemBuilder: (context, index) {
-                              final item = checkInData[index];
-                              return buildCheckInItem(item);
-                            },
-                          ),
-                ),
-              ],
-            ),
-            // Loader overlay if needed
-            //             if (loader)
-            //              Container(
-            //   color: Colors.white.withOpacity(0.19),
-            //   child: Center(
-            //     child: Image.asset(
-            //       'assets/Bird_Full_Eye_Blinking.gif',
-            //       width: 100, // Adjust size as needed
-            //       height: 100,
-            //     ),
-            //   ),
-            // ),
-          ],
+                  ],
+                )
+              : checkInData.isEmpty
+                  ? const Center(child: Text('No Check-Ins Found'))
+                  : ListView.builder(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      itemCount: checkInData.length,
+                      itemBuilder: (context, index) {
+                        final item = checkInData[index];
+                        return buildCheckInItem(item);
+                      },
+                    ),
         ),
-      ),
-    );
+      ],
+    ),
+  ),
+);
+
   }
 }

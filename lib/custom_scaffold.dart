@@ -115,14 +115,13 @@ class CustomScaffold extends StatelessWidget {
                 },
               );
             },
-           child: Center(
-  child: Image.asset(
-    'assets/bird.png',
-    width: screenWidth * 0.2,
-    height: screenWidth * 0.2,
-  ),
-),
-
+            child: Center(
+              child: Image.asset(
+                'assets/bird.png',
+                width: screenWidth * 0.2,
+                height: screenWidth * 0.2,
+              ),
+            ),
           ),
           bottomNavigationBar: CustomBottomBar(currentIndex: currentIndex),
         ),

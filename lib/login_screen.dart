@@ -110,7 +110,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
           Navigator.pushReplacementNamed(context, '/home'); // Use pushReplacement to avoid back navigation
         } else {
-          _showError(responseData['message'] ?? 'Invalid credentials.');
+          _showError(responseData['message'] ?? 'Please check your email or password');
         }
       } else {
         if (response.statusCode == 401) {
@@ -129,7 +129,7 @@ class _LoginScreenState extends State<LoginScreen> {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Error'),
+        title: const Text('Login Failed'),
         content: Text(message),
         actions: [
           TextButton(

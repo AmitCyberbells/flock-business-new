@@ -80,7 +80,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     // Format the timestamp to "yyyy-MM-dd hh:mm a" (e.g., "2025-03-13 05:20 pm")
     final timestamp = DateTime.parse(item['datetime']);
     final formattedTime = DateFormat('yyyy-MM-dd hh:mm a').format(timestamp);
-    final image=item['image'] as String; 
+   
 
     // Determine points sign and color based on transaction_type
     final points = item['feather_points'] as int;

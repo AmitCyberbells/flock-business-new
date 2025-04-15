@@ -229,7 +229,7 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
       } else if (_useVenuePoints) {
         redeemBy = 'venue_points';
       } else if (_useAppPoints) {
-        redeemBy = 'feathers_points';
+        redeemBy = 'feather_points';
       }
       request.fields['redeem_by'] = redeemBy;
 
@@ -375,16 +375,26 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
                             SizedBox(
                               height: 10,
                               width: 20,
-                              child: Container(
-                                color: Colors.white.withOpacity(0.19),
-                                child: Center(
-                                  child: Image.asset(
-                                    'assets/Bird_Full_Eye_Blinking.gif',
-                                    width: 100, // Adjust size as needed
-                                    height: 100,
-                                  ),
-                                ),
-                              ),
+                              child:      Stack(
+  children: [
+    // Semi-transparent dark overlay
+    Container(
+      color: Colors.black.withOpacity(0.14), // Dark overlay
+    ),
+
+    // Your original container with white tint and loader
+    Container(
+      color: Colors.white10,
+      child: Center(
+        child: Image.asset(
+          'assets/Bird_Full_Eye_Blinking.gif',
+          width: 100, // Adjust size as needed
+          height: 100,
+        ),
+      ),
+    ),
+  ],
+)
                             ),
                             const SizedBox(width: 8),
                             Text(

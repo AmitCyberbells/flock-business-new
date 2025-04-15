@@ -60,6 +60,9 @@ class _EditVenueScreenState extends State<EditVenueScreen> {
 
   // Dropdown toggle flag
   bool _showVenueDropdown = false;
+  // edit dietary tags
+  List<dynamic> _allDietaryTags = [];
+  List<int> _selectedDietaryTagIds = [];
 
   @override
   void initState() {
@@ -113,17 +116,26 @@ class _EditVenueScreenState extends State<EditVenueScreen> {
               .map((am) => am['id'] as int)
               .toList();
     }
+    // pre-select dietary
+    if (widget.venueData['dietary_tags'] != null) {
+      _selectedDietaryTagIds =
+          (widget.venueData['dietary_tags'] as List)
+              .map((tag) => tag['id'] as int)
+              .toList();
+    }
 
     // Fetch dropdown data
     _fetchCategories();
     _fetchTags();
     _fetchAmenities();
+    _fetchDietaryTags();
 
-     if (widget.venueData['images'] != null) {
-    _existingImageUrls = (widget.venueData['images'] as List)
-        .map((img) => img['image'].toString())
-        .toList();
-  }
+    if (widget.venueData['images'] != null) {
+      _existingImageUrls =
+          (widget.venueData['images'] as List)
+              .map((img) => img['image'].toString())
+              .toList();
+    }
   }
 
   Future<void> _fetchCategories() async {
@@ -146,6 +158,33 @@ class _EditVenueScreenState extends State<EditVenueScreen> {
       }
     } catch (e) {
       Fluttertoast.showToast(msg: 'Error fetching categories: $e');
+    }
+  }
+
+  // method to fetch dietary
+  Future<void> _fetchDietaryTags() async {
+    try {
+      final token = await _getToken();
+      final response = await http.get(
+        Uri.parse(
+          "http://165.232.152.77/api/vendor/dietary-tags",
+        ), // Replace with your actual endpoint URL
+        headers: {
+          HttpHeaders.authorizationHeader: 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          _allDietaryTags =
+              data['data'] ?? []; // Adjust according to your response structure
+        });
+      } else {
+        Fluttertoast.showToast(msg: 'Failed to fetch dietary tags');
+      }
+    } catch (e) {
+      Fluttertoast.showToast(msg: 'Error fetching dietary tags: $e');
     }
   }
 
@@ -273,182 +312,173 @@ class _EditVenueScreenState extends State<EditVenueScreen> {
         );
       },
     );
-    
   }
+
   void _openImageViewer(String imageUrl) {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => Scaffold(
-        backgroundColor: Colors.black,
-        appBar: AppBar(
-          backgroundColor: Colors.black,
-          iconTheme: const IconThemeData(color: Colors.white),
-        ),
-        body: Center(
-          child: InteractiveViewer(
-            child: Image.network(imageUrl),
-          ),
-        ),
-      ),
-    ),
-  );
-}
-
-void _openLocalImageViewer(File imageFile) {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => Scaffold(
-        backgroundColor: Colors.black,
-        appBar: AppBar(
-          backgroundColor: Colors.black,
-          iconTheme: const IconThemeData(color: Colors.white),
-        ),
-        body: Center(
-          child: InteractiveViewer(
-            child: Image.file(imageFile),
-          ),
-        ),
-      ),
-    ),
-  );
-}
-Widget _buildSelectedImages() {
-  List<Widget> imageWidgets = [];
-
-  // Existing images
-  for (int i = 0; i < _existingImageUrls.length; i++) {
-    String url = _existingImageUrls[i];
-
-    imageWidgets.add(
-      Padding(
-        padding: const EdgeInsets.only(right: 8.0),
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            GestureDetector(
-              onTap: () => _openImageViewer(url),
-              child: Container(
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    color: Colors.grey.shade400,
-                    width: 1,
-                  ),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: Image.network(
-                    url,
-                    width: 80,
-                    height: 80,
-                    fit: BoxFit.cover,
-                  ),
-                ),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (_) => Scaffold(
+              backgroundColor: Colors.black,
+              appBar: AppBar(
+                backgroundColor: Colors.black,
+                iconTheme: const IconThemeData(color: Colors.white),
+              ),
+              body: Center(
+                child: InteractiveViewer(child: Image.network(imageUrl)),
               ),
             ),
-            Positioned(
-              top: 2,
-              right: 2,
-              child: GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _existingImageUrls.removeAt(i);
-                  });
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(2),
-                  decoration: BoxDecoration(
-                    color: const Color.fromRGBO(255, 130, 16, 1),
-                    borderRadius: BorderRadius.circular(5),
-                  ),
-                  child: const Icon(
-                    Icons.close,
-                    color: Colors.white,
-                    size: 14,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
 
-   // New images picked by user
-  for (int i = 0; i < _selectedImages.length; i++) {
-    XFile xfile = _selectedImages[i];
-    File imageFile = File(xfile.path);
-
-    imageWidgets.add(
-      Padding(
-        padding: const EdgeInsets.only(right: 8.0),
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            GestureDetector(
-              onTap: () => _openLocalImageViewer(imageFile),
-              child: Container(
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    color: Colors.grey.shade400,
-                    width: 1,
-                  ),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: Image.file(
-                    imageFile,
-                    width: 80,
-                    height: 80,
-                    fit: BoxFit.cover,
-                  ),
-                ),
+  void _openLocalImageViewer(File imageFile) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (_) => Scaffold(
+              backgroundColor: Colors.black,
+              appBar: AppBar(
+                backgroundColor: Colors.black,
+                iconTheme: const IconThemeData(color: Colors.white),
+              ),
+              body: Center(
+                child: InteractiveViewer(child: Image.file(imageFile)),
               ),
             ),
-            Positioned(
-              top: -6,
-              right: -6,
-              child: GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _selectedImages.removeAt(i);
-                  });
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: const Color.fromRGBO(255, 130, 16, 1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(
-                    Icons.close,
-                    color: Colors.white,
-                    size: 14,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
+
+  Widget _buildSelectedImages() {
+    List<Widget> imageWidgets = [];
+
+    // Existing images
+    // Existing images portion in _buildSelectedImages()
+    for (int i = 0; i < _existingImageUrls.length; i++) {
+      final String imageUrl = _existingImageUrls[i];
+      imageWidgets.add(
+        Padding(
+          padding: const EdgeInsets.only(right: 8.0),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              GestureDetector(
+                onTap: () => _openImageViewer(imageUrl),
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey.shade400, width: 1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: Image.network(
+                      imageUrl,
+                      width: 80,
+                      height: 80,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 2,
+                right: 2,
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      // Remove the image URL from the list so it's not sent to the backend.
+                      _existingImageUrls.remove(imageUrl);
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: const Color.fromRGBO(255, 130, 16, 1),
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    child: const Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: 14,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // New images picked by user
+    for (int i = 0; i < _selectedImages.length; i++) {
+      // XFile xfile = _selectedImages[i];
+      final XFile currentFile = _selectedImages[i]; // capture by value
+      File imageFile = File(currentFile.path);
+
+      imageWidgets.add(
+        Padding(
+          padding: const EdgeInsets.only(right: 8.0),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              GestureDetector(
+                onTap: () => _openLocalImageViewer(imageFile),
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey.shade400, width: 1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: Image.file(
+                      imageFile,
+                      width: 80,
+                      height: 80,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: -6,
+                right: -6,
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedImages.remove(currentFile);
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: const Color.fromRGBO(255, 130, 16, 1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: 14,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     if (imageWidgets.isEmpty) return const SizedBox();
 
-  return SizedBox(
-    height: 80,
-    child: ListView(
-      scrollDirection: Axis.horizontal,
-      children: imageWidgets,
-    ),
-  );
-}
-
+    return SizedBox(
+      height: 80,
+      child: ListView(scrollDirection: Axis.horizontal, children: imageWidgets),
+    );
+  }
 
   /// Custom Category Dropdown Widget
   Widget _buildCategoryDropdown() {
@@ -463,18 +493,21 @@ Widget _buildSelectedImages() {
       child: InputDecorator(
         decoration: InputDecoration(
           labelText: 'Category',
-           border: OutlineInputBorder(
-      borderSide: BorderSide(color: Design.primaryColorOrange),
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderSide: BorderSide(color: Design.black),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderSide: BorderSide(color: Design.primaryColorOrange, width: 2.0),
-    ),
-    errorBorder: OutlineInputBorder(
-      borderSide: const BorderSide(color: Colors.red, width: 2.0),
-    ),
+          border: OutlineInputBorder(
+            borderSide: BorderSide(color: Design.primaryColorOrange),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: Design.black),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(
+              color: Design.primaryColorOrange,
+              width: 2.0,
+            ),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderSide: const BorderSide(color: Colors.red, width: 2.0),
+          ),
           // You may adjust focusedBorder properties as needed.
         ),
         child: Text(
@@ -643,18 +676,26 @@ Widget _buildSelectedImages() {
                               vertical: 8,
                               horizontal: 10,
                             ),
-                           border: OutlineInputBorder(
-      borderSide: BorderSide(color: Design.primaryColorOrange),
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderSide: BorderSide(color: Design.black),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderSide: BorderSide(color: Design.primaryColorOrange, width: 2.0),
-    ),
-    errorBorder: OutlineInputBorder(
-      borderSide: const BorderSide(color: Colors.red, width: 2.0),
-    ),
+                            border: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                color: Design.primaryColorOrange,
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderSide: BorderSide(color: Design.black),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                color: Design.primaryColorOrange,
+                                width: 2.0,
+                              ),
+                            ),
+                            errorBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(
+                                color: Colors.red,
+                                width: 2.0,
+                              ),
+                            ),
                           ),
                           onChanged: (value) {
                             setStateDialog(() {
@@ -740,24 +781,196 @@ Widget _buildSelectedImages() {
       child: InputDecorator(
         decoration: InputDecoration(
           labelText: "Tags",
-           border: OutlineInputBorder(
-      borderSide: BorderSide(color: Design.primaryColorOrange),
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderSide: BorderSide(color: Design.black),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderSide: BorderSide(color: Design.primaryColorOrange, width: 2.0),
-    ),
-    errorBorder: OutlineInputBorder(
-      borderSide: const BorderSide(color: Colors.red, width: 2.0),
-    ),
-
+          border: OutlineInputBorder(
+            borderSide: BorderSide(color: Design.primaryColorOrange),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: Design.black),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(
+              color: Design.primaryColorOrange,
+              width: 2.0,
+            ),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderSide: const BorderSide(color: Colors.red, width: 2.0),
+          ),
         ),
         child: Text(
           selectedTagNames.isNotEmpty
               ? selectedTagNames.join(", ")
               : "Select Tags",
+          style: const TextStyle(color: Colors.black),
+        ),
+      ),
+    );
+  }
+  // dietary dropdown
+
+  // build dietary build
+  Widget _buildDietaryTagsDropdown() {
+    // Convert currently selected IDs to their names (if any)
+    final selectedDietaryNames =
+        _allDietaryTags
+            .where((tag) => _selectedDietaryTagIds.contains(tag['id']))
+            .map((tag) => tag['name'].toString())
+            .toList();
+
+    return InkWell(
+      onTap: () async {
+        await showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            String localSearchText = '';
+            return StatefulBuilder(
+              builder: (context, setStateDialog) {
+                final filteredDietary =
+                    _allDietaryTags.where((tag) {
+                      final tagName =
+                          tag['name']?.toString().toLowerCase() ?? '';
+                      return tagName.contains(localSearchText.toLowerCase());
+                    }).toList();
+                return AlertDialog(
+                  backgroundColor: Colors.white,
+                  title: const Text(
+                    "Select Dietary Tags",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                  ),
+                  content: SizedBox(
+                    width: double.maxFinite,
+                    height: 150,
+                    child: Column(
+                      children: [
+                        TextField(
+                          style: const TextStyle(fontSize: 12),
+                          decoration: InputDecoration(
+                            labelText: 'Search Dietary Tags',
+                            labelStyle: const TextStyle(fontSize: 14),
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 8,
+                              horizontal: 10,
+                            ),
+                            border: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                color: Design.primaryColorOrange,
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderSide: BorderSide(color: Design.black),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                color: Design.primaryColorOrange,
+                                width: 2.0,
+                              ),
+                            ),
+                          ),
+                          onChanged: (value) {
+                            setStateDialog(() {
+                              localSearchText = value;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 10),
+                        Expanded(
+                          child: ListView.builder(
+                            itemCount: filteredDietary.length,
+                            itemBuilder: (context, index) {
+                              final tag = filteredDietary[index];
+                              final tagId = tag['id'] as int;
+                              final tagName = tag['name'].toString();
+                              final isSelected = _selectedDietaryTagIds
+                                  .contains(tagId);
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 1,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Transform.scale(
+                                      scale: 0.75,
+                                      child: Checkbox(
+                                        value: isSelected,
+                                        activeColor: Design.primaryColorOrange,
+                                        visualDensity: const VisualDensity(
+                                          vertical: -4,
+                                          horizontal: -4,
+                                        ),
+                                        materialTapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
+                                        onChanged: (bool? value) {
+                                          setStateDialog(() {
+                                            setState(() {
+                                              if (value == true) {
+                                                _selectedDietaryTagIds.add(
+                                                  tagId,
+                                                );
+                                              } else {
+                                                _selectedDietaryTagIds.remove(
+                                                  tagId,
+                                                );
+                                              }
+                                            });
+                                          });
+                                        },
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        tagName,
+                                        style: const TextStyle(fontSize: 15),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: const Text("Done"),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        );
+      },
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: "Dietary Tags",
+          border: OutlineInputBorder(
+            borderSide: BorderSide(color: Design.primaryColorOrange),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: Design.black),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(
+              color: Design.primaryColorOrange,
+              width: 2.0,
+            ),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderSide: const BorderSide(color: Colors.red, width: 2.0),
+          ),
+        ),
+        child: Text(
+          selectedDietaryNames.isNotEmpty
+              ? selectedDietaryNames.join(", ")
+              : "Select Dietary Tags",
           style: const TextStyle(color: Colors.black),
         ),
       ),
@@ -806,18 +1019,26 @@ Widget _buildSelectedImages() {
                               vertical: 8,
                               horizontal: 10,
                             ),
-                           border: OutlineInputBorder(
-      borderSide: BorderSide(color: Design.primaryColorOrange),
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderSide: BorderSide(color: Design.black),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderSide: BorderSide(color: Design.primaryColorOrange, width: 2.0),
-    ),
-    errorBorder: OutlineInputBorder(
-      borderSide: const BorderSide(color: Colors.red, width: 2.0),
-    ),
+                            border: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                color: Design.primaryColorOrange,
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderSide: BorderSide(color: Design.black),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                color: Design.primaryColorOrange,
+                                width: 2.0,
+                              ),
+                            ),
+                            errorBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(
+                                color: Colors.red,
+                                width: 2.0,
+                              ),
+                            ),
                           ),
                           onChanged: (value) {
                             setStateDialog(() {
@@ -907,18 +1128,21 @@ Widget _buildSelectedImages() {
       child: InputDecorator(
         decoration: InputDecoration(
           labelText: "Amenities",
-         border: OutlineInputBorder(
-      borderSide: BorderSide(color: Design.primaryColorOrange),
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderSide: BorderSide(color: Design.black),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderSide: BorderSide(color: Design.primaryColorOrange, width: 2.0),
-    ),
-    errorBorder: OutlineInputBorder(
-      borderSide: const BorderSide(color: Colors.red, width: 2.0),
-    ),
+          border: OutlineInputBorder(
+            borderSide: BorderSide(color: Design.primaryColorOrange),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: Design.black),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(
+              color: Design.primaryColorOrange,
+              width: 2.0,
+            ),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderSide: const BorderSide(color: Colors.red, width: 2.0),
+          ),
         ),
         child: Text(
           selectedAmenityNames.isNotEmpty
@@ -1005,6 +1229,7 @@ Widget _buildSelectedImages() {
     );
   }
 
+  // In edit_venue.dart, replace the _updateVenue method with this:
   Future<void> _updateVenue() async {
     if (_nameController.text.isEmpty ||
         _descriptionController.text.isEmpty ||
@@ -1050,20 +1275,26 @@ Widget _buildSelectedImages() {
       request.fields['lat'] = _latController.text;
       request.fields['lon'] = _lonController.text;
       request.fields['notice'] = _noticeController.text;
-      request.fields['feather_points'] = _featherPointsController.text;
       request.fields['venue_points'] = _venuePointsController.text;
       request.fields['category_id'] = _selectedCategoryId ?? '';
       request.fields['id'] = venueId;
 
-      // Add selected tags and amenities as JSON-encoded arrays
+      // Add selected tags, amenities, and dietary tags
       request.fields['tag_ids'] = jsonEncode(_selectedTagIds);
       request.fields['amenity_ids'] = jsonEncode(_selectedAmenityIds);
+      request.fields['dietary_ids'] = jsonEncode(_selectedDietaryTagIds);
 
-      // Attach images from _selectedImages
+      // Attach old images
+      for (int i = 0; i < _existingImageUrls.length; i++) {
+        request.fields['old_images[$i]'] = _existingImageUrls[i];
+      }
+
+      // Attach new images
       if (_selectedImages.isNotEmpty) {
         for (var image in _selectedImages) {
           final stream = http.ByteStream(image.openRead());
           final length = await image.length();
+          debugPrint("Image ${image.name} size:$length bytes");
           final multipartFile = http.MultipartFile(
             'images[]',
             stream,
@@ -1074,17 +1305,37 @@ Widget _buildSelectedImages() {
         }
       }
 
-      final response = await request.send();
+      final response = await request.send().timeout(
+        const Duration(minutes: 5),
+        onTimeout: () {
+          // Optionally you can show a message or cancel the request here
+          throw TimeoutException("Image upload timed out. Please try again.");
+        },
+      );
+
       final respStr = await response.stream.bytesToString();
       final respData = json.decode(respStr);
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        Fluttertoast.showToast(
-          msg: respData['message'] ?? 'Venue updated successfully',
-          backgroundColor: Colors.green,
-        );
-        Navigator.pop(context, {
-          ...widget.venueData,
+        // Extract new images from response, assuming backend returns updated venue data
+        List<String> newImageUrls = [];
+        if (respData['data'] != null && respData['data']['images'] != null) {
+          newImageUrls =
+              (respData['data']['images'] as List)
+                  .map((img) => img['image'].toString())
+                  .toList();
+        }
+
+        // Update local state with new image URLs
+        setState(() {
+          _existingImageUrls = newImageUrls;
+          _selectedImages
+              .clear(); // Clear newly uploaded images since they're now in _existingImageUrls
+        });
+
+        // Create updated venue data map
+        final updatedVenue = {
+          'id': venueId,
           'name': _nameController.text,
           'suburb': _suburbController.text,
           'description': _descriptionController.text,
@@ -1092,16 +1343,46 @@ Widget _buildSelectedImages() {
           'lat': _latController.text,
           'lon': _lonController.text,
           'notice': _noticeController.text,
-          'feather_points': _featherPointsController.text,
           'venue_points': _venuePointsController.text,
           'category_id': _selectedCategoryId,
-          'tags': _selectedTagIds.map((id) => {'id': id}).toList(),
-          'amenities': _selectedAmenityIds.map((id) => {'id': id}).toList(),
-        });
+          'tags':
+              _allTags
+                  .where((tag) => _selectedTagIds.contains(tag['id']))
+                  .map((tag) => {'id': tag['id'], 'name': tag['name']})
+                  .toList(),
+          'amenities':
+              _allAmenities
+                  .where((am) => _selectedAmenityIds.contains(am['id']))
+                  .map((am) => {'id': am['id'], 'name': am['name']})
+                  .toList(),
+          'dietary_tags':
+              _allDietaryTags
+                  .where((tag) => _selectedDietaryTagIds.contains(tag['id']))
+                  .map((tag) => {'id': tag['id'], 'name': tag['name']})
+                  .toList(),
+          'images': newImageUrls.map((url) => {'image': url}).toList(),
+          'approval': widget.venueData['approval'],
+          'posted_at': widget.venueData['posted_at'],
+        };
+
+        Fluttertoast.showToast(
+          msg: respData['message'] ?? 'Venue updated successfully',
+          backgroundColor: Colors.green,
+        );
+
+        // Pop the screen and return the updated venue data
+        Navigator.pop(context, updatedVenue);
       } else {
         final errorMsg = respData['message'] ?? 'Failed to update venue';
         throw Exception(errorMsg);
       }
+    } on TimeoutException catch (e) {
+      // Handle timeout: Show feedback or retry mechanism
+      Fluttertoast.showToast(
+        msg: 'Error updating venue: ${e.message}',
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
     } catch (e) {
       Fluttertoast.showToast(
         msg: 'Error updating venue: $e',
@@ -1123,8 +1404,29 @@ Widget _buildSelectedImages() {
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        title: const Text('Edit Venue'),
+        title: const Text(
+          'Edit Venue',
+          style: TextStyle(
+            color: Colors.black,
+          ), // Optional: make title text visible on white background
+        ),
+        leading: InkWell(
+          onTap: () => Navigator.pop(context),
+          child: Padding(
+            padding: const EdgeInsets.all(
+              8.0,
+            ), // Optional padding for better tap area
+            child: Image.asset(
+              'assets/back_updated.png',
+              height: 40,
+              width: 34,
+              fit: BoxFit.contain,
+            ),
+          ),
+        ),
+        elevation: 0, // Optional: remove AppBar shadow
       ),
+
       body: Stack(
         children: [
           SafeArea(
@@ -1134,27 +1436,30 @@ Widget _buildSelectedImages() {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Venue Name
-           TextField(
-  controller: _nameController,
-  decoration: InputDecoration(
-    labelText: 'Venue Name',
-    border: OutlineInputBorder(
-      borderSide: BorderSide(color: Design.black),
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderSide: BorderSide(color: Design.black),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderSide: BorderSide(color: Design.primaryColorOrange, width: 2.0),
-    ),
-    errorBorder: OutlineInputBorder(
-      borderSide: const BorderSide(color: Colors.red, width: 2.0),
-    ),
-  ),
-),
-
-
-
+                  TextField(
+                    controller: _nameController,
+                    decoration: InputDecoration(
+                      labelText: 'Venue Name',
+                      border: OutlineInputBorder(
+                        borderSide: BorderSide(color: Design.black),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Design.black),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Design.primaryColorOrange,
+                          width: 2.0,
+                        ),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(
+                          color: Colors.red,
+                          width: 2.0,
+                        ),
+                      ),
+                    ),
+                  ),
 
                   const SizedBox(height: 16),
                   // Custom Category Dropdown
@@ -1165,44 +1470,55 @@ Widget _buildSelectedImages() {
                     controller: _suburbController,
                     decoration: InputDecoration(
                       labelText: 'Suburb',
-                     border: OutlineInputBorder(
-      borderSide: BorderSide(color: Design.black),
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderSide: BorderSide(color: Design.black),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderSide: BorderSide(color: Design.primaryColorOrange, width: 2.0),
-    ),
-    errorBorder: OutlineInputBorder(
-      borderSide: const BorderSide(color: Colors.red, width: 2.0),
-    ),
+                      border: OutlineInputBorder(
+                        borderSide: BorderSide(color: Design.black),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Design.black),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Design.primaryColorOrange,
+                          width: 2.0,
+                        ),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(
+                          color: Colors.red,
+                          width: 2.0,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
                   // Description
-                 TextField(
-  controller: _descriptionController,
-  decoration: InputDecoration(
-    labelText: 'Description',
-    border: OutlineInputBorder(
-      borderSide: BorderSide(color: Design.primaryColorOrange),
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderSide: BorderSide(color: Design.black),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderSide: BorderSide(color: Design.primaryColorOrange, width: 2.0),
-    ),
-    errorBorder: OutlineInputBorder(
-      borderSide: const BorderSide(color: Colors.red, width: 2.0),
-    ),
-  ),
-  maxLines: 3,
-),
-
-
-
+                  TextField(
+                    controller: _descriptionController,
+                    decoration: InputDecoration(
+                      labelText: 'Description',
+                      border: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Design.primaryColorOrange,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Design.black),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Design.primaryColorOrange,
+                          width: 2.0,
+                        ),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(
+                          color: Colors.red,
+                          width: 2.0,
+                        ),
+                      ),
+                    ),
+                    maxLines: 3,
+                  ),
 
                   const SizedBox(height: 16),
                   // Location (read-only with onTap for LocationPicker)
@@ -1213,14 +1529,17 @@ Widget _buildSelectedImages() {
                       final result = await Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => LocationPicker(
-                            initialPosition: _latController.text.isNotEmpty && _lonController.text.isNotEmpty
-            ? LatLng(
-                double.parse(_latController.text),
-                double.parse(_lonController.text),
-              )
-            : null,
-                          ),
+                          builder:
+                              (context) => LocationPicker(
+                                initialPosition:
+                                    _latController.text.isNotEmpty &&
+                                            _lonController.text.isNotEmpty
+                                        ? LatLng(
+                                          double.parse(_latController.text),
+                                          double.parse(_lonController.text),
+                                        )
+                                        : null,
+                              ),
                         ),
                       );
                       if (result != null && result is Map<String, dynamic>) {
@@ -1233,225 +1552,246 @@ Widget _buildSelectedImages() {
                     },
                     decoration: InputDecoration(
                       labelText: 'Location',
-                       border: OutlineInputBorder(
-      borderSide: BorderSide(color: Design.primaryColorOrange),
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderSide: BorderSide(color: Design.black),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderSide: BorderSide(color: Design.primaryColorOrange, width: 2.0),
-    ),
-    errorBorder: OutlineInputBorder(
-      borderSide: const BorderSide(color: Colors.red, width: 2.0),
-    ),
+                      border: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Design.primaryColorOrange,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Design.black),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Design.primaryColorOrange,
+                          width: 2.0,
+                        ),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(
+                          color: Colors.red,
+                          width: 2.0,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
                   // Latitude and Longitude Row
-    //               Row(
-    //                 children: [
-    //                   Expanded(
-    //                     child: TextField(
-    //                       controller: _latController,
-    //                       decoration: InputDecoration(
-    //                         labelText: 'Latitude',
-    //                         border: OutlineInputBorder(
-    //   borderSide: BorderSide(color: Design.primaryColorOrange),
-    // ),
-    // enabledBorder: OutlineInputBorder(
-    //   borderSide: BorderSide(color: Design.black),
-    // ),
-    // focusedBorder: OutlineInputBorder(
-    //   borderSide: BorderSide(color: Design.primaryColorOrange, width: 2.0),
-    // ),
-    // errorBorder: OutlineInputBorder(
-    //   borderSide: const BorderSide(color: Colors.red, width: 2.0),
-    // ),
-                           
-    //                       ),
-    //                       keyboardType: TextInputType.number,
-    //                     ),
-    //                   ),
-    //                   const SizedBox(width: 16),
-    //                   Expanded(
-    //                     child: TextField(
-    //                       controller: _lonController,
-    //                       decoration: InputDecoration(
-    //                         labelText: 'Longitude',
-    //                          border: OutlineInputBorder(
-    //   borderSide: BorderSide(color: Design.primaryColorOrange),
-    // ),
-    // enabledBorder: OutlineInputBorder(
-    //   borderSide: BorderSide(color: Design.black),
-    // ),
-    // focusedBorder: OutlineInputBorder(
-    //   borderSide: BorderSide(color: Design.primaryColorOrange, width: 2.0),
-    // ),
-    // errorBorder: OutlineInputBorder(
-    //   borderSide: const BorderSide(color: Colors.red, width: 2.0),
-    // ),
-                          
-    //                       ),
-    //                       keyboardType: TextInputType.number,
-    //                     ),
-    //                   ),
-    //                 ],
-    //               ),
-    //               const SizedBox(height: 16),
+                  //               Row(
+                  //                 children: [
+                  //                   Expanded(
+                  //                     child: TextField(
+                  //                       controller: _latController,
+                  //                       decoration: InputDecoration(
+                  //                         labelText: 'Latitude',
+                  //                         border: OutlineInputBorder(
+                  //   borderSide: BorderSide(color: Design.primaryColorOrange),
+                  // ),
+                  // enabledBorder: OutlineInputBorder(
+                  //   borderSide: BorderSide(color: Design.black),
+                  // ),
+                  // focusedBorder: OutlineInputBorder(
+                  //   borderSide: BorderSide(color: Design.primaryColorOrange, width: 2.0),
+                  // ),
+                  // errorBorder: OutlineInputBorder(
+                  //   borderSide: const BorderSide(color: Colors.red, width: 2.0),
+                  // ),
+
+                  //                       ),
+                  //                       keyboardType: TextInputType.number,
+                  //                     ),
+                  //                   ),
+                  //                   const SizedBox(width: 16),
+                  //                   Expanded(
+                  //                     child: TextField(
+                  //                       controller: _lonController,
+                  //                       decoration: InputDecoration(
+                  //                         labelText: 'Longitude',
+                  //                          border: OutlineInputBorder(
+                  //   borderSide: BorderSide(color: Design.primaryColorOrange),
+                  // ),
+                  // enabledBorder: OutlineInputBorder(
+                  //   borderSide: BorderSide(color: Design.black),
+                  // ),
+                  // focusedBorder: OutlineInputBorder(
+                  //   borderSide: BorderSide(color: Design.primaryColorOrange, width: 2.0),
+                  // ),
+                  // errorBorder: OutlineInputBorder(
+                  //   borderSide: const BorderSide(color: Colors.red, width: 2.0),
+                  // ),
+
+                  //                       ),
+                  //                       keyboardType: TextInputType.number,
+                  //                     ),
+                  //                   ),
+                  //                 ],
+                  //               ),
+                  //               const SizedBox(height: 16),
                   // Notice
                   TextField(
                     controller: _noticeController,
                     decoration: InputDecoration(
                       labelText: 'Notice',
-                     border: OutlineInputBorder(
-      borderSide: BorderSide(color: Design.primaryColorOrange),
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderSide: BorderSide(color: Design.black),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderSide: BorderSide(color: Design.primaryColorOrange, width: 2.0),
-    ),
-    errorBorder: OutlineInputBorder(
-      borderSide: const BorderSide(color: Colors.red, width: 2.0),
-    ),
+                      border: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Design.primaryColorOrange,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Design.black),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Design.primaryColorOrange,
+                          width: 2.0,
+                        ),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(
+                          color: Colors.red,
+                          width: 2.0,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
                   // Feather Points and Venue Points Row
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _featherPointsController,
-                          decoration: InputDecoration(
-                            labelText: 'Feather Points',
-                            border: OutlineInputBorder(
-      borderSide: BorderSide(color: Design.primaryColorOrange),
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderSide: BorderSide(color: Design.black),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderSide: BorderSide(color: Design.primaryColorOrange, width: 2.0),
-    ),
-    errorBorder: OutlineInputBorder(
-      borderSide: const BorderSide(color: Colors.red, width: 2.0),
-    ),
-                          ),
-                          keyboardType: TextInputType.number,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: TextField(
-                          controller: _venuePointsController,
-                          decoration: InputDecoration(
-                            labelText: 'Venue Points',
-                            border: OutlineInputBorder(
-      borderSide: BorderSide(color: Design.primaryColorOrange),
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderSide: BorderSide(color: Design.black),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderSide: BorderSide(color: Design.primaryColorOrange, width: 2.0),
-    ),
-    errorBorder: OutlineInputBorder(
-      borderSide: const BorderSide(color: Colors.red, width: 2.0),
-    ),
-                          ),
-                          keyboardType: TextInputType.number,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
+                  //               Row(
+                  //                 children: [
+                  //                   Expanded(
+                  //                     child: TextField(
+                  //                       controller: _featherPointsController,
+                  //                       decoration: InputDecoration(
+                  //                         labelText: 'Feather Points',
+                  //                         border: OutlineInputBorder(
+                  //   borderSide: BorderSide(color: Design.primaryColorOrange),
+                  // ),
+                  // enabledBorder: OutlineInputBorder(
+                  //   borderSide: BorderSide(color: Design.black),
+                  // ),
+                  // focusedBorder: OutlineInputBorder(
+                  //   borderSide: BorderSide(color: Design.primaryColorOrange, width: 2.0),
+                  // ),
+                  // errorBorder: OutlineInputBorder(
+                  //   borderSide: const BorderSide(color: Colors.red, width: 2.0),
+                  // ),
+                  //                       ),
+                  //                       keyboardType: TextInputType.number,
+                  //                     ),
+                  //                   ),
+                  //                   const SizedBox(width: 16),
+                  //                   Expanded(
+                  //                     child: TextField(
+                  //                       controller: _venuePointsController,
+                  //                       decoration: InputDecoration(
+                  //                         labelText: 'Venue Points',
+                  //                         border: OutlineInputBorder(
+                  //   borderSide: BorderSide(color: Design.primaryColorOrange),
+                  // ),
+                  // enabledBorder: OutlineInputBorder(
+                  //   borderSide: BorderSide(color: Design.black),
+                  // ),
+                  // focusedBorder: OutlineInputBorder(
+                  //   borderSide: BorderSide(color: Design.primaryColorOrange, width: 2.0),
+                  // ),
+                  // errorBorder: OutlineInputBorder(
+                  //   borderSide: const BorderSide(color: Colors.red, width: 2.0),
+                  // ),
+                  //                       ),
+                  //                       keyboardType: TextInputType.number,
+                  //                     ),
+                  //                   ),
+                  //                 ],
+                  //               ),
+                  // const SizedBox(height: 16),
                   // Tags Dropdown
                   _buildTagsDropdown(),
                   const SizedBox(height: 16),
                   // Amenities Dropdown
                   _buildAmenitiesDropdown(),
                   const SizedBox(height: 16),
+                  _buildDietaryTagsDropdown(),
+                  const SizedBox(height: 20),
+
                   // Image Picker Row
-             Column(
-  crossAxisAlignment: CrossAxisAlignment.start,
-  children: [
-    // 🔝 Label with camera icon
- 
-   
-    Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-ElevatedButton(
-  onPressed: _showImagePickerSheet,
-  style: ElevatedButton.styleFrom(
-    backgroundColor: Design.white,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(10),
-    ),
-    padding: EdgeInsets.zero, // Remove inner padding to align icon properly
-  ),
-  child: Stack(
-   children: [
-     
-  Padding(
-    padding: const EdgeInsets.symmetric(vertical:4,horizontal: 2),
-    child: Container(
-     
-      decoration: BoxDecoration(
-        // color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.4), // 👈 Grey shadow
-            blurRadius: 6,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(10),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text(
-            'Add Image(s)',
-            style: TextStyle(
-              fontSize: 11,
-              color: Colors.black87,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Image.asset(
-            'assets/camera.png',
-            height: 30,
-            width: 36,
-            fit: BoxFit.contain,
-            color: const Color.fromRGBO(255, 130, 16, 1),
-          ),
-        ],
-      ),
-    ),
-  ),
-],
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 🔝 Label with camera icon
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ElevatedButton(
+                            onPressed: _showImagePickerSheet,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Design.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              padding:
+                                  EdgeInsets
+                                      .zero, // Remove inner padding to align icon properly
+                            ),
+                            child: Stack(
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 4,
+                                    horizontal: 2,
+                                  ),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      // color: Colors.white,
+                                      borderRadius: BorderRadius.circular(10),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.grey.withOpacity(
+                                            0.4,
+                                          ), // 👈 Grey shadow
+                                          blurRadius: 6,
+                                          offset: const Offset(0, 3),
+                                        ),
+                                      ],
+                                    ),
+                                    padding: const EdgeInsets.all(10),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Text(
+                                          'Add Image(s)',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: Colors.black87,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Image.asset(
+                                          'assets/camera.png',
+                                          height: 30,
+                                          width: 36,
+                                          fit: BoxFit.contain,
+                                          color: const Color.fromRGBO(
+                                            255,
+                                            130,
+                                            16,
+                                            1,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
 
-  ),
-),
-
-
-
-        const SizedBox(width: 16),
-        // 🖼 Image preview list
-        Expanded(child: _buildSelectedImages()),
-      ],
-    ),
-  ],
-),
-
-
-
+                          const SizedBox(width: 16),
+                          // 🖼 Image preview list
+                          Expanded(child: _buildSelectedImages()),
+                        ],
+                      ),
+                    ],
+                  ),
 
                   const SizedBox(height: 24),
                   // Save Changes Button
@@ -1480,16 +1820,26 @@ ElevatedButton(
             ),
           ),
           if (_isLoading)
-            Container(
-  color: Colors.white.withOpacity(0.19),
-  child: Center(
-    child: Image.asset(
-      'assets/Bird_Full_Eye_Blinking.gif',
-      width: 100, // Adjust size as needed
-      height: 100,
-    ),
-  ),
-),
+            Stack(
+              children: [
+                // Semi-transparent dark overlay
+                Container(
+                  color: Colors.black.withOpacity(0.14), // Dark overlay
+                ),
+
+                // Your original container with white tint and loader
+                Container(
+                  color: Colors.white10,
+                  child: Center(
+                    child: Image.asset(
+                      'assets/Bird_Full_Eye_Blinking.gif',
+                      width: 100, // Adjust size as needed
+                      height: 100,
+                    ),
+                  ),
+                ),
+              ],
+            ),
         ],
       ),
     );

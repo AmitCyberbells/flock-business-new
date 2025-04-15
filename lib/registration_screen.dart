@@ -65,7 +65,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _validateInputs() {
     bool isValid = true;
     setState(() {
-      // Reset errors before validating
       _firstNameError = null;
       _lastNameError = null;
       _dobError = null;
@@ -76,27 +75,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     final firstName = _firstNameController.text.trim();
     final lastName = _lastNameController.text.trim();
-    final dob = _dobController.text.trim();
     final email = _emailController.text.trim();
-    final phone = _phoneController.text.trim();
     final password = _passwordController.text;
 
-    // Validate First Name
     if (firstName.isEmpty) {
       _firstNameError = 'First name is required';
       isValid = false;
     }
-    // Validate Last Name
     if (lastName.isEmpty) {
       _lastNameError = 'Last name is required';
       isValid = false;
     }
-    // Validate Date of Birth
-    // if (dob.isEmpty) {
-    //   _dobError = 'Date of birth is required';
-    //   isValid = false;
-    // }
-    // Validate Email
     if (email.isEmpty) {
       _emailError = 'Email is required';
       isValid = false;
@@ -104,15 +93,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _emailError = 'Please enter a valid email address';
       isValid = false;
     }
-    // Validate Phone Number
-    // if (phone.isEmpty) {
-    //   _phoneError = 'Phone number is required';
-    //   isValid = false;
-    // } else if (!isValidPhone(phone)) {
-    //   _phoneError = 'Please enter a valid 10-digit phone number';
-    //   isValid = false;
-    // }
-    // Validate Password
     if (password.isEmpty) {
       _passwordError = 'Password is required';
       isValid = false;
@@ -135,10 +115,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       final Map<String, dynamic> body = {
         'first_name': firstName,
         'last_name': lastName,
-        'dob': dob,
-        'location': location,
+        'dob': dob.isEmpty ? null : dob,
+        'location': location.isEmpty ? null : location,
         'email': email,
-        'phone': phone,
+        'phone': phone.isEmpty ? null : phone,
         'password': password,
       };
 
@@ -154,44 +134,55 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
         if (responseData['status'] == 'success') {
-          SharedPreferences prefs = await SharedPreferences.getInstance();
-          await prefs.setString('firstName', firstName);
-          await prefs.setString('lastName', lastName);
-          await prefs.setString('email', email);
+          // Do NOT store access_token or user data yet
+          debugPrint("Signup successful, navigating to OTP verification");
 
-          if (responseData['data'] != null &&
-              responseData['data']['access_token'] != null) {
-            final token = responseData['data']['access_token'];
-            await prefs.setString('access_token', token);
-            debugPrint("Stored token after signup: $token");
-          } else {
-            debugPrint("No token returned from signup API");
-          }
-
-          showDialog(
+          // Show dialog and navigate to OTP screen
+          await showDialog(
             context: context,
-            builder:
-                (_) => AlertDialog(
-                  title: const Text('Success'),
-                  content: const Text('OTP sent successfully.'),
-                  actions: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder:
-                                (context) =>
-                                    OtpVerificationScreen(email: email),
-                          ),
-                        );
-                      },
-                      child: const Text('OK'),
-                    ),
-                  ],
+            builder: (_) => AlertDialog(
+              title: const Text('Success'),
+              content: const Text('OTP sent successfully.'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    debugPrint("Dialog OK button pressed");
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('OK'),
                 ),
+              ],
+            ),
           );
+
+          // Navigate to OTP verification with user data
+          if (mounted) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => OtpVerificationScreen(
+                  email: email,
+                  firstName: firstName,
+                  lastName: lastName,
+                ),
+              ),
+            ).then((result) {
+              // Handle case where user navigates back without verifying
+              if (result == null && mounted) {
+                debugPrint("Returned from OTP screen without verification");
+                _showError(
+                    'OTP verification incomplete. Please register again.');
+                // Optionally clear controllers
+                _firstNameController.clear();
+                _lastNameController.clear();
+                _emailController.clear();
+                _phoneController.clear();
+                _passwordController.clear();
+                _dobController.clear();
+                _locationController.clear();
+              }
+            });
+          }
         } else {
           _showError(responseData['message'] ?? 'Registration failed.');
         }
@@ -207,17 +198,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void _showError(String message) {
     showDialog(
       context: context,
-      builder:
-          (_) => AlertDialog(
-            title: const Text('Error'),
-            content: Text(message),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('OK'),
-              ),
-            ],
+      builder: (_) => AlertDialog(
+        title: const Text('Error'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
           ),
+        ],
+      ),
     );
   }
 
@@ -252,14 +242,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
-  // Helper method for building text fields with inline validation
   Widget _buildTextField({
     required TextEditingController controller,
     required String hintText,
     String? errorText,
     bool obscureText = false,
     IconButton? suffixIcon,
-    VoidCallback? onTap, // 👈 Add this line
+    VoidCallback? onTap,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -276,8 +265,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       child: TextField(
         controller: controller,
         obscureText: obscureText,
-        readOnly: onTap != null, // 👈 Prevents keyboard if onTap is set
-        onTap: onTap, // 👈 Executes the passed onTap function
+        readOnly: onTap != null,
+        onTap: onTap,
         style: const TextStyle(color: Colors.black, fontSize: 14.0),
         decoration: AppConstants.textFieldDecoration.copyWith(
           hintText: hintText,
@@ -293,7 +282,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.transparent, // Match background image
+        backgroundColor: Colors.transparent,
         elevation: 0,
         leading: Padding(
           padding: const EdgeInsets.only(left: 10.0),
@@ -312,11 +301,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
       body: Stack(
         children: [
-          // Background image
           Positioned.fill(
             child: Image.asset('assets/login_back.jpg', fit: BoxFit.cover),
           ),
-          // Form content
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -336,7 +323,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     style: TextStyle(fontSize: 16, color: Colors.black54),
                   ),
                   const SizedBox(height: 20),
-                  // First Name and Last Name in one row
                   Row(
                     children: [
                       Expanded(
@@ -369,40 +355,50 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     errorText: _phoneError,
                   ),
                   const SizedBox(height: 25),
-                 _buildTextField(
-  controller: _dobController,
-  hintText: 'Date of Birth (optional)',
-  errorText: _dobError,
-  onTap: () async {
-    DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: DateTime(2000),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-    );
+                  _buildTextField(
+                    controller: _dobController,
+                    hintText: 'Date of Birth (optional)',
+                    errorText: _dobError,
+                    onTap: () async {
+                      final DateTime today = DateTime.now();
+                      final DateTime eighteenYearsAgo = DateTime(
+                        today.year - 18,
+                        today.month,
+                        today.day,
+                      );
 
-    if (pickedDate != null) {
-      String formattedDate = "${pickedDate.day}/${pickedDate.month}/${pickedDate.year}";
-      _dobController.text = formattedDate;
-    }
-  },
-),
+                      DateTime? pickedDate = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime(2000),
+                        firstDate: DateTime(1900),
+                        lastDate: eighteenYearsAgo,
+                      );
 
+                      if (pickedDate != null) {
+                        String formattedDate =
+                            "${pickedDate.day}/${pickedDate.month}/${pickedDate.year}";
+                        _dobController.text = formattedDate;
+                      }
+                    },
+                  ),
                   const SizedBox(height: 25),
                   _buildTextField(
                     controller: _locationController,
-                    hintText: 'Enter your location',
-
-                    onTap: () {
-                      Navigator.push(
+                    hintText: 'Enter your location (optional)',
+                    onTap: () async {
+                      final selectedLocation = await Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => LocationPicker(),
                         ),
                       );
+                      if (selectedLocation != null) {
+                        setState(() {
+                          _locationController.text = selectedLocation.toString();
+                        });
+                      }
                     },
                   ),
-
                   const SizedBox(height: 25),
                   _buildTextField(
                     controller: _passwordController,
@@ -422,7 +418,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ),
                   const SizedBox(height: 30),
-                  // Checkbox and link for Terms and Conditions/User Agreement
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -452,35 +447,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               TextSpan(
                                 text: 'Terms and Conditions',
                                 style: const TextStyle(color: Colors.orange),
-                                recognizer:
-                                    TapGestureRecognizer()
-                                      ..onTap = () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder:
-                                                (context) =>
-                                                    const TermsAndConditionsPage(),
-                                          ),
-                                        );
-                                      },
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const TermsAndConditionsPage(),
+                                      ),
+                                    );
+                                  },
                               ),
                               const TextSpan(text: ' as set out by the '),
                               TextSpan(
                                 text: 'User Agreement.',
                                 style: const TextStyle(color: Colors.orange),
-                                recognizer:
-                                    TapGestureRecognizer()
-                                      ..onTap = () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder:
-                                                (context) =>
-                                                    const TermsAndConditionsPage(),
-                                          ),
-                                        );
-                                      },
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const TermsAndConditionsPage(),
+                                      ),
+                                    );
+                                  },
                               ),
                             ],
                           ),

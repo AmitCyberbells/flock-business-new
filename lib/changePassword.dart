@@ -119,10 +119,13 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 children: [
                   InkWell(
                     onTap: () => Navigator.of(context).pop(),
-                    child: const Icon(
-                      Icons.arrow_back,
-                      color: Color.fromRGBO(255, 130, 16, 1.0),
-                    ),
+                      child: Image.asset(
+    'assets/back_updated.png',
+    height: 40,
+    width: 34,
+    fit: BoxFit.contain,
+    // color: const Color.fromRGBO(255, 130, 16, 1.0), // Orange tint
+  ),
                   ),
                   const Expanded(
                     child: Center(

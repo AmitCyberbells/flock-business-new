@@ -3,7 +3,7 @@ description: "A new Flutter project."
 
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
-version: 1.7.5
+version: 1.8.4
 
 environment:
   sdk: ^3.7.2
@@ -81,6 +81,7 @@ flutter:
     - assets/people.png
     - assets/back.png
     - assets/back.png
+    - assets/back_updated.png
     - assets/location.png
     - assets/camera.png
     - assets/bottom_nav.png
@@ -95,6 +96,7 @@ flutter:
     - assets/closebtn.png
     - assets/camera.png
     - assets/date_time.png
+    - assets/request.png
    
     - assets/drop_up.png
     - assets/back.png
