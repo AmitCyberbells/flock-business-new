@@ -172,7 +172,7 @@
 //                   key: qrKey,
 //                   onQRViewCreated: _onQRViewCreated,
 //                   overlay: QrScannerOverlayShape(
-//                     borderColor: Colors.orange,
+//                     borderColor: const Color.fromRGBO(255, 130, 16, 1),
 //                     borderRadius: 10,
 //                     borderLength: 30,
 //                     borderWidth: 10,

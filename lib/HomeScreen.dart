@@ -168,7 +168,7 @@ class _TabDashboardState extends State<TabDashboard>
                   int.tryParse(data['today_venue_points']?.toString() ?? '0') ??
                   0;
               hotelList[0]['points'] =
-                  '${int.tryParse(data['checkin_count']?.toString() ?? '0') ?? 0}';
+                  '${int.tryParse(data['today_checkins']?.toString() ?? '0') ?? 0}';
               hotelList[1]['points'] =
                   '${int.tryParse(data['offers_count']?.toString() ?? '0') ?? 0}';
               hotelList[2]['points'] =

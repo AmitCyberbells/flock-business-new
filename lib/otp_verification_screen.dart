@@ -39,10 +39,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     }
 
     try {
-      final Map<String, dynamic> body = {
-        'email': widget.email,
-        'otp': otp,
-      };
+      final Map<String, dynamic> body = {'email': widget.email, 'otp': otp};
 
       final response = await http.post(
         Uri.parse(_otpUrl),
@@ -65,7 +62,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
           // Handle token storage
           String? newToken;
           if (responseData['data'] != null && responseData['data'] is Map) {
-            newToken = responseData['data']['token'] ??
+            newToken =
+                responseData['data']['token'] ??
                 responseData['data']['access_token'];
           }
           if (newToken != null) {
@@ -88,7 +86,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         }
       } else {
         _showError(
-            'OTP verification failed with status: ${response.statusCode}.');
+          'OTP verification failed with status: ${response.statusCode}.',
+        );
       }
     } catch (error) {
       debugPrint("Error during OTP verification: $error");
@@ -99,16 +98,17 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   void _showError(String message) {
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Error'),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
+      builder:
+          (_) => AlertDialog(
+            title: const Text('Error'),
+            content: Text(message),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -154,7 +154,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                 height: 50,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
+                    backgroundColor: const Color.fromRGBO(255, 130, 16, 1),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(15),
                     ),

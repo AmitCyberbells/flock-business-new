@@ -27,8 +27,9 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Report Screen Demo',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(primarySwatch: Colors.orange),
-      home: const ReportScreen(),
+theme: ThemeData(
+  primaryColor: const Color.fromRGBO(255, 130, 16, 1),
+),      home: const ReportScreen(),
     );
   }
 }
@@ -538,13 +539,13 @@ class _ReportScreenState extends State<ReportScreen> {
                   children: [
                     InkWell(
                       onTap: () => Navigator.of(context).pop(),
-                        child: Image.asset(
-    'assets/back_updated.png',
-    height: 40,
-    width: 34,
-    fit: BoxFit.contain,
-    // color: const Color.fromRGBO(255, 130, 16, 1.0), // Orange tint
-  ),
+                      child: Image.asset(
+                        'assets/back_updated.png',
+                        height: 40,
+                        width: 34,
+                        fit: BoxFit.contain,
+                        // color: const Color.fromRGBO(255, 130, 16, 1.0), // Orange tint
+                      ),
                     ),
                     const Expanded(
                       child: Center(

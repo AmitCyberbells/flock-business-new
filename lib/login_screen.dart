@@ -3,6 +3,7 @@ import 'package:flock/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -21,6 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
   String? _passwordError;
 
   final String _loginUrl = 'http://165.232.152.77/api/vendor/login';
+  final String _deviceUpdateUrl = 'http://165.232.152.77/api/vendor/devices/update';
 
   @override
   void dispose() {
@@ -60,6 +62,43 @@ class _LoginScreenState extends State<LoginScreen> {
     return isValid;
   }
 
+  Future<void> _updateDeviceToken(String accessToken) async {
+    try {
+      // Get FCM token
+      final fcmToken = await FirebaseMessaging.instance.getToken();
+      if (fcmToken == null) {
+        print('Failed to retrieve FCM token');
+        return;
+      }
+
+      // Prepare payload (adjust based on API requirements)
+      final body = {
+        'fcm_token': fcmToken,
+        // Add other device info if required (e.g., device_id, platform)
+        'platform': 'android', // or 'ios' based on Platform.isIOS
+      };
+
+      final response = await http.post(
+        Uri.parse(_deviceUpdateUrl),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $accessToken',
+        },
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode == 200) {
+        print('Device token updated successfully');
+      } else {
+        print('Failed to update device token: ${response.statusCode}');
+        final responseData = jsonDecode(response.body);
+        print('Error: ${responseData['message'] ?? 'Unknown error'}');
+      }
+    } catch (error) {
+      print('Error updating device token: $error');
+    }
+  }
+
   Future<void> _login() async {
     if (!_validateInputs()) return;
 
@@ -67,10 +106,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final String password = _passwordController.text;
 
     try {
-      final Map<String, dynamic> body = {
-        'email': email,
-        'password': password,
-      };
+      final Map<String, dynamic> body = {'email': email, 'password': password};
 
       final response = await http.post(
         Uri.parse(_loginUrl),
@@ -96,19 +132,21 @@ class _LoginScreenState extends State<LoginScreen> {
             fName = responseData['data']['user']['first_name']?.toString();
             lName = responseData['data']['user']['last_name']?.toString();
           } else {
-            userId = responseData['userId']?.toString() ??
-                responseData['vendor_id']?.toString();
+            userId = responseData['userId']?.toString() ?? responseData['vendor_id']?.toString();
           }
 
           SharedPreferences prefs = await SharedPreferences.getInstance();
           await prefs.setString('access_token', token);
-          await prefs.setBool('isLoggedIn', true); // Set login persistence flag
+          await prefs.setBool('isLoggedIn', true);
           if (userId != null) await prefs.setString('userid', userId);
           if (userEmail != null) await prefs.setString('email', userEmail);
           if (fName != null) await prefs.setString('firstName', fName);
           if (lName != null) await prefs.setString('lastName', lName);
 
-          Navigator.pushReplacementNamed(context, '/home'); // Use pushReplacement to avoid back navigation
+          // Call API to update device token after successful login
+          await _updateDeviceToken(token);
+
+          Navigator.pushReplacementNamed(context, '/home');
         } else {
           _showError(responseData['message'] ?? 'Please check your email or password');
         }
@@ -135,7 +173,7 @@ class _LoginScreenState extends State<LoginScreen> {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('OK'),
-          )
+          ),
         ],
       ),
     );
@@ -217,10 +255,7 @@ class _LoginScreenState extends State<LoginScreen> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: Image.asset(
-              'assets/login_back.jpg',
-              fit: BoxFit.cover,
-            ),
+            child: Image.asset('assets/login_back.jpg', fit: BoxFit.cover),
           ),
           SafeArea(
             child: Column(
@@ -256,8 +291,16 @@ class _LoginScreenState extends State<LoginScreen> {
                               TextSpan(
                                 style: TextStyle(fontSize: 14),
                                 children: [
-                                  TextSpan(text: 'Forgot password? ', style: TextStyle(color: Colors.black87)),
-                                  TextSpan(text: 'Reset here', style: TextStyle(color: Colors.orange)),
+                                  TextSpan(
+                                    text: 'Forgot password? ',
+                                    style: TextStyle(color: Colors.black87),
+                                  ),
+                                  TextSpan(
+                                    text: 'Reset here',
+                                    style: TextStyle(
+                                      color: Color.fromRGBO(255, 130, 16, 1),
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
@@ -276,7 +319,12 @@ class _LoginScreenState extends State<LoginScreen> {
                               text: 'Don’t have an account? ',
                               style: TextStyle(color: Colors.black87),
                               children: [
-                                TextSpan(text: 'Create New', style: TextStyle(color: Colors.orange)),
+                                TextSpan(
+                                  text: 'Create New',
+                                  style: TextStyle(
+                                    color: Color.fromRGBO(255, 130, 16, 1),
+                                  ),
+                                ),
                               ],
                             ),
                           ),

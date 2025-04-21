@@ -195,13 +195,13 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                               children: [
                                 InkWell(
                                   onTap: () => Navigator.of(context).pop(),
-                                   child: Image.asset(
-    'assets/back_updated.png',
-    height: 40,
-    width: 34,
-    fit: BoxFit.contain,
-    // color: const Color.fromRGBO(255, 130, 16, 1.0), // Orange tint
-  ),
+                                  child: Image.asset(
+                                    'assets/back_updated.png',
+                                    height: 40,
+                                    width: 34,
+                                    fit: BoxFit.contain,
+                                    // color: const Color.fromRGBO(255, 130, 16, 1.0), // Orange tint
+                                  ),
                                 ),
                                 const Expanded(
                                   child: Center(
@@ -230,12 +230,12 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: const [
-                                  Icon(Icons.add_circle, color: Colors.orange),
+                                  Icon(Icons.add_circle, color: Color.fromRGBO(255, 130, 16, 1)),
                                   SizedBox(width: 4),
                                   Text(
                                     "Add Member",
                                     style: TextStyle(
-                                      color: Colors.orange,
+                                      color: Color.fromRGBO(255, 130, 16, 1),
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
@@ -248,26 +248,28 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
 
                           // Loading indicator
                           if (_isLoading)
-                                    Stack(
-  children: [
-    // Semi-transparent dark overlay
-    Container(
-      color: Colors.black.withOpacity(0.14), // Dark overlay
-    ),
+                            Stack(
+                              children: [
+                                // Semi-transparent dark overlay
+                                Container(
+                                  color: Colors.black.withOpacity(
+                                    0.14,
+                                  ), // Dark overlay
+                                ),
 
-    // Your original container with white tint and loader
-    Container(
-      color: Colors.white10,
-      child: Center(
-        child: Image.asset(
-          'assets/Bird_Full_Eye_Blinking.gif',
-          width: 100, // Adjust size as needed
-          height: 100,
-        ),
-      ),
-    ),
-  ],
-),
+                                // Your original container with white tint and loader
+                                Container(
+                                  color: Colors.white10,
+                                  child: Center(
+                                    child: Image.asset(
+                                      'assets/Bird_Full_Eye_Blinking.gif',
+                                      width: 100, // Adjust size as needed
+                                      height: 100,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
 
                           // Staff list or empty state
                           staffMembers.isEmpty && !_isLoading
@@ -331,39 +333,52 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                                           ),
                                           // Delete
                                           IconButton(
-  icon: Image.asset(
-    'assets/closebtn.png', // Path to your custom image
-    width: 20, // Match the size of the previous icon
-    height: 20,
-    // color: const Color.fromRGBO(255, 130, 16, 1), // Optional: tint the image like the original
-  ),
-  onPressed: () {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Confirm Delete'),
-          content: const Text('Are you sure you want to delete this member?'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
-              },
-              child: const Text('CANCEL'),
-            ),
-            TextButton(
-              onPressed: () {
-                deleteMember(index);
-                Navigator.of(context).pop(); // Close the dialog after deletion
-              },
-              child: const Text('OK'),
-            ),
-          ],
-        );
-      },
-    );
-  },
-),
+                                            icon: Image.asset(
+                                              'assets/closebtn.png', // Path to your custom image
+                                              width:
+                                                  20, // Match the size of the previous icon
+                                              height: 20,
+                                              // color: const Color.fromRGBO(255, 130, 16, 1), // Optional: tint the image like the original
+                                            ),
+                                            onPressed: () {
+                                              showDialog(
+                                                context: context,
+                                                builder: (
+                                                  BuildContext context,
+                                                ) {
+                                                  return AlertDialog(
+                                                    title: const Text(
+                                                      'Confirm Delete',
+                                                    ),
+                                                    content: const Text(
+                                                      'Are you sure you want to delete this member?',
+                                                    ),
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed: () {
+                                                          Navigator.of(
+                                                            context,
+                                                          ).pop(); // Close the dialog
+                                                        },
+                                                        child: const Text(
+                                                          'CANCEL',
+                                                        ),
+                                                      ),
+                                                      TextButton(
+                                                        onPressed: () {
+                                                          deleteMember(index);
+                                                          Navigator.of(
+                                                            context,
+                                                          ).pop(); // Close the dialog after deletion
+                                                        },
+                                                        child: const Text('OK'),
+                                                      ),
+                                                    ],
+                                                  );
+                                                },
+                                              );
+                                            },
+                                          ),
                                         ],
                                       ),
                                     ),

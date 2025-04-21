@@ -41,28 +41,30 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
         title: const Text('Tutorial Video'),
       ),
       body: Center(
-        child: isInitialized
-            ? AspectRatio(
-                aspectRatio: _controller.value.aspectRatio,
-                child: VideoPlayer(_controller),
-              )
-            : const CircularProgressIndicator(),
+        child:
+            isInitialized
+                ? AspectRatio(
+                  aspectRatio: _controller.value.aspectRatio,
+                  child: VideoPlayer(_controller),
+                )
+                : const CircularProgressIndicator(),
       ),
-      floatingActionButton: isInitialized
-          ? FloatingActionButton(
-              backgroundColor: Colors.orange,
-              onPressed: () {
-                setState(() {
-                  _controller.value.isPlaying
-                      ? _controller.pause()
-                      : _controller.play();
-                });
-              },
-              child: Icon(
-                _controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
-              ),
-            )
-          : null,
+      floatingActionButton:
+          isInitialized
+              ? FloatingActionButton(
+                backgroundColor: const Color.fromRGBO(255, 130, 16, 1),
+                onPressed: () {
+                  setState(() {
+                    _controller.value.isPlaying
+                        ? _controller.pause()
+                        : _controller.play();
+                  });
+                },
+                child: Icon(
+                  _controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
+                ),
+              )
+              : null,
     );
   }
 }

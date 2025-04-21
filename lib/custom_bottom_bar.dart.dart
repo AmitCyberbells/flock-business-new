@@ -5,7 +5,6 @@
 // import 'package:flock/profile_screen.dart' as profile;
 // import 'package:flock/venue.dart' as venue;
 
-
 // class CustomBottomBar extends StatelessWidget {
 //   final int currentIndex;
 //   const CustomBottomBar({Key? key, required this.currentIndex}) : super(key: key);
@@ -102,7 +101,7 @@
 //     required int index,
 //   }) {
 //     final bool isActive = (currentIndex == index);
-//     final Color activeColor = Colors.orange;
+//     final Color activeColor = const Color.fromRGBO(255, 130, 16, 1);
 //     final Color inactiveColor = Colors.grey;
 
 //     return InkWell(

@@ -263,6 +263,10 @@ class _OffersScreenState extends State<OffersScreen> {
                                   width: double.infinity,
                                   child: Text(
                                     desc,
+                                    maxLines: 2, // Limit to 2 lines
+                                    overflow:
+                                        TextOverflow
+                                            .ellipsis, // Add ellipsis if overflow
                                     style: TextStyle(
                                       fontSize: 12,
                                       color: Colors.grey.shade600,
@@ -408,7 +412,12 @@ class _OffersScreenState extends State<OffersScreen> {
                                     );
                                   },
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.orange,
+                                    backgroundColor: const Color.fromRGBO(
+                                      255,
+                                      130,
+                                      16,
+                                      1,
+                                    ),
 
                                     minimumSize: const Size(60, 30),
                                     padding: const EdgeInsets.symmetric(

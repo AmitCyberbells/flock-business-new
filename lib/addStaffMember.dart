@@ -230,7 +230,7 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
                     right: -10,
                     child: CircleAvatar(
                       radius: 18,
-                      backgroundColor: Colors.orange,
+                      backgroundColor: const Color.fromRGBO(255, 130, 16, 1),
                       child: IconButton(
                         icon: Icon(
                           Icons.camera_alt,

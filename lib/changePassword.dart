@@ -119,13 +119,13 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 children: [
                   InkWell(
                     onTap: () => Navigator.of(context).pop(),
-                      child: Image.asset(
-    'assets/back_updated.png',
-    height: 40,
-    width: 34,
-    fit: BoxFit.contain,
-    // color: const Color.fromRGBO(255, 130, 16, 1.0), // Orange tint
-  ),
+                    child: Image.asset(
+                      'assets/back_updated.png',
+                      height: 40,
+                      width: 34,
+                      fit: BoxFit.contain,
+                      // color: const Color.fromRGBO(255, 130, 16, 1.0), // Orange tint
+                    ),
                   ),
                   const Expanded(
                     child: Center(
@@ -179,7 +179,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 child: ElevatedButton(
                   onPressed: _changePassword,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
+                    backgroundColor: const Color.fromRGBO(255, 130, 16, 1),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),

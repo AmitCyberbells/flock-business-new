@@ -140,19 +140,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
           // Show dialog and navigate to OTP screen
           await showDialog(
             context: context,
-            builder: (_) => AlertDialog(
-              title: const Text('Success'),
-              content: const Text('OTP sent successfully.'),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    debugPrint("Dialog OK button pressed");
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('OK'),
+            builder:
+                (_) => AlertDialog(
+                  title: const Text('Success'),
+                  content: const Text('OTP sent successfully.'),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        debugPrint("Dialog OK button pressed");
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text('OK'),
+                    ),
+                  ],
                 ),
-              ],
-            ),
           );
 
           // Navigate to OTP verification with user data
@@ -160,18 +161,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => OtpVerificationScreen(
-                  email: email,
-                  firstName: firstName,
-                  lastName: lastName,
-                ),
+                builder:
+                    (context) => OtpVerificationScreen(
+                      email: email,
+                      firstName: firstName,
+                      lastName: lastName,
+                    ),
               ),
             ).then((result) {
               // Handle case where user navigates back without verifying
               if (result == null && mounted) {
                 debugPrint("Returned from OTP screen without verification");
                 _showError(
-                    'OTP verification incomplete. Please register again.');
+                  'OTP verification incomplete. Please register again.',
+                );
                 // Optionally clear controllers
                 _firstNameController.clear();
                 _lastNameController.clear();
@@ -198,16 +201,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void _showError(String message) {
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Error'),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
+      builder:
+          (_) => AlertDialog(
+            title: const Text('Error'),
+            content: Text(message),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -394,7 +398,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       );
                       if (selectedLocation != null) {
                         setState(() {
-                          _locationController.text = selectedLocation.toString();
+                          _locationController.text =
+                              selectedLocation.toString();
                         });
                       }
                     },
@@ -426,7 +431,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         height: 24,
                         child: Checkbox(
                           value: isChecked,
-                          activeColor: Colors.orange,
+                          activeColor: const Color.fromRGBO(255, 130, 16, 1),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(4),
                           ),
@@ -446,32 +451,40 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             children: [
                               TextSpan(
                                 text: 'Terms and Conditions',
-                                style: const TextStyle(color: Colors.orange),
-                                recognizer: TapGestureRecognizer()
-                                  ..onTap = () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const TermsAndConditionsPage(),
-                                      ),
-                                    );
-                                  },
+                                style: const TextStyle(
+                                  color: const Color.fromRGBO(255, 130, 16, 1),
+                                ),
+                                recognizer:
+                                    TapGestureRecognizer()
+                                      ..onTap = () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder:
+                                                (context) =>
+                                                    const TermsAndConditionsPage(),
+                                          ),
+                                        );
+                                      },
                               ),
                               const TextSpan(text: ' as set out by the '),
                               TextSpan(
                                 text: 'User Agreement.',
-                                style: const TextStyle(color: Colors.orange),
-                                recognizer: TapGestureRecognizer()
-                                  ..onTap = () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const TermsAndConditionsPage(),
-                                      ),
-                                    );
-                                  },
+                                style: const TextStyle(
+                                  color: const Color.fromRGBO(255, 130, 16, 1),
+                                ),
+                                recognizer:
+                                    TapGestureRecognizer()
+                                      ..onTap = () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder:
+                                                (context) =>
+                                                    const TermsAndConditionsPage(),
+                                          ),
+                                        );
+                                      },
                               ),
                             ],
                           ),

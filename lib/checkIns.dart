@@ -192,7 +192,7 @@ class _CheckInsScreenState extends State<CheckInsScreen> {
                     Container(
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
-                        color: Colors.orange,
+                        color: const Color.fromRGBO(255, 130, 16, 1),
                         borderRadius: BorderRadius.circular(5),
                       ),
                       child: const Icon(
@@ -234,80 +234,80 @@ class _CheckInsScreenState extends State<CheckInsScreen> {
 
   @override
   Widget build(BuildContext context) {
-   return CustomScaffold(
-  currentIndex: 2,
-  body: SafeArea(
-    child: Column(
-      children: [
-        // 👇 Manually include the app bar as a widget
-        AppConstants.customAppBar(context: context, title: 'Check-Ins'),
+    return CustomScaffold(
+      currentIndex: 2,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // 👇 Manually include the app bar as a widget
+            AppConstants.customAppBar(context: context, title: 'Check-Ins'),
 
-        // Date selector aligned to the right
-        Align(
-          alignment: Alignment.centerRight,
-          child: Padding(
-            padding: const EdgeInsets.only(right: 16, top: 8),
-            child: TextButton(
-              onPressed: () => _selectDate(context),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    selectedDate == null
-                        ? "Choose Date"
-                        : DateFormat('MMM d, yyyy').format(selectedDate!),
-                    style: const TextStyle(
-                      color: Color.fromRGBO(255, 130, 16, 1.0),
-                      fontSize: 16,
-                    ),
-                    overflow: TextOverflow.ellipsis,
+            // Date selector aligned to the right
+            Align(
+              alignment: Alignment.centerRight,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 16, top: 8),
+                child: TextButton(
+                  onPressed: () => _selectDate(context),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        selectedDate == null
+                            ? "Choose Date"
+                            : DateFormat('MMM d, yyyy').format(selectedDate!),
+                        style: const TextStyle(
+                          color: Color.fromRGBO(255, 130, 16, 1.0),
+                          fontSize: 16,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(width: 4),
+                      const Icon(
+                        Icons.arrow_drop_down,
+                        color: Color.fromRGBO(255, 130, 16, 1.0),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 4),
-                  const Icon(
-                    Icons.arrow_drop_down,
-                    color: Color.fromRGBO(255, 130, 16, 1.0),
-                  ),
-                ],
+                ),
               ),
             ),
-          ),
-        ),
 
-        const SizedBox(height: 8),
+            const SizedBox(height: 8),
 
-        // Main content area
-        Expanded(
-          child: loader
-              ? Stack(
-                  children: [
-                    Container(color: Colors.black.withOpacity(0.14)),
-                    Container(
-                      color: Colors.white10,
-                      child: Center(
-                        child: Image.asset(
-                          'assets/Bird_Full_Eye_Blinking.gif',
-                          width: 100,
-                          height: 100,
-                        ),
+            // Main content area
+            Expanded(
+              child:
+                  loader
+                      ? Stack(
+                        children: [
+                          Container(color: Colors.black.withOpacity(0.14)),
+                          Container(
+                            color: Colors.white10,
+                            child: Center(
+                              child: Image.asset(
+                                'assets/Bird_Full_Eye_Blinking.gif',
+                                width: 100,
+                                height: 100,
+                              ),
+                            ),
+                          ),
+                        ],
+                      )
+                      : checkInData.isEmpty
+                      ? const Center(child: Text('No Check-Ins Found'))
+                      : ListView.builder(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        itemCount: checkInData.length,
+                        itemBuilder: (context, index) {
+                          final item = checkInData[index];
+                          return buildCheckInItem(item);
+                        },
                       ),
-                    ),
-                  ],
-                )
-              : checkInData.isEmpty
-                  ? const Center(child: Text('No Check-Ins Found'))
-                  : ListView.builder(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      itemCount: checkInData.length,
-                      itemBuilder: (context, index) {
-                        final item = checkInData[index];
-                        return buildCheckInItem(item);
-                      },
-                    ),
+            ),
+          ],
         ),
-      ],
-    ),
-  ),
-);
-
+      ),
+    );
   }
 }

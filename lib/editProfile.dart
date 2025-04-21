@@ -305,13 +305,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               children: [
                                 InkWell(
                                   onTap: () => Navigator.of(context).pop(),
-                                   child: Image.asset(
-    'assets/back_updated.png',
-    height: 40,
-    width: 34,
-    fit: BoxFit.contain,
-    // color: const Color.fromRGBO(255, 130, 16, 1.0), // Orange tint
-  ),
+                                  child: Image.asset(
+                                    'assets/back_updated.png',
+                                    height: 40,
+                                    width: 34,
+                                    fit: BoxFit.contain,
+                                    // color: const Color.fromRGBO(255, 130, 16, 1.0), // Orange tint
+                                  ),
                                 ),
                                 const Expanded(
                                   child: Center(
@@ -369,7 +369,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                       ),
                                       child: CircleAvatar(
                                         radius: 16,
-                                        backgroundColor: Colors.orange,
+                                        backgroundColor: const Color.fromRGBO(255, 130, 16, 1),
                                         child: IconButton(
                                           onPressed: _selectImage,
                                           icon: const Icon(

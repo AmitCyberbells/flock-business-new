@@ -129,12 +129,12 @@ class _TutorialsScreenState extends State<TutorialsScreen> {
               ),
               child: Center(
                 child: IconButton(
-                icon: Image.asset(
-  'assets/tutorials.png',
-  width: 40,
-  height: 40,
-  fit: BoxFit.contain,
-),
+                  icon: Image.asset(
+                    'assets/tutorials.png',
+                    width: 40,
+                    height: 40,
+                    fit: BoxFit.contain,
+                  ),
 
                   onPressed: () {
                     _playTutorial(tutorial['url'] ?? '');
@@ -148,34 +148,32 @@ class _TutorialsScreenState extends State<TutorialsScreen> {
     );
   }
 
-void _playTutorial(String rawUrl) {
-  if (rawUrl.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('No video available')),
+  void _playTutorial(String rawUrl) {
+    if (rawUrl.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('No video available')));
+      return;
+    }
+
+    // If backend returns: http://IP/storage/https://actual-url.com/video.mp4
+    String videoUrl;
+    if (rawUrl.contains('https://')) {
+      final split = rawUrl.split('https://');
+      videoUrl = 'https://${split.last}';
+    } else {
+      videoUrl = rawUrl;
+    }
+
+    debugPrint('Final video URL: $videoUrl');
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => VideoPlayerScreen(videoUrl: videoUrl),
+      ),
     );
-    return;
   }
-
-  // If backend returns: http://IP/storage/https://actual-url.com/video.mp4
-  String videoUrl;
-  if (rawUrl.contains('https://')) {
-    final split = rawUrl.split('https://');
-    videoUrl = 'https://${split.last}';
-  } else {
-    videoUrl = rawUrl;
-  }
-
-  debugPrint('Final video URL: $videoUrl');
-
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => VideoPlayerScreen(videoUrl: videoUrl),
-    ),
-  );
-}
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -190,13 +188,13 @@ void _playTutorial(String rawUrl) {
                 children: [
                   InkWell(
                     onTap: () => Navigator.of(context).pop(),
-                     child: Image.asset(
-    'assets/back_updated.png',
-    height: 40,
-    width: 34,
-    fit: BoxFit.contain,
-    // color: const Color.fromRGBO(255, 130, 16, 1.0), // Orange tint
-  ),
+                    child: Image.asset(
+                      'assets/back_updated.png',
+                      height: 40,
+                      width: 34,
+                      fit: BoxFit.contain,
+                      // color: const Color.fromRGBO(255, 130, 16, 1.0), // Orange tint
+                    ),
                   ),
                   const Expanded(
                     child: Center(
@@ -218,26 +216,28 @@ void _playTutorial(String rawUrl) {
             Expanded(
               child:
                   isLoading
-                      ?      Stack(
-  children: [
-    // Semi-transparent dark overlay
-    Container(
-      color: Colors.black.withOpacity(0.14), // Dark overlay
-    ),
+                      ? Stack(
+                        children: [
+                          // Semi-transparent dark overlay
+                          Container(
+                            color: Colors.black.withOpacity(
+                              0.14,
+                            ), // Dark overlay
+                          ),
 
-    // Your original container with white tint and loader
-    Container(
-      color: Colors.white10,
-      child: Center(
-        child: Image.asset(
-          'assets/Bird_Full_Eye_Blinking.gif',
-          width: 100, // Adjust size as needed
-          height: 100,
-        ),
-      ),
-    ),
-  ],
-)
+                          // Your original container with white tint and loader
+                          Container(
+                            color: Colors.white10,
+                            child: Center(
+                              child: Image.asset(
+                                'assets/Bird_Full_Eye_Blinking.gif',
+                                width: 100, // Adjust size as needed
+                                height: 100,
+                              ),
+                            ),
+                          ),
+                        ],
+                      )
                       : errorMessage.isNotEmpty
                       ? Center(
                         child: Column(
@@ -269,51 +269,52 @@ void _playTutorial(String rawUrl) {
                       ),
             ),
             const SizedBox(height: 16),
-          Padding(
-  padding: const EdgeInsets.all(16),
-  child: SizedBox(
-    width: double.infinity,
-    height: 48,
-    child: ElevatedButton(
-      onPressed: () async {
-        final url = Uri.parse('https://getflock.io/business/');
-        debugPrint('Attempting to launch URL: $url');
-        try {
-          final launched = await launchUrl(
-            url,
-            mode: LaunchMode.externalApplication,
-          );
-          debugPrint('Launch result: $launched');
-          if (!launched) {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Could not open the link')),
-              );
-            }
-          }
-        } catch (e) {
-          debugPrint('Error launching URL: $e');
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Error launching URL: $e')),
-            );
-          }
-        }
-      },
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.orange,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
-      ),
-      child: const Text(
-        "Learn More",
-        style: TextStyle(color: Colors.white, fontSize: 16),
-      ),
-    ),
-  ),
-),
-
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    final url = Uri.parse('https://getflock.io/business/');
+                    debugPrint('Attempting to launch URL: $url');
+                    try {
+                      final launched = await launchUrl(
+                        url,
+                        mode: LaunchMode.externalApplication,
+                      );
+                      debugPrint('Launch result: $launched');
+                      if (!launched) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Could not open the link'),
+                            ),
+                          );
+                        }
+                      }
+                    } catch (e) {
+                      debugPrint('Error launching URL: $e');
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Error launching URL: $e')),
+                        );
+                      }
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color.fromRGBO(255, 130, 16, 1),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text(
+                    "Learn More",
+                    style: TextStyle(color: Colors.white, fontSize: 16),
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),

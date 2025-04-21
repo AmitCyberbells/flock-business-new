@@ -23,6 +23,10 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
   // Separate controllers for each type of points
   final TextEditingController _venuePointsController = TextEditingController();
   final TextEditingController _appPointsController = TextEditingController();
+   
+  // Controller for Redemption Limit
+  final TextEditingController _redemptionLimitController = TextEditingController();
+
 
   // Venues stored as a list of maps: [{'id': 1, 'name': 'Venue 1'}, ...]
   List<Map<String, dynamic>> _venues = [
@@ -154,6 +158,22 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
         _venuePointsController.text.trim(); // user input for "Venue Points"
     final appPoints =
         _appPointsController.text.trim(); // user input for "App Points"
+    final redemptionLimit = _redemptionLimitController.text.trim();
+    // Validation for redemption limit
+
+  int? redemptionLimitValue;
+  if (redemptionLimit.isEmpty) {
+    redemptionLimitValue = -1; // Treat blank as unlimited
+  } else {
+    redemptionLimitValue = int.tryParse(redemptionLimit);
+    if (redemptionLimitValue == null || redemptionLimitValue < -1) {
+      setState(() {
+        _errorMessage = "Please enter a valid redemption limit (-1 for unlimited).";
+      });
+      return;
+    }
+  }
+
 
     // Validation
     // if (name.isEmpty || fee.isEmpty || description.isEmpty) {
@@ -194,6 +214,7 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
       });
       return;
     }
+
 
     setState(() {
       _isSubmitting = true;
@@ -241,6 +262,11 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
       if (_useAppPoints) {
         request.fields['feather_points'] = appPoints;
       }
+           // Handle Redemption Limit (send -1 for unlimited or a specific number)
+      request.fields['redemption_limit'] = redemptionLimitValue == -1
+          ? ''
+          : redemptionLimitValue.toString();
+
 
       // If user picked an image, attach it
       if (_pickedImage != null) {
@@ -324,11 +350,13 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              "Enter Details",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
+            // const Text(
+            //   "Enter Details",
+            //   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            // ),
+            // const SizedBox(height: 8),
+                    
+
 
             // Name of Offer
             const Text(
@@ -340,8 +368,7 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
             AppConstants.customTextField(
               controller: _nameController,
               hintText: 'Enter Title of Offer',
-                textInputAction: TextInputAction.next, // or .done, .search, etc.
-
+              textInputAction: TextInputAction.next, // or .done, .search, etc.
             ),
 
             const SizedBox(height: 8),
@@ -375,26 +402,28 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
                             SizedBox(
                               height: 10,
                               width: 20,
-                              child:      Stack(
-  children: [
-    // Semi-transparent dark overlay
-    Container(
-      color: Colors.black.withOpacity(0.14), // Dark overlay
-    ),
+                              child: Stack(
+                                children: [
+                                  // Semi-transparent dark overlay
+                                  Container(
+                                    color: Colors.black.withOpacity(
+                                      0.14,
+                                    ), // Dark overlay
+                                  ),
 
-    // Your original container with white tint and loader
-    Container(
-      color: Colors.white10,
-      child: Center(
-        child: Image.asset(
-          'assets/Bird_Full_Eye_Blinking.gif',
-          width: 100, // Adjust size as needed
-          height: 100,
-        ),
-      ),
-    ),
-  ],
-)
+                                  // Your original container with white tint and loader
+                                  Container(
+                                    color: Colors.white10,
+                                    child: Center(
+                                      child: Image.asset(
+                                        'assets/Bird_Full_Eye_Blinking.gif',
+                                        width: 100, // Adjust size as needed
+                                        height: 100,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                             const SizedBox(width: 8),
                             Text(
@@ -469,7 +498,7 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Checkbox(
-                      activeColor: Colors.orange,
+                      activeColor: const Color.fromRGBO(255, 130, 16, 1),
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       visualDensity: VisualDensity.compact,
                       value: _useVenuePoints,
@@ -490,7 +519,7 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Checkbox(
-                      activeColor: Colors.orange,
+                      activeColor: const Color.fromRGBO(255, 130, 16, 1),
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       visualDensity: VisualDensity.compact,
                       value: _useAppPoints,
@@ -572,13 +601,13 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
             const Text("Description", style: TextStyle(fontSize: 16)),
             const SizedBox(height: 8),
             Container(
-              
               decoration: BoxDecoration(
                 border: Border.all(color: Colors.grey.shade400),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: TextField(
-                  textInputAction: TextInputAction.next, // or .done, .search, etc.
+                textInputAction:
+                    TextInputAction.next, // or .done, .search, etc.
 
                 controller: _descriptionController,
                 maxLines: 4,
@@ -593,7 +622,30 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
               ),
             ),
             const SizedBox(height: 16),
+  // Redemption Limit field
+   RichText(
+  text: TextSpan(
+    children: [
+      TextSpan(
+        text: "Redemption Limit  ",
+        style: TextStyle(fontSize: 16, color: Colors.black),
+      ),
+      TextSpan(
+        text: "(Leave Blank for unlimited)",
+        style: TextStyle(fontSize: 14, color: Colors.black54),
+      ),
+    ],
+  ),
+),
+            const SizedBox(height: 8),
+            AppConstants.customTextField(
+              controller: _redemptionLimitController,
+              hintText: 'Enter Redemption Limit',
+              textInputAction: TextInputAction.next, // or .done, .search, etc.
+            ),
 
+            const SizedBox(height: 8),
+            
             // Upload Pictures
             const Text("Upload Pictures", style: TextStyle(fontSize: 16)),
             const SizedBox(height: 8),

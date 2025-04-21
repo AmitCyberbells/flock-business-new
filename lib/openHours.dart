@@ -362,13 +362,13 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
                       children: [
                         InkWell(
                           onTap: () => Navigator.of(context).pop(),
-                           child: Image.asset(
-    'assets/back_updated.png',
-    height: 40,
-    width: 34,
-    fit: BoxFit.contain,
-    // color: const Color.fromRGBO(255, 130, 16, 1.0), // Orange tint
-  ),
+                          child: Image.asset(
+                            'assets/back_updated.png',
+                            height: 40,
+                            width: 34,
+                            fit: BoxFit.contain,
+                            // color: const Color.fromRGBO(255, 130, 16, 1.0), // Orange tint
+                          ),
                         ),
                         const Expanded(
                           child: Center(
@@ -464,7 +464,12 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
                       child: ElevatedButton(
                         onPressed: _saveOpeningHours,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color.fromRGBO(255, 130, 16, 1),
+                          backgroundColor: const Color.fromRGBO(
+                            255,
+                            130,
+                            16,
+                            1,
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -482,26 +487,26 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
           ),
           // Loading overlay
           if (_isLoading)
-                 Stack(
-  children: [
-    // Semi-transparent dark overlay
-    Container(
-      color: Colors.black.withOpacity(0.14), // Dark overlay
-    ),
+            Stack(
+              children: [
+                // Semi-transparent dark overlay
+                Container(
+                  color: Colors.black.withOpacity(0.14), // Dark overlay
+                ),
 
-    // Your original container with white tint and loader
-    Container(
-      color: Colors.white10,
-      child: Center(
-        child: Image.asset(
-          'assets/Bird_Full_Eye_Blinking.gif',
-          width: 100, // Adjust size as needed
-          height: 100,
-        ),
-      ),
-    ),
-  ],
-)
+                // Your original container with white tint and loader
+                Container(
+                  color: Colors.white10,
+                  child: Center(
+                    child: Image.asset(
+                      'assets/Bird_Full_Eye_Blinking.gif',
+                      width: 100, // Adjust size as needed
+                      height: 100,
+                    ),
+                  ),
+                ),
+              ],
+            ),
         ],
       ),
     );
@@ -594,7 +599,9 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
                 child: Switch(
                   value: dayInfo["isOpen"],
                   activeColor:
-                      dayInfo["updated"] == true ? Colors.green : const Color.fromRGBO(255, 130, 16, 1),
+                      dayInfo["updated"] == true
+                          ? Colors.green
+                          : const Color.fromRGBO(255, 130, 16, 1),
                   onChanged: (value) {
                     setState(() {
                       _days[index]["isOpen"] = value;
@@ -625,7 +632,10 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.access_time, color: Colors.orange),
+              icon: const Icon(
+                Icons.access_time,
+                color: const Color.fromRGBO(255, 130, 16, 1),
+              ),
               onPressed: () {
                 _showDayDialog(dayInfo["day"], index);
               },
@@ -672,7 +682,7 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
                       }
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange,
+                      backgroundColor: const Color.fromRGBO(255, 130, 16, 1),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -702,7 +712,7 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
                       }
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange,
+                      backgroundColor: const Color.fromRGBO(255, 130, 16, 1),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),

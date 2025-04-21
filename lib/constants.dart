@@ -105,7 +105,7 @@ class AppConstants {
               height: 74,
               width: 94,
               fit: BoxFit.contain,
-              // color: Colors.orange, // Tint the image
+              // color: const Color.fromRGBO(255, 130, 16, 1), // Tint the image
             ),
           ),
 
