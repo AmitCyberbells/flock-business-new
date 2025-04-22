@@ -1,14 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
-
-import 'package:file_picker/file_picker.dart';
 import 'package:flock/constants.dart';
 import 'package:flock/location.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:multi_select_flutter/multi_select_flutter.dart';
+
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
@@ -663,15 +661,15 @@ class _AddEggScreenState extends State<AddEggScreen> {
                   child: Row(
                     children: [
                       GestureDetector(
-  onTap: () => Navigator.pop(context),
-  child: Image.asset(
-    'assets/back_updated.png',
-    height: 40,
-    width: 34,
-    fit: BoxFit.contain,
-    // color: const Color.fromRGBO(255, 130, 16, 1.0),
-  ),
-),
+                        onTap: () => Navigator.pop(context),
+                        child: Image.asset(
+                          'assets/back_updated.png',
+                          height: 40,
+                          width: 34,
+                          fit: BoxFit.contain,
+                          // color: const Color.fromRGBO(255, 130, 16, 1.0),
+                        ),
+                      ),
 
                       Expanded(
                         child: Center(

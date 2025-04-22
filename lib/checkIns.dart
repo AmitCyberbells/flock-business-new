@@ -235,7 +235,7 @@ class _CheckInsScreenState extends State<CheckInsScreen> {
   @override
   Widget build(BuildContext context) {
     return CustomScaffold(
-      currentIndex: 2,
+      currentIndex: 3, //2
       body: SafeArea(
         child: Column(
           children: [

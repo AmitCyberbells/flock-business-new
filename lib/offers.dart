@@ -1,12 +1,10 @@
 import 'dart:convert';
 import 'package:flock/constants.dart';
-import 'package:flock/feedback.dart';
 import 'package:flock/offer_details.dart';
 import 'package:flock/venue.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
 
 class OffersScreen extends StatefulWidget {
   const OffersScreen({Key? key}) : super(key: key);
@@ -234,13 +232,18 @@ class _OffersScreenState extends State<OffersScreen> {
                                       },
                                     )
                                     : Container(
-                                      height: 100,
-                                      color: Colors.grey.shade200,
-                                      child: const Icon(
-                                        Icons.image_not_supported,
-                                        size: 40,
-                                      ),
-                                    ),
+  height: 100,
+  width: double.infinity,
+  color: Colors.grey.shade200,
+  child: FittedBox(
+    fit: BoxFit.contain, // Or BoxFit.cover if you want it to crop and fill
+    child: Icon(
+      Icons.image_not_supported,
+      size: 30, // The size doesn't really matter here since FittedBox resizes it
+    ),
+  ),
+)
+
                           ),
                           // Offer details
                           Padding(

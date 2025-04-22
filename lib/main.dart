@@ -17,6 +17,7 @@ import 'package:flutter/material.dart';
 import 'login_screen.dart';
 import 'checkIns.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:http/http.dart' as http;
@@ -183,6 +184,7 @@ class LoadingScreen extends StatefulWidget {
 class _LoadingScreenState extends State<LoadingScreen> {
   int _unreadNotifications = 0;
   List<NotificationModel> _notifications = [];
+  
 
   @override
   void initState() {
@@ -234,18 +236,18 @@ class _LoadingScreenState extends State<LoadingScreen> {
       FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
         print('Foreground message received: ${message.toMap()}');
         await _storeNotification(message);
-        setState(() {
-          _notifications.add(
-            NotificationModel(
-              id: message.messageId ?? DateTime.now().millisecondsSinceEpoch.toString(),
-              title: message.notification?.title ?? message.data['title'] ?? 'New Notification',
-              body: message.notification?.body ?? message.data['body'] ?? 'No details available',
-              screen: message.data['screen'],
-              timestamp: DateTime.now(),
-            ),
-          );
-          _unreadNotifications = _notifications.where((n) => !n.isRead).length;
-        });
+      setState(() {
+    _notifications.add(
+      NotificationModel(
+        id: message.messageId ?? DateTime.now().millisecondsSinceEpoch.toString(),
+        title: message.notification?.title ?? message.data['title'] ?? 'New Notification',
+        body: message.notification?.body ?? message.data['body'] ?? 'No details available',
+        screen: message.data['screen'],
+        timestamp: DateTime.now(),
+      ),
+    );
+    _unreadNotifications = _notifications.where((n) => !n.isRead).length;
+  });
 
         // Show SnackBar with a valid ScaffoldMessenger
         if (mounted) {
@@ -377,6 +379,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
       print('Error sending FCM token: $e');
     }
   }
+  
 
   Future<void> _checkLoginStatus() async {
     // Wait for notifications to load
@@ -403,74 +406,84 @@ class _LoadingScreenState extends State<LoadingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          const Center(child: CircularProgressIndicator()),
-          if (_unreadNotifications > 0)
-            Positioned(
-              top: 40,
-              right: 20,
-              child: Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  shape: BoxShape.circle,
-                ),
-                child: Text(
-                  '$_unreadNotifications',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          if (_notifications.isNotEmpty)
-            Positioned(
-              bottom: 20,
-              left: 20,
-              right: 20,
-              child: Container(
-                constraints: const BoxConstraints(maxHeight: 200),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 5,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: _notifications.length,
-                  itemBuilder: (context, index) {
-                    final notification = _notifications[index];
-                    return ListTile(
-                      title: Text(
-                        notification.title,
-                        style: TextStyle(
-                          fontWeight: notification.isRead ? FontWeight.normal : FontWeight.bold,
-                        ),
-                      ),
-                      subtitle: Text(notification.body),
-                      trailing: notification.isRead
-                          ? null
-                          : const Icon(Icons.circle, color: Colors.red, size: 10),
-                      onTap: () {
-                        _markNotificationAsRead(notification.id);
-                      },
-                    );
-                  },
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
+     return Scaffold(
+      // body: Stack(
+        // children: [
+                  //  Container(color: Colors.black.withOpacity(0.14)),
+                          // Container(
+                          //   color: Colors.white10,
+                          //   child: Center(
+                          //     child: Image.asset(
+                          //       'assets/Bird_Full_Eye_Blinking.gif',
+                          //       width: 100,
+                          //       height: 100,
+                          //     ),
+                          //   ),
+                          // ),
+          // if (_unreadNotifications > 0)
+            // Positioned(
+              // top: 40,
+              // right: 20,
+              // child: Container(
+                // padding: const EdgeInsets.all(6),
+                // decoration: BoxDecoration(
+                //   color: AppColors.primary,
+                //   shape: BoxShape.circle,
+                // ),
+                // child: Text(
+                //   '$_unreadNotifications',
+                //   style: const TextStyle(
+                //     color: Colors.white,
+                //     fontSize: 12,
+                //     fontWeight: FontWeight.bold,
+                //   ),
+                // ),
+              // ),
+            // ),
+          // if (_notifications.isNotEmpty)
+            // Positioned(
+              // bottom: 20,
+              // left: 20,
+              // right: 20,
+              // child: Container(
+                // constraints: const BoxConstraints(maxHeight: 200),
+                // decoration: BoxDecoration(
+                //   color: Colors.white,
+                //   borderRadius: BorderRadius.circular(10),
+                //   boxShadow: [
+                //     BoxShadow(
+                //       color: Colors.black.withOpacity(0.1),
+                //       blurRadius: 5,
+                //       offset: const Offset(0, 3),
+                //     ),
+                //   ],
+                // ),
+                // child: ListView.builder(
+                //   shrinkWrap: true,
+                //   itemCount: _notifications.length,
+                //   itemBuilder: (context, index) {
+                //     final notification = _notifications[index];
+                //     return ListTile(
+                //       title: Text(
+                //         notification.title,
+                //         style: TextStyle(
+                //           fontWeight: notification.isRead ? FontWeight.normal : FontWeight.bold,
+                //         ),
+                //       ),
+                //       subtitle: Text(notification.body),
+                //       trailing: notification.isRead
+                //           ? null
+                //           : const Icon(Icons.circle, color: Colors.red, size: 10),
+                //       onTap: () {
+                //         _markNotificationAsRead(notification.id);
+                //       },
+                //     );
+                //   },
+                // ),
+              // ),
+            // ),
+        // ],
+      // ),
+     );
   }
 }

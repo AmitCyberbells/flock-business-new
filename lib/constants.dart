@@ -551,14 +551,15 @@ class AppConstants {
   }
 
   // Reusable "Enter Venue Name" field
-  static Widget customTextField({
+static Widget customTextField({
     required TextEditingController controller,
     required String hintText,
     required TextInputAction textInputAction,
+    String? Function(String?)? validator,
   }) {
     return Container(
       decoration: textFieldBoxDecoration,
-      child: TextField(
+      child: TextFormField(
         controller: controller,
         style: const TextStyle(
           color: Colors.black,
@@ -566,10 +567,11 @@ class AppConstants {
           fontFamily: 'YourFontFamily',
         ),
         decoration: textFieldDecoration.copyWith(hintText: hintText),
+        textInputAction: textInputAction,
+        validator: validator,
       ),
     );
   }
-
   // Reusable "Enter Category" field
   // (If you need a dropdown, you can adapt this or wrap it in an InkWell.)
   static Widget categoryField({required TextEditingController controller}) {

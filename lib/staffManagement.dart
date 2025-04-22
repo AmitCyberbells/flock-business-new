@@ -360,9 +360,13 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                                                             context,
                                                           ).pop(); // Close the dialog
                                                         },
-                                                        child: const Text(
-                                                          'CANCEL',
-                                                        ),
+                                                     child: const Text(
+  'CANCEL',
+  style: TextStyle(
+    color: Colors.grey,
+  ),
+),
+
                                                       ),
                                                       TextButton(
                                                         onPressed: () {

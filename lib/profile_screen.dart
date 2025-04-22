@@ -234,7 +234,7 @@ class _TabProfileState extends State<TabProfile> {
                           onTap: () => Navigator.pushNamed(context, '/changePassword'),
                         ),
                         _buildProfileOption(
-                          title: "History",
+                          title: " Transaction History",
                           onTap: () => Navigator.pushNamed(context, '/HistoryScreen'),
                         ),
                         _buildProfileOption(

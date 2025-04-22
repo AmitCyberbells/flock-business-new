@@ -15,64 +15,50 @@ class AddOfferScreen extends StatefulWidget {
 }
 
 class _AddOfferScreenState extends State<AddOfferScreen> {
-  // Text controllers
+  final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
-  // final TextEditingController _feeController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
-
-  // Separate controllers for each type of points
   final TextEditingController _venuePointsController = TextEditingController();
   final TextEditingController _appPointsController = TextEditingController();
-   
-  // Controller for Redemption Limit
   final TextEditingController _redemptionLimitController = TextEditingController();
 
-
-  // Venues stored as a list of maps: [{'id': 1, 'name': 'Venue 1'}, ...]
   List<Map<String, dynamic>> _venues = [
     {'id': null, 'name': 'Select Venue'},
   ];
-  // Currently selected venue map
   Map<String, dynamic>? _selectedVenue;
 
-  // Checkboxes for redeem type
-  bool _useVenuePoints = false; // "feather_points"
-  bool _useAppPoints = false; // "venue_points"
+  bool _useVenuePoints = false;
+  bool _useAppPoints = false;
 
-  // Image picking
   XFile? _pickedImage;
 
-  // Loading states
   bool _isVenuesLoading = false;
   bool _isSubmitting = false;
 
-  // Error messages
   String _errorMessage = '';
 
   @override
   void initState() {
     super.initState();
-    _selectedVenue = _venues.first; // default to "Select Venue"
+    _selectedVenue = _venues.first;
     _fetchVenues();
   }
 
   @override
   void dispose() {
     _nameController.dispose();
-    // _feeController.dispose();
     _descriptionController.dispose();
     _venuePointsController.dispose();
     _appPointsController.dispose();
+    _redemptionLimitController.dispose();
     super.dispose();
   }
 
-  /// Retrieve token stored during login
   Future<String?> _getToken() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return prefs.getString('access_token');
   }
 
-  /// Fetch the list of venues from the API
   Future<void> _fetchVenues() async {
     setState(() {
       _isVenuesLoading = true;
@@ -122,8 +108,7 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
         }
       } else {
         setState(() {
-          _errorMessage =
-              'Error ${response.statusCode}: Unable to fetch venues.';
+          _errorMessage = 'Error ${response.statusCode}: Unable to fetch venues.';
         });
       }
     } catch (e) {
@@ -137,7 +122,6 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
     });
   }
 
-  /// Pick an image from the gallery
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
@@ -148,73 +132,63 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
     }
   }
 
-  /// Validate form and submit the offer (multipart/form-data)
   Future<void> _submitOffer() async {
-    final name = _nameController.text.trim();
-    // final fee = _feeController.text.trim();
-    final description = _descriptionController.text.trim();
-
-    final venuePoints =
-        _venuePointsController.text.trim(); // user input for "Venue Points"
-    final appPoints =
-        _appPointsController.text.trim(); // user input for "App Points"
-    final redemptionLimit = _redemptionLimitController.text.trim();
-    // Validation for redemption limit
-
-  int? redemptionLimitValue;
-  if (redemptionLimit.isEmpty) {
-    redemptionLimitValue = -1; // Treat blank as unlimited
-  } else {
-    redemptionLimitValue = int.tryParse(redemptionLimit);
-    if (redemptionLimitValue == null || redemptionLimitValue < -1) {
-      setState(() {
-        _errorMessage = "Please enter a valid redemption limit (-1 for unlimited).";
-      });
+    if (!_formKey.currentState!.validate()) {
+      _scrollToError();
       return;
     }
-  }
 
+    final name = _nameController.text.trim();
+    final description = _descriptionController.text.trim();
+    final venuePoints = _venuePointsController.text.trim();
+    final appPoints = _appPointsController.text.trim();
+    final redemptionLimit = _redemptionLimitController.text.trim();
 
-    // Validation
-    // if (name.isEmpty || fee.isEmpty || description.isEmpty) {
-    //   setState(() {
-    //     _errorMessage =
-    //         "Please fill all required fields (Name, Fee, Description).";
-    //   });
-    //   return;
-    // }
+    int? redemptionLimitValue;
+    if (redemptionLimit.isEmpty) {
+      redemptionLimitValue = -1;
+    } else {
+      redemptionLimitValue = int.tryParse(redemptionLimit);
+      if (redemptionLimitValue == null || redemptionLimitValue < -1) {
+        setState(() {
+          _errorMessage = "Please enter a valid redemption limit (-1 for unlimited).";
+        });
+        _scrollToError();
+        return;
+      }
+    }
 
     if (_selectedVenue == null || _selectedVenue!['id'] == null) {
       setState(() {
-        _errorMessage = "Please select a valid venue.";
+        // _errorMessage = "Please select a valid venue.";
       });
+      _scrollToError();
       return;
     }
 
-    // At least one checkbox must be selected
     if (!_useVenuePoints && !_useAppPoints) {
       setState(() {
         _errorMessage = "Please select at least one redeem type (Venue/App).";
       });
+      _scrollToError();
       return;
     }
 
-    // If Venue Points is checked, ensure user enters a value
     if (_useVenuePoints && venuePoints.isEmpty) {
       setState(() {
         _errorMessage = "Please enter the number of Venue Points.";
       });
+      _scrollToError();
       return;
     }
 
-    // If App Points is checked, ensure user enters a value
     if (_useAppPoints && appPoints.isEmpty) {
       setState(() {
         _errorMessage = "Please enter the number of App Points.";
       });
+      _scrollToError();
       return;
     }
-
 
     setState(() {
       _isSubmitting = true;
@@ -230,20 +204,13 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
     final url = Uri.parse('http://165.232.152.77/api/vendor/offers');
 
     try {
-      // Using MultipartRequest for file upload
       final request = http.MultipartRequest('POST', url);
       request.headers['Authorization'] = 'Bearer $token';
 
-      // Add text fields
       request.fields['name'] = name;
-      // request.fields['fee'] = fee;
       request.fields['description'] = description;
       request.fields['venue_id'] = _selectedVenue!['id'].toString();
 
-      // Build redeem_by logic
-      //   "feather_points" if only Venue Points,
-      //   "venue_points" if only App Points,
-      //   "feather_points,venue_points" if both
       String redeemBy = '';
       if (_useVenuePoints && _useAppPoints) {
         redeemBy = 'both';
@@ -254,31 +221,23 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
       }
       request.fields['redeem_by'] = redeemBy;
 
-      // If user checked "Venue Points", we send it in "feather_points"
       if (_useVenuePoints) {
         request.fields['venue_points'] = venuePoints;
       }
-      // If user checked "App Points", we send it in "venue_points"
       if (_useAppPoints) {
         request.fields['feather_points'] = appPoints;
       }
-           // Handle Redemption Limit (send -1 for unlimited or a specific number)
-      request.fields['redemption_limit'] = redemptionLimitValue == -1
-          ? ''
-          : redemptionLimitValue.toString();
+      request.fields['redemption_limit'] = redemptionLimitValue.toString();
 
-
-      // If user picked an image, attach it
       if (_pickedImage != null) {
         request.files.add(
           await http.MultipartFile.fromPath(
-            'images[]', // Matches your screenshot's field name
+            'images[]',
             _pickedImage!.path,
           ),
         );
       }
 
-      // Send the request
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
 
@@ -286,52 +245,58 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
         final responseData = jsonDecode(response.body);
         if (responseData['status'] == 'success' ||
             (responseData['message'] != null &&
-                responseData['message'].toString().toLowerCase().contains(
-                  'success',
-                ))) {
-          // Show success dialog
+                responseData['message'].toString().toLowerCase().contains('success'))) {
           showDialog(
             context: context,
-            builder:
-                (_) => AlertDialog(
-                  title: const Text('Success'),
-                  content: const Text('Offer added successfully!'),
-                  actions: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pop(context); // Dismiss dialog
-                        Navigator.pop(
-                          context,
-                        ); // Go back to the previous screen
-                      },
-                      child: const Text('OK'),
-                    ),
-                  ],
+            builder: (_) => AlertDialog(
+              title: const Text('Success'),
+              content: const Text('Offer added successfully!'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Navigator.pop(context);
+                  },
+                  child: const Text('OK'),
                 ),
+              ],
+            ),
           );
         } else {
           setState(() {
             _errorMessage = responseData['message'] ?? 'Failed to add offer.';
           });
+          _scrollToError();
         }
       } else {
-        // Handle 422 or other errors
         final responseData = jsonDecode(response.body);
         setState(() {
           _errorMessage =
-              'Error ${response.statusCode}: '
-              '${responseData['message'] ?? 'Unable to add offer.'}';
+              'Error ${response.statusCode}: ${responseData['message'] ?? 'Unable to add offer.'}';
         });
+        _scrollToError();
       }
     } catch (e) {
       setState(() {
         _errorMessage = 'Network error: $e';
       });
+      _scrollToError();
     }
 
     setState(() {
       _isSubmitting = false;
     });
+  }
+
+  void _scrollToError() {
+    final context = _formKey.currentContext;
+    if (context != null) {
+      Scrollable.ensureVisible(
+        context,
+        duration: Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
+    }
   }
 
   @override
@@ -341,58 +306,49 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
       appBar: AppConstants.customAppBar(
         context: context,
         title: 'Add New Offer',
-        // Optionally, if you want a different back icon, you can pass:
-        // backIconAsset: 'assets/your_custom_back.png',
-      ), // 'back' is a String holding the asset path, e.g., 'assets/images/back_icon.png'
-
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // const Text(
-            //   "Enter Details",
-            //   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-            // ),
-            // const SizedBox(height: 8),
-                    
-
-
-            // Name of Offer
-            const Text(
-              "Title of Offer",
-              style: TextStyle(fontSize: 16, color: Colors.black),
-            ),
-
-            const SizedBox(height: 8),
-            AppConstants.customTextField(
-              controller: _nameController,
-              hintText: 'Enter Title of Offer',
-              textInputAction: TextInputAction.next, // or .done, .search, etc.
-            ),
-
-            const SizedBox(height: 8),
-
-            // Venue dropdown
-            const Text("Venue", style: TextStyle(fontSize: 16)),
-            const SizedBox(height: 8),
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.grey.shade300),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.1),
-                    spreadRadius: 1,
-                    blurRadius: 2,
-                    offset: const Offset(0, 1),
-                  ),
-                ],
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Title of Offer",
+                style: TextStyle(fontSize: 16, color: Colors.black),
               ),
-              child:
-                  _isVenuesLoading
-                      ? Padding(
+              const SizedBox(height: 8),
+              AppConstants.customTextField(
+                controller: _nameController,
+                hintText: 'Enter Title of Offer',
+                textInputAction: TextInputAction.next,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter the title of the offer';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 8),
+              const Text("Venue", style: TextStyle(fontSize: 16)),
+              const SizedBox(height: 8),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.grey.shade300),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.1),
+                      spreadRadius: 1,
+                      blurRadius: 2,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
+                ),
+                child: _isVenuesLoading
+                    ? Padding(
                         padding: const EdgeInsets.symmetric(
                           vertical: 14.0,
                           horizontal: 16.0,
@@ -404,20 +360,15 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
                               width: 20,
                               child: Stack(
                                 children: [
-                                  // Semi-transparent dark overlay
                                   Container(
-                                    color: Colors.black.withOpacity(
-                                      0.14,
-                                    ), // Dark overlay
+                                    color: Colors.black.withOpacity(0.14),
                                   ),
-
-                                  // Your original container with white tint and loader
                                   Container(
                                     color: Colors.white10,
                                     child: Center(
                                       child: Image.asset(
                                         'assets/Bird_Full_Eye_Blinking.gif',
-                                        width: 100, // Adjust size as needed
+                                        width: 100,
                                         height: 100,
                                       ),
                                     ),
@@ -437,7 +388,7 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
                           ],
                         ),
                       )
-                      : DropdownButtonHideUnderline(
+                    : DropdownButtonHideUnderline(
                         child: ButtonTheme(
                           alignedDropdown: true,
                           child: DropdownButton<Map<String, dynamic>>(
@@ -456,20 +407,19 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
                                 fontFamily: 'YourFontFamily',
                               ),
                             ),
-                            items:
-                                _venues.map((venueMap) {
-                                  return DropdownMenuItem<Map<String, dynamic>>(
-                                    value: venueMap,
-                                    child: Text(
-                                      venueMap['name'] ?? 'Unnamed',
-                                      style: const TextStyle(
-                                        color: Colors.black,
-                                        fontSize: 14.0,
-                                        fontFamily: 'YourFontFamily',
-                                      ),
-                                    ),
-                                  );
-                                }).toList(),
+                            items: _venues.map((venueMap) {
+                              return DropdownMenuItem<Map<String, dynamic>>(
+                                value: venueMap,
+                                child: Text(
+                                  venueMap['name'] ?? 'Unnamed',
+                                  style: const TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 14.0,
+                                    fontFamily: 'YourFontFamily',
+                                  ),
+                                ),
+                              );
+                            }).toList(),
                             onChanged: (newValue) {
                               setState(() {
                                 _selectedVenue = newValue;
@@ -484,211 +434,216 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
                           ),
                         ),
                       ),
-            ),
-            const SizedBox(height: 8),
-
-            // Type - using Checkboxes
-            const Text("Redeem Type", style: TextStyle(fontSize: 16)),
-
-            const SizedBox(height: 2),
-            Row(
-              children: [
-                // Venue Points Checkbox and label with compact layout
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Checkbox(
-                      activeColor: const Color.fromRGBO(255, 130, 16, 1),
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      visualDensity: VisualDensity.compact,
-                      value: _useVenuePoints,
-                      onChanged: (value) {
-                        setState(() {
-                          _useVenuePoints = value ?? false;
-                        });
-                      },
-                    ),
-                    const Text("Venue Points"),
-                  ],
-                ),
-                const SizedBox(
-                  width: 32,
-                ), // Adjust the spacing between the two options
-                // App Points Checkbox and label with compact layout
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Checkbox(
-                      activeColor: const Color.fromRGBO(255, 130, 16, 1),
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      visualDensity: VisualDensity.compact,
-                      value: _useAppPoints,
-                      onChanged: (value) {
-                        setState(() {
-                          _useAppPoints = value ?? false;
-                        });
-                      },
-                    ),
-                    const Text("App Points"),
-                  ],
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 5),
-            if (_useVenuePoints || _useAppPoints)
+              ),
+              const SizedBox(height: 8),
+              const Text("Redeem Type", style: TextStyle(fontSize: 16)),
+              const SizedBox(height: 2),
               Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (_useVenuePoints)
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          TextField(
-                            controller: _venuePointsController,
-                            keyboardType: TextInputType.number,
-                            decoration: InputDecoration(
-                              hintText: "Enter Venue Points",
-                              hintStyle: const TextStyle(
-                                fontSize: 12,
-                              ), // Reduced hint font size
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 8,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          ),
-                        ],
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Checkbox(
+                        activeColor: const Color.fromRGBO(255, 130, 16, 1),
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        visualDensity: VisualDensity.compact,
+                        value: _useVenuePoints,
+                        onChanged: (value) {
+                          setState(() {
+                            _useVenuePoints = value ?? false;
+                          });
+                        },
                       ),
-                    ),
-                  if (_useVenuePoints && _useAppPoints)
-                    const SizedBox(width: 16),
-                  if (_useAppPoints)
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          TextField(
-                            controller: _appPointsController,
-                            keyboardType: TextInputType.number,
-                            decoration: InputDecoration(
-                              hintText: "Enter App Points",
-                              hintStyle: const TextStyle(
-                                fontSize: 12,
-                              ), // Reduced hint font size
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 8,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          ),
-                        ],
+                      const Text("Venue Points"),
+                    ],
+                  ),
+                  const SizedBox(width: 32),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Checkbox(
+                        activeColor: const Color.fromRGBO(255, 130, 16, 1),
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        visualDensity: VisualDensity.compact,
+                        value: _useAppPoints,
+                        onChanged: (value) {
+                          setState(() {
+                            _useAppPoints = value ?? false;
+                          });
+                        },
                       ),
-                    ),
+                      const Text("App Points"),
+                    ],
+                  ),
                 ],
               ),
-
-            if (_useVenuePoints || _useAppPoints) const SizedBox(height: 16),
-
-            // Description
-            const Text("Description", style: TextStyle(fontSize: 16)),
-            const SizedBox(height: 8),
-            Container(
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade400),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: TextField(
-                textInputAction:
-                    TextInputAction.next, // or .done, .search, etc.
-
-                controller: _descriptionController,
-                maxLines: 4,
-                decoration: const InputDecoration(
-                  hintText: "",
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 12,
+              const SizedBox(height: 5),
+              if (_useVenuePoints || _useAppPoints)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (_useVenuePoints)
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            TextFormField(
+                              controller: _venuePointsController,
+                              keyboardType: TextInputType.number,
+                              decoration: InputDecoration(
+                                hintText: "Enter Venue Points",
+                                hintStyle: const TextStyle(fontSize: 12),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 8,
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              validator: (value) {
+                                if (_useVenuePoints && (value == null || value.isEmpty)) {
+                                  return 'Please enter Venue Points';
+                                }
+                                return null;
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    if (_useVenuePoints && _useAppPoints)
+                      const SizedBox(width: 16),
+                    if (_useAppPoints)
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            TextFormField(
+                              controller: _appPointsController,
+                              keyboardType: TextInputType.number,
+                              decoration: InputDecoration(
+                                hintText: "Enter App Points",
+                                hintStyle: const TextStyle(fontSize: 12),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 8,
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              validator: (value) {
+                                if (_useAppPoints && (value == null || value.isEmpty)) {
+                                  return 'Please enter App Points';
+                                }
+                                return null;
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              if (_useVenuePoints || _useAppPoints) const SizedBox(height: 16),
+              const Text("Description", style: TextStyle(fontSize: 16)),
+              const SizedBox(height: 8),
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade400),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: TextFormField(
+                  controller: _descriptionController,
+                  maxLines: 4,
+                  decoration: const InputDecoration(
+                    hintText: "",
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 12,
+                    ),
+                    border: InputBorder.none,
                   ),
-                  border: InputBorder.none,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter a description';
+                    }
+                    return null;
+                  },
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-  // Redemption Limit field
-   RichText(
-  text: TextSpan(
-    children: [
-      TextSpan(
-        text: "Redemption Limit  ",
-        style: TextStyle(fontSize: 16, color: Colors.black),
-      ),
-      TextSpan(
-        text: "(Leave Blank for unlimited)",
-        style: TextStyle(fontSize: 14, color: Colors.black54),
-      ),
-    ],
-  ),
-),
-            const SizedBox(height: 8),
-            AppConstants.customTextField(
-              controller: _redemptionLimitController,
-              hintText: 'Enter Redemption Limit',
-              textInputAction: TextInputAction.next, // or .done, .search, etc.
-            ),
-
-            const SizedBox(height: 8),
-            
-            // Upload Pictures
-            const Text("Upload Pictures", style: TextStyle(fontSize: 16)),
-            const SizedBox(height: 8),
-            _pickedImage == null
-                ? Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.grey.shade400),
-                  ),
-                  child: IconButton(
-                    icon: const Icon(Icons.camera_alt, size: 30),
-                    onPressed: _pickImage,
-                  ),
-                )
-                : InkWell(
-                  onTap: _pickImage,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.file(
-                      File(_pickedImage!.path),
+              const SizedBox(height: 16),
+              RichText(
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: "Redemption Limit  ",
+                      style: TextStyle(fontSize: 16, color: Colors.black),
+                    ),
+                    TextSpan(
+                      text: "(Leave Blank for unlimited)",
+                      style: TextStyle(fontSize: 14, color: Colors.black54),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              AppConstants.customTextField(
+                controller: _redemptionLimitController,
+                hintText: 'Enter Redemption Limit',
+                textInputAction: TextInputAction.next,
+                validator: (value) {
+                  if (value != null && value.isNotEmpty) {
+                    final parsedValue = int.tryParse(value);
+                    if (parsedValue == null || parsedValue < -1) {
+                      return 'Please enter a valid redemption limit (-1 for unlimited)';
+                    }
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 10),
+              const Text("Upload Pictures", style: TextStyle(fontSize: 16)),
+              const SizedBox(height: 8),
+              _pickedImage == null
+                  ? Container(
                       width: 80,
                       height: 80,
-                      fit: BoxFit.cover,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.grey.shade400),
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.camera_alt, size: 50),
+                        onPressed: _pickImage,
+                      ),
+                    )
+                  : InkWell(
+                      onTap: _pickImage,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.file(
+                          File(_pickedImage!.path),
+                          width: 80,
+                          height: 80,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+              const SizedBox(height: 80),
+              if (_errorMessage.isNotEmpty)
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 12.0),
+                    child: Text(
+                      _errorMessage,
+                      style: const TextStyle(color: Colors.red),
+                      textAlign: TextAlign.center,
                     ),
                   ),
                 ),
-            const SizedBox(height: 80),
-
-            // Show error message if any
-            if (_errorMessage.isNotEmpty)
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 12.0),
-                  child: Text(
-                    _errorMessage,
-                    style: const TextStyle(color: Colors.red),
-                  ),
-                ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: Padding(
@@ -704,22 +659,21 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
               ),
             ),
             onPressed: _isSubmitting ? null : _submitOffer,
-            child:
-                _isSubmitting
-                    ? Container(
-                      color: Colors.white.withOpacity(0.19),
-                      child: Center(
-                        // child: Image.asset(
-                        //   'assets/Bird_Full_Eye_Blinking.gif',
-                        //   width: 100, // Adjust size as needed
-                        //   height: 100,
-                        // ),
+            child: _isSubmitting
+                ? Container(
+                    color: Colors.white.withOpacity(0.19),
+                    child: Center(
+                      child: Image.asset(
+                        'assets/Bird_Full_Eye_Blinking.gif',
+                        width: 100,
+                        height: 100,
                       ),
-                    )
-                    : const Text(
-                      "Save Offer",
-                      style: TextStyle(color: Colors.white, fontSize: 16),
                     ),
+                  )
+                : const Text(
+                    "Save Offer",
+                    style: TextStyle(color: Colors.white, fontSize: 16),
+                  ),
           ),
         ),
       ),

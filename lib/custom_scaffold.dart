@@ -23,6 +23,7 @@ class _CustomFABLocation extends FloatingActionButtonLocation {
 }
 
 class CustomScaffold extends StatelessWidget {
+  static final AssetImage _bird=const AssetImage('assets/bird.png');
   final Widget body;
   final int currentIndex;
 
@@ -34,24 +35,17 @@ class CustomScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    precacheImage(_bird, context); //add not to reload
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
 
     return Stack(
       children: [
         // Background layer
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-          ),
-        ),
+        Container(decoration: BoxDecoration(color: Colors.white)),
         Scaffold(
           backgroundColor: Colors.transparent,
-          body: SafeArea(
-            top: true,
-            bottom: true,
-            child: body,
-          ),
+          body: SafeArea(top: true, bottom: true, child: body),
           floatingActionButtonLocation: _CustomFABLocation(),
           floatingActionButton: GestureDetector(
             onTap: () {
@@ -82,7 +76,8 @@ class CustomScaffold extends StatelessWidget {
                                   await Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => addVenue.AddEggScreen(),
+                                      builder:
+                                          (context) => addVenue.AddEggScreen(),
                                     ),
                                   );
                                 },
@@ -116,8 +111,8 @@ class CustomScaffold extends StatelessWidget {
               );
             },
             child: Center(
-              child: Image.asset(
-                'assets/bird.png',
+              child: Image(
+               image: _bird,
                 width: screenWidth * 0.2,
                 height: screenWidth * 0.2,
               ),
@@ -184,13 +179,14 @@ class CustomBottomBar extends StatelessWidget {
   final int currentIndex;
 
   const CustomBottomBar({Key? key, required this.currentIndex})
-      : super(key: key);
+    : super(key: key);
 
   void _onItemTapped(BuildContext context, int index) {
     if (index == currentIndex) return; // Prevent unnecessary navigation
     switch (index) {
       case 0:
-        Navigator.pushReplacement( // Use pushReplacement to avoid stack buildup
+        Navigator.pushReplacement(
+          // Use pushReplacement to avoid stack buildup
           context,
           MaterialPageRoute(builder: (context) => TabDashboard()),
         );
@@ -201,13 +197,15 @@ class CustomBottomBar extends StatelessWidget {
           MaterialPageRoute(builder: (context) => venue.TabEggScreen()),
         );
         break;
-      case 2:
+      case 2: //bird
+        break;
+      case 3:
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const CheckInsScreen()),
         );
         break;
-      case 3:
+      case 4:
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => profile.TabProfile()),
@@ -272,7 +270,7 @@ class CustomBottomBar extends StatelessWidget {
             top: 0,
             left: 0,
             right: 0,
-            
+
             child: Image.asset(
               'assets/bottom_nav.png',
               fit: BoxFit.cover,
@@ -294,31 +292,31 @@ class CustomBottomBar extends StatelessWidget {
                   icon: Icons.grid_view_rounded,
                   label: "Dashboard",
                   index: 0,
-                   color: Colors.black
-                  
+                  color: Colors.black,
                 ),
                 _buildNavItem(
                   context,
                   icon: Icons.apartment,
                   label: "Venues",
                   index: 1,
-                    color: Colors.black
+                  color: Colors.black,
                 ),
+
                 SizedBox(width: screenWidth * 0.2),
                 _buildNavItem(
                   context,
                   icon: Icons.login_outlined,
                   label: "Check In",
-                  index: 2,
-                 color: Colors.black
+                  index: 3,
+                  color: Colors.black,
                 ),
                 _buildNavItem(
                   context,
                   icon: Icons.person,
                   label: "My Profile",
-                  index: 3,
-                  
-                color: Colors.black
+                  index: 4,
+
+                  color: Colors.black,
                 ),
               ],
             ),

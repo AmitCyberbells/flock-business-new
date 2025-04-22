@@ -1,13 +1,10 @@
 import 'dart:convert';
 import 'package:flock/custom_scaffold.dart';
-import 'package:flock/venue.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:intl/intl.dart'; // For formatting dates
-
-// Assuming CustomScaffold is in a separate file
+import 'package:intl/intl.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({Key? key}) : super(key: key);
@@ -27,24 +24,23 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Future<void> checkAuthentication() async {
-    final token = await getToken();
+    final token = await _getToken();
     if (token.isEmpty) {
-      // Redirect to LoginScreen if not authenticated
       Navigator.pushReplacementNamed(context, '/login');
     } else {
-      fetchHistory(); // Fetch data if authenticated
+      _fetchHistory();
     }
   }
 
-  Future<String> getToken() async {
+  Future<String> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('access_token') ?? '';
   }
 
-  Future<void> fetchHistory() async {
+  Future<void> _fetchHistory() async {
     setState(() => loader = true);
     try {
-      final token = await getToken();
+      final token = await _getToken();
       if (token.isEmpty) throw Exception('No authentication token');
 
       final headers = {
@@ -53,7 +49,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
         'Content-Type': 'application/json',
       };
 
-      // Use the correct endpoint for transactions
       final response = await http
           .get(
             Uri.parse('http://165.232.152.77/api/vendor/transactions'),
@@ -68,7 +63,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
           loader = false;
         });
       } else {
-        throw Exception('API Error ${response.statusCode}: ${response.body}');
+        throw Exception(
+            'API Error ${response.statusCode}: ${response.reasonPhrase}');
       }
     } catch (e) {
       setState(() => loader = false);
@@ -76,36 +72,40 @@ class _HistoryScreenState extends State<HistoryScreen> {
     }
   }
 
-  Widget buildHistoryItem(Map<String, dynamic> item) {
-    // Format the timestamp to "yyyy-MM-dd hh:mm a" (e.g., "2025-03-13 05:20 pm")
-    final timestamp = DateTime.parse(item['datetime']);
-    final formattedTime = DateFormat('yyyy-MM-dd hh:mm a').format(timestamp);
-   
+  /// ----------  ITEM UI  ----------
+  Widget _buildHistoryItem(Map<String, dynamic> item) {
+    // Parse & format timestamp
+    final inputFormat = DateFormat('MMMM-dd-yyyy hh:mm a');
+    final timestamp = inputFormat.parse(item['datetime']);
+    final formattedTime =
+        DateFormat('MMMM-dd-yyyy hh:mm a').format(timestamp);
 
-    // Determine points sign and color based on transaction_type
-    final points = item['feather_points'] as int;
-    final transactionType = item['transaction_type'] as String;
+    // Points sign & colour
+    final points = item['feather_points'] as int? ?? 0;
+
+     final points1 = item['venue_points'] as int? ?? 0;
+    
+    final transactionType = item['transaction_type'] as String? ?? '+';
     final isPositive = transactionType == '+';
-    final pointsText = isPositive ? '+ $points pts' : '- $points pts';
+    final pointsText = isPositive ? '+ $points fts' : '- $points fts';
+
+    final pointsText1 = isPositive ? '+ $points1 pts' : '- $points1 pts';
+
     final pointsColor = isPositive ? Colors.green : Colors.red;
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 5,
-            offset: const Offset(0, 2),
-          ),
+        boxShadow: const [
+          BoxShadow(color: Colors.black12, blurRadius: 5, offset: Offset(0, 2)),
         ],
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center, // 👈 top‑align icon
         children: [
-          // Bird Icon
           ClipRRect(
             borderRadius: BorderRadius.circular(50),
             child: Image.asset(
@@ -115,122 +115,189 @@ class _HistoryScreenState extends State<HistoryScreen> {
               fit: BoxFit.cover,
             ),
           ),
-          const SizedBox(width: 16),
-          // Title and Timestamp
+          const SizedBox(width: 12),
+          // ----- TITLE / VENUE / DATE -----
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  item['title'] ?? 'Unknown',
+                  item['title'] ?? 'Offer Redeemed',
                   style: const TextStyle(
-                    fontSize: 16,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
+                      const SizedBox(height: 4),
+           item['offer_name'] == null || item['offer_name'].toString().trim().isEmpty
+  ? Row(
+      children: [
+        const Icon(Icons.apartment, size: 16, color: Color.fromRGBO(255, 130, 16, 1)),
+        const SizedBox(width: 6),
+        Flexible(
+          child: Text(
+            item['venue_name'] ?? '',
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    )
+  : Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          item['offer_name'],
+          style: const TextStyle(fontSize: 14),
+        ),
+        const SizedBox(height: 4),
+        Row(
+          children: [
+            const Icon(Icons.apartment, size: 16, color: Color.fromRGBO(255, 130, 16, 1)),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                item['venue_name'] ?? '',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ],
+    )
+,
                 const SizedBox(height: 4),
-                Text(
-                  formattedTime,
-                  style: const TextStyle(fontSize: 14, color: Colors.grey),
+                Row(
+                  children: [
+                    const Icon(Icons.calendar_month, size: 16, color: Color.fromRGBO(255, 130, 16, 1)),
+            const SizedBox(width: 6),
+                    Text(
+                      formattedTime,
+                      style: const TextStyle(fontSize: 14, color: Colors.grey),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
-          // Points
-          Text(
-            pointsText,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: pointsColor,
-            ),
-          ),
+          // ----- POINTS -----
+//           Column(
+//   crossAxisAlignment: CrossAxisAlignment.end,
+//   children: [
+//     Text(
+//       pointsText,
+//       style: TextStyle(
+//         fontSize: 16,
+//         fontWeight: FontWeight.w600,
+//         color: pointsColor,
+//       ),
+//     ),
+//     const SizedBox(height: 10), // Space between points
+//     Text(
+//       pointsText1,
+//       style: TextStyle(
+//         fontSize: 16,
+//         fontWeight: FontWeight.w600,
+//         color: pointsColor,
+//       ),
+//     ),
+//   ],
+// ),
+
         ],
       ),
     );
   }
 
+  /// ----------  PAGE UI  ----------
   @override
   Widget build(BuildContext context) {
     return CustomScaffold(
-      currentIndex:
-          2, // Assuming History is accessible from Check-Ins (index 2)
+      currentIndex: 2, // History tab
       body: SafeArea(
         child: Stack(
           children: [
             Column(
               children: [
-                // Header
+                // ---------- HEADER ----------
                 Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Row(
                     children: [
-                      IconButton(
-                        icon: const Icon(
-                          Icons.arrow_back,
-                          color: Color.fromRGBO(255, 130, 16, 1.0),
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Image.asset(
+                          'assets/back_updated.png',
+                          height: 40,
+                          width: 34,
+                          fit: BoxFit.contain,
                         ),
-                        onPressed: () => Navigator.pop(context),
                       ),
-                      const Expanded(
+                      Expanded(
                         child: Center(
-                          child: Text(
-                            "History",
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w600,
-                            ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Image.asset(
+                              //   'assets/bird.png', // 👈 bird icon on top
+                              //   height: 28,
+                              //   width: 28,
+                              // ),
+                              // const SizedBox(width: 8),
+                              const Text(
+                                'Transaction History',
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
-                      const SizedBox(width: 48), // Space for alignment
+                      const SizedBox(width: 34), // balance back‑button width
                     ],
                   ),
                 ),
-                // Body
+                // ---------- LIST ----------
                 Expanded(
-                  child:
-                      loader
-                          ? Container(
-                            color: Colors.white.withOpacity(0.19),
-                            child: Center(
-                              child: Image.asset(
-                                'assets/Bird_Full_Eye_Blinking.gif',
-                                width: 100, // Adjust size as needed
-                                height: 100,
-                              ),
+                  child: loader
+                      ? Container(
+                          color: Colors.white.withOpacity(0.19),
+                          child: Center(
+                            child: Image.asset(
+                              'assets/Bird_Full_Eye_Blinking.gif',
+                              width: 100,
+                              height: 100,
                             ),
-                          )
-                          : historyData.isEmpty
+                          ),
+                        )
+                      : historyData.isEmpty
                           ? const Center(child: Text('No History Found'))
                           : ListView.builder(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            itemCount: historyData.length,
-                            itemBuilder: (context, index) {
-                              final item = historyData[index];
-                              return buildHistoryItem(item);
-                            },
-                          ),
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 8),
+                              itemCount: historyData.length,
+                              itemBuilder: (context, index) =>
+                                  _buildHistoryItem(historyData[index]),
+                            ),
                 ),
               ],
             ),
-            //             if (loader)
-            //               Container(
-            //   color: Colors.white.withOpacity(0.19),
-            //   child: Center(
-            //     child: Image.asset(
-            //       'assets/Bird_Full_Eye_Blinking.gif',
-            //       width: 100, // Adjust size as needed
-            //       height: 100,
-            //     ),
-            //   ),
-            // ),
           ],
         ),
       ),
     );
   }
 }
+
+
+
