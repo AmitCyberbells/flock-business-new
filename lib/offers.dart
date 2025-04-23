@@ -164,7 +164,7 @@ class _OffersScreenState extends State<OffersScreen> {
                     crossAxisCount: 2,
                     crossAxisSpacing: 12,
                     mainAxisSpacing: 12,
-                    childAspectRatio: 0.7,
+                    childAspectRatio: 0.65,
                   ),
                   itemBuilder: (context, index) {
                     final offer = offersList[index];
@@ -189,7 +189,8 @@ class _OffersScreenState extends State<OffersScreen> {
                             : '';
                     print('Offer Images: ${offer['images']}');
 
-                    return Container(
+                    return 
+                    Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(12),

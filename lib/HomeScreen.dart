@@ -494,35 +494,53 @@ class _TabDashboardState extends State<TabDashboard>
   }
 
   /// Updated venue list with QR Codes method (includes the custom dropdown)
-  Widget venueListWithQRCodes() {
-    if (!hasPermission('verify_voucher') || venueList.isEmpty) {
-      return const SizedBox.shrink();
-    }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        customVenueDropdown(),
-        if (selectedVenue != null)
-          Padding(
-            padding: const EdgeInsets.all(10),
-            child: Center(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.transparent,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: QrImageView(
-                  data: selectedVenue!['id'].toString(),
-                  version: QrVersions.auto,
-                  size: 150.0,
-                  backgroundColor: Colors.transparent,
-                ),
+  /// 
+/// Updated venue list with QR Codes method (includes the custom dropdown)
+/// 
+Widget venueListWithQRCodes() {
+  if (!hasPermission('verify_voucher')) {
+    return const SizedBox.shrink();
+  }
+  if (venueList.isEmpty) {
+    return Padding(
+      padding: const EdgeInsets.all(10.0),
+      child: Center(
+        child: Text(
+          'You don’t have any venues yet, please add a venue by clicking on the Bird icon in the bottom bar.',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 16,
+            color: Colors.grey[600],
+          ),
+        ),
+      ),
+    );
+  }
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      customVenueDropdown(),
+      if (selectedVenue != null)
+        Padding(
+          padding: const EdgeInsets.all(10),
+          child: Center(
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: QrImageView(
+                data: selectedVenue!['id'].toString(),
+                version: QrVersions.auto,
+                size: 150.0,
+                backgroundColor: Colors.transparent,
               ),
             ),
           ),
-      ],
-    );
-  }
+        ),
+    ],
+  );
+}
 
   @override
   Widget build(BuildContext context) {

@@ -6,10 +6,9 @@ plugins {
 }
 
 android {
-    namespace = "com.example.flock"
+    namespace = "com.flockbusiness"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = "27.0.12077973"
-
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -17,11 +16,11 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
+        jvmTarget = "11"
     }
 
     defaultConfig {
-        applicationId = "com.example.flock"
+        applicationId = "com.flockbusiness"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -29,9 +28,22 @@ android {
         multiDexEnabled = true
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file("flockbusiness-release-key.keystore")
+            storePassword = "123@Business"
+            keyAlias = "flockbusiness-release-key"
+            keyPassword = "123@Business"
+            enableV1Signing = true
+            enableV2Signing = true
+        }
+    }
+
     buildTypes {
-        release {
-            signingConfig = signingConfigs.getByName("debug")
+        getByName("release") {
+            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 }

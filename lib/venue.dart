@@ -1,23 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'package:flock/constants.dart';
 import 'package:flock/edit_venue.dart'; // This file should contain your EditVenueScreen implementation.
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flock/add_offer.dart';
-import 'package:flock/send_notifications.dart';
-import 'package:flock/add_venue.dart' as addVenue;
-import 'package:flock/venue.dart' as venue;
-import 'package:flock/checkIns.dart';
-import 'package:flock/profile_screen.dart' as profile hide TabEggScreen;
 import 'package:flock/HomeScreen.dart';
 import 'package:flock/custom_scaffold.dart';
-import 'package:timezone/data/latest.dart' as tz;
-import 'package:timezone/timezone.dart' as tz;
 
 // Design tokens
 class Design {

@@ -1,4 +1,4 @@
-package com.example.flock
+package com.flockbusiness
 
 import io.flutter.embedding.android.FlutterActivity
 import android.app.NotificationChannel
