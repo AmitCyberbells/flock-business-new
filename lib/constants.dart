@@ -551,11 +551,12 @@ class AppConstants {
   }
 
   // Reusable "Enter Venue Name" field
-static Widget customTextField({
+ static Widget customTextField({
     required TextEditingController controller,
     required String hintText,
     required TextInputAction textInputAction,
     String? Function(String?)? validator,
+    InputDecoration? decoration, // Made decoration optional
   }) {
     return Container(
       decoration: textFieldBoxDecoration,
@@ -566,7 +567,8 @@ static Widget customTextField({
           fontSize: 14.0,
           fontFamily: 'YourFontFamily',
         ),
-        decoration: textFieldDecoration.copyWith(hintText: hintText),
+        decoration: decoration?.copyWith(hintText: hintText) ??
+            textFieldDecoration.copyWith(hintText: hintText),
         textInputAction: textInputAction,
         validator: validator,
       ),
@@ -594,7 +596,10 @@ static Widget customTextField({
   }
 
   // Reusable "Enter Suburb" field
-  static Widget suburbField({required TextEditingController controller}) {
+  static Widget suburbField({
+    required TextEditingController controller,
+    InputDecoration? decoration, // Added optional decoration for consistency
+  }) {
     return Container(
       decoration: textFieldBoxDecoration,
       child: TextField(
@@ -604,13 +609,18 @@ static Widget customTextField({
           fontSize: 14.0,
           fontFamily: 'YourFontFamily',
         ),
-        decoration: textFieldDecoration.copyWith(hintText: 'Enter suburb'),
+        decoration: decoration?.copyWith(hintText: "Enter Suburb") ??
+            textFieldDecoration.copyWith(hintText: "Enter Suburb"),
       ),
     );
   }
 
+
   // Reusable "Enter Notice" field
-  static Widget noticeField({required TextEditingController controller}) {
+  static Widget noticeField({
+    required TextEditingController controller,
+    InputDecoration? decoration, // Added optional decoration for consistency
+  }) {
     return Container(
       decoration: textFieldBoxDecoration,
       child: TextField(
@@ -620,7 +630,8 @@ static Widget customTextField({
           fontSize: 14.0,
           fontFamily: 'YourFontFamily',
         ),
-        decoration: textFieldDecoration.copyWith(hintText: 'Enter notice'),
+        decoration: decoration?.copyWith(hintText: "Important Notice") ??
+            textFieldDecoration.copyWith(hintText: "Important Notice"),
       ),
     );
   }

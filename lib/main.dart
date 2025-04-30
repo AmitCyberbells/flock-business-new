@@ -169,6 +169,7 @@ class MyApp extends StatelessWidget {
         '/faq': (context) => FaqScreen(),
         '/offers': (context) => const OffersScreen(),
         '/HistoryScreen': (context) => const HistoryScreen(),
+        '/history': (context) => const HistoryScreen(),
       },
     );
   }
@@ -407,83 +408,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
   @override
   Widget build(BuildContext context) {
      return Scaffold(
-      // body: Stack(
-        // children: [
-                  //  Container(color: Colors.black.withOpacity(0.14)),
-                          // Container(
-                          //   color: Colors.white10,
-                          //   child: Center(
-                          //     child: Image.asset(
-                          //       'assets/Bird_Full_Eye_Blinking.gif',
-                          //       width: 100,
-                          //       height: 100,
-                          //     ),
-                          //   ),
-                          // ),
-          // if (_unreadNotifications > 0)
-            // Positioned(
-              // top: 40,
-              // right: 20,
-              // child: Container(
-                // padding: const EdgeInsets.all(6),
-                // decoration: BoxDecoration(
-                //   color: AppColors.primary,
-                //   shape: BoxShape.circle,
-                // ),
-                // child: Text(
-                //   '$_unreadNotifications',
-                //   style: const TextStyle(
-                //     color: Colors.white,
-                //     fontSize: 12,
-                //     fontWeight: FontWeight.bold,
-                //   ),
-                // ),
-              // ),
-            // ),
-          // if (_notifications.isNotEmpty)
-            // Positioned(
-              // bottom: 20,
-              // left: 20,
-              // right: 20,
-              // child: Container(
-                // constraints: const BoxConstraints(maxHeight: 200),
-                // decoration: BoxDecoration(
-                //   color: Colors.white,
-                //   borderRadius: BorderRadius.circular(10),
-                //   boxShadow: [
-                //     BoxShadow(
-                //       color: Colors.black.withOpacity(0.1),
-                //       blurRadius: 5,
-                //       offset: const Offset(0, 3),
-                //     ),
-                //   ],
-                // ),
-                // child: ListView.builder(
-                //   shrinkWrap: true,
-                //   itemCount: _notifications.length,
-                //   itemBuilder: (context, index) {
-                //     final notification = _notifications[index];
-                //     return ListTile(
-                //       title: Text(
-                //         notification.title,
-                //         style: TextStyle(
-                //           fontWeight: notification.isRead ? FontWeight.normal : FontWeight.bold,
-                //         ),
-                //       ),
-                //       subtitle: Text(notification.body),
-                //       trailing: notification.isRead
-                //           ? null
-                //           : const Icon(Icons.circle, color: Colors.red, size: 10),
-                //       onTap: () {
-                //         _markNotificationAsRead(notification.id);
-                //       },
-                //     );
-                //   },
-                // ),
-              // ),
-            // ),
-        // ],
-      // ),
+     
      );
   }
 }

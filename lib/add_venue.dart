@@ -6,10 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
-
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -18,15 +16,15 @@ class Design {
   static const Color black = Colors.black;
   static const Color white = Colors.white;
   static const Color lightPurple = Color(0xFFF0F0F5);
-  static const Color blue = Colors.blue; // Added for link color
-  static const double font14 = 14; // Added for dialog
+  static const Color blue = Colors.blue;
+  static const Color errorRed = Colors.red;
+  static const double font14 = 14;
   static const double font15 = 15;
   static const double font16 = 16;
   static const double font18 = 18;
   static const double font20 = 20;
 }
 
-// Example image references
 class GlobalImages {
   static const String camera = 'assets/camera.png';
   static const String closeBtn = 'assets/closebtn.png';
@@ -37,12 +35,10 @@ class GlobalImages {
   static const String openCamera = 'assets/camera.png';
 }
 
-// Server endpoints
 class Server {
   static const String venues = "http://165.232.152.77/api/vendor/venues";
   static const String tags = "http://165.232.152.77/api/vendor/tags";
-  static const String categoryList =
-      "http://165.232.152.77/api/vendor/categories";
+  static const String categoryList = "http://165.232.152.77/api/vendor/categories";
   static const String amenities = "http://165.232.152.77/api/vendor/amenities";
 }
 
@@ -63,91 +59,94 @@ class AddEggScreen extends StatefulWidget {
 }
 
 class _AddEggScreenState extends State<AddEggScreen> {
-  String tagSearchQuery = ''; // For searching tags
+  String tagSearchQuery = '';
   final GlobalKey _categoryFieldKey = GlobalKey();
   final GlobalKey _amenityFieldKey = GlobalKey();
-  bool showCategoryDropdown = false; //
+  bool showCategoryDropdown = false;
   bool loader = false;
-  bool dialogAlert = false; // For image dialog
-  bool confirmPopup = false; // For confirmation after submission
-  bool showVenueDialog = false; // New state for "How do I list a venue?" dialog
-  final GlobalKey _tagsFieldKey =
-      GlobalKey(); // For positioning the tags dropdown
+  bool dialogAlert = false;
+  bool confirmPopup = false;
+  bool showVenueDialog = false;
+  final GlobalKey _tagsFieldKey = GlobalKey();
   bool showAmenityDropdown = false;
+  bool showTagsDropdown = false;
+  bool showDietaryDropdown = false;
+  final GlobalKey _dietaryFieldKey = GlobalKey();
 
-  bool showTagsDropdown = false; // To toggle the tags dropdown visibility
-  // ---------- TEXT CONTROLLERS (Fix reverse typing) ----------
+  // Text Controllers
   late TextEditingController nameController;
   late TextEditingController suburbController;
   late TextEditingController noticeController;
   late TextEditingController descriptionController;
 
-  // Category
-  bool nameofeggStatus = false; // toggles category dropdown
+  // Form state
+  bool nameofeggStatus = false;
   String catId = '';
-  String nameofegg = ''; // category name
-
-  // Location
+  String nameofegg = '';
   String location = '';
   double lat = 0.0;
   double lng = 0.0;
-
-  // Amenities
-  bool reportStatus = false; // toggles amenities dropdown
+  bool reportStatus = false;
   List<dynamic> allAmenities = [];
   List<String> arrOfAmenities = [];
-
-  // Category list
   List<dynamic> allCategory = [];
-
-  // Tags
   List<dynamic> tags = [];
   List<String> selectedTags = [];
-
-  // Photos
   final ImagePicker _picker = ImagePicker();
   List<XFile> photos = [];
-
-  // Auth
   String userId = "";
-
-  // dietary
-
-  bool showDietaryDropdown = false;
   List<dynamic> allDietaryTags = [];
   List<String> arrOfDietaryTags = [];
-  final GlobalKey _dietaryFieldKey = GlobalKey();
+
+  // Validation constants
+  static const int minVenueNameLength = 3;
+  static const int minSuburbLength = 3;
+  static const int minDescriptionLength = 10;
+  static const int maxNoticeLength = 500;
+  static const int maxPhotos = 10;
+  static const int maxPhotoSizeMB = 5;
+  static const int maxTags = 5;
+
+  // Error state variables
+  String? nameError;
+  String? categoryError;
+  String? suburbError;
+  String? locationError;
+  String? amenitiesError;
+  String? descriptionError;
+  String? photosError;
+  String? noticeError;
+  String? tagsError;
 
   @override
   void initState() {
     super.initState();
-
-    // Initialize controllers
     nameController = TextEditingController();
     suburbController = TextEditingController();
     noticeController = TextEditingController();
     descriptionController = TextEditingController();
 
-    // Load category & amenities if provided
+    // Add listeners for immediate validation
+    nameController.addListener(() => validateName());
+    suburbController.addListener(() => validateSuburb());
+    noticeController.addListener(() => validateNotice());
+    descriptionController.addListener(() => validateDescription());
+
     if (widget.allCategory != null) {
       allCategory = widget.allCategory!;
     }
     if (widget.allAmenities != null) {
       allAmenities = widget.allAmenities!;
     }
-
-    // If editing an existing venue, populate fields
     if (widget.allDetail != null) {
       populateExistingVenue(widget.allDetail);
     }
 
-    // Get user data, tags, categories, amenities
     getUserId();
     getVenueTags();
     getCategoriesAmenties();
     getDietaryTags();
 
-    // Show the "How do I list a venue?" dialog on screen entry
     WidgetsBinding.instance.addPostFrameCallback((_) {
       setState(() {
         showVenueDialog = true;
@@ -157,12 +156,110 @@ class _AddEggScreenState extends State<AddEggScreen> {
 
   @override
   void dispose() {
-    // Dispose controllers to free resources
     nameController.dispose();
     suburbController.dispose();
     noticeController.dispose();
     descriptionController.dispose();
     super.dispose();
+  }
+
+  // Validation methods
+  void validateName() {
+    setState(() {
+      if (nameController.text.trim().isEmpty) {
+        nameError = "Venue name is required";
+      } else if (nameController.text.trim().length < minVenueNameLength) {
+        nameError = "Venue name must be at least $minVenueNameLength characters";
+      } else {
+        nameError = null;
+      }
+    });
+  }
+
+  void validateCategory() {
+    setState(() {
+      if (nameofegg.isEmpty || catId.isEmpty) {
+        categoryError = "Please select a category";
+      } else {
+        categoryError = null;
+      }
+    });
+  }
+
+  void validateSuburb() {
+    setState(() {
+      if (suburbController.text.trim().isEmpty) {
+        suburbError = "Suburb is required";
+      } else if (suburbController.text.trim().length < minSuburbLength) {
+        suburbError = "Suburb must be at least $minSuburbLength characters";
+      } else {
+        suburbError = null;
+      }
+    });
+  }
+
+  void validateLocation() {
+    setState(() {
+      if (location.isEmpty || lat == 0.0 || lng == 0.0) {
+        locationError = "Please select a valid location";
+      } else if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+        locationError = "Invalid location coordinates";
+      } else {
+        locationError = null;
+      }
+    });
+  }
+
+  void validateAmenities() {
+    setState(() {
+      if (arrOfAmenities.isEmpty) {
+        amenitiesError = "Please select at least one amenity";
+      } else {
+        amenitiesError = null;
+      }
+    });
+  }
+
+  void validateDescription() {
+    setState(() {
+      if (descriptionController.text.trim().isEmpty) {
+        descriptionError = "Description is required";
+      } else if (descriptionController.text.trim().length < minDescriptionLength) {
+        descriptionError = "Description must be at least $minDescriptionLength characters";
+      } else {
+        descriptionError = null;
+      }
+    });
+  }
+
+  void validatePhotos() {
+    setState(() {
+      if (photos.isEmpty) {
+        photosError = "Please upload at least one photo";
+      } else {
+        photosError = null;
+      }
+    });
+  }
+
+  void validateNotice() {
+    setState(() {
+      if (noticeController.text.length > maxNoticeLength) {
+        noticeError = "Notice must be less than $maxNoticeLength characters";
+      } else {
+        noticeError = null;
+      }
+    });
+  }
+
+  void validateTags() {
+    setState(() {
+      if (selectedTags.length > maxTags) {
+        tagsError = "Maximum $maxTags tags allowed";
+      } else {
+        tagsError = null;
+      }
+    });
   }
 
   Future<String> getToken() async {
@@ -193,9 +290,7 @@ class _AddEggScreenState extends State<AddEggScreen> {
           tags = tagsJson['data'] ?? [];
         });
       } else {
-        Fluttertoast.showToast(
-          msg: "Failed to load tags: ${response.statusCode}",
-        );
+        Fluttertoast.showToast(msg: "Failed to load tags: ${response.statusCode}");
       }
     } catch (e) {
       Fluttertoast.showToast(msg: "Error fetching tags: $e");
@@ -206,24 +301,19 @@ class _AddEggScreenState extends State<AddEggScreen> {
     try {
       final token = await getToken();
       final dietaryResponse = await http.get(
-        Uri.parse(
-          "http://165.232.152.77/api/vendor/dietary-tags",
-        ), // <-- Use your dietary tags API URL
+        Uri.parse("http://165.232.152.77/api/vendor/dietary-tags"),
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
         },
       );
-
       if (dietaryResponse.statusCode == 200) {
         final dietaryJson = jsonDecode(dietaryResponse.body);
         setState(() {
           allDietaryTags = dietaryJson['data'] ?? [];
         });
       } else {
-        Fluttertoast.showToast(
-          msg: "Failed to load dietary tags: ${dietaryResponse.statusCode}",
-        );
+        Fluttertoast.showToast(msg: "Failed to load dietary tags: ${dietaryResponse.statusCode}");
       }
     } catch (e) {
       Fluttertoast.showToast(msg: "Error fetching dietary tags: $e");
@@ -237,43 +327,29 @@ class _AddEggScreenState extends State<AddEggScreen> {
         'Authorization': 'Bearer $token',
         'Accept': 'application/json',
       };
-
-      final categoriesResponse = await http.get(
-        Uri.parse(Server.categoryList),
-        headers: headers,
-      );
-      final amenitiesResponse = await http.get(
-        Uri.parse(Server.amenities),
-        headers: headers,
-      );
-
+      final categoriesResponse = await http.get(Uri.parse(Server.categoryList), headers: headers);
+      final amenitiesResponse = await http.get(Uri.parse(Server.amenities), headers: headers);
       if (categoriesResponse.statusCode == 200) {
         final categoriesJson = jsonDecode(categoriesResponse.body);
         setState(() {
           allCategory = categoriesJson['data'] ?? [];
         });
       } else {
-        Fluttertoast.showToast(
-          msg: "Failed to load categories: ${categoriesResponse.statusCode}",
-        );
+        Fluttertoast.showToast(msg: "Failed to load categories: ${categoriesResponse.statusCode}");
       }
-
       if (amenitiesResponse.statusCode == 200) {
         final amenitiesJson = jsonDecode(amenitiesResponse.body);
         setState(() {
           allAmenities = amenitiesJson['data'] ?? [];
         });
       } else {
-        Fluttertoast.showToast(
-          msg: "Failed to load amenities: ${amenitiesResponse.statusCode}",
-        );
+        Fluttertoast.showToast(msg: "Failed to load amenities: ${amenitiesResponse.statusCode}");
       }
     } catch (e) {
       Fluttertoast.showToast(msg: "Error fetching categories/amenities: $e");
     }
   }
 
-  // Populate from existing venue (Edit scenario)
   void populateExistingVenue(dynamic detail) {
     final existingName = detail['venue_name'] ?? '';
     final existingSuburb = detail['suburb'] ?? '';
@@ -288,34 +364,38 @@ class _AddEggScreenState extends State<AddEggScreen> {
 
     catId = detail['cat_id']?.toString() ?? '';
     nameofegg = '';
-
     lat = double.tryParse('${detail['lat']}') ?? 0.0;
     lng = double.tryParse('${detail['lon']}') ?? 0.0;
-
     location = existingLocation;
 
     final aList = detail['amenties'] as List<dynamic>? ?? [];
     arrOfAmenities = aList.map((e) => e['id'].toString()).toList();
+
+    // Validate initial values
+    validateName();
+    validateSuburb();
+    validateNotice();
+    validateDescription();
+    validateCategory();
+    validateLocation();
+    validateAmenities();
+    validatePhotos();
+    validateTags();
   }
 
-  // TAGS logic
   void handleTagChange(List<int?> selectedValues) {
-    // Filter out any null values.
     final validValues = selectedValues.whereType<int>().toList();
-    if (validValues.length > 5) {
-      Fluttertoast.showToast(msg: "You can select up to 5 tags!");
-      return;
-    }
     setState(() {
       selectedTags = validValues.map((e) => e.toString()).toList();
     });
+    validateTags();
   }
 
-  // Category logic
   void toggleNameOfEggStatus() {
     setState(() {
       nameofeggStatus = !nameofeggStatus;
     });
+    validateCategory();
   }
 
   void selectCategory(Map<String, dynamic> item) {
@@ -324,13 +404,14 @@ class _AddEggScreenState extends State<AddEggScreen> {
       catId = item['id'].toString();
       nameofeggStatus = false;
     });
+    validateCategory();
   }
 
-  // Amenities logic
   void toggleReportStatus() {
     setState(() {
       reportStatus = !reportStatus;
     });
+    validateAmenities();
   }
 
   void selectAmenity(Map<String, dynamic> item) {
@@ -340,15 +421,16 @@ class _AddEggScreenState extends State<AddEggScreen> {
         arrOfAmenities.add(id);
       });
     }
+    validateAmenities();
   }
 
   void removeAmenity(String item) {
     setState(() {
       arrOfAmenities.remove(item);
     });
+    validateAmenities();
   }
 
-  // Image logic
   void showImageDialog() {
     setState(() {
       dialogAlert = true;
@@ -357,10 +439,11 @@ class _AddEggScreenState extends State<AddEggScreen> {
 
   Future<void> pickFromCamera() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.camera);
-    if (image != null) {
+    if (image != null && await validatePhoto(image)) {
       setState(() {
         photos.add(image);
       });
+      validatePhotos();
     }
     setState(() {
       dialogAlert = false;
@@ -369,25 +452,46 @@ class _AddEggScreenState extends State<AddEggScreen> {
 
   Future<void> pickFromGallery() async {
     final List<XFile>? selectedImages = await _picker.pickMultiImage();
-
     if (selectedImages != null && selectedImages.isNotEmpty) {
+      List<XFile> validImages = [];
+      for (var image in selectedImages) {
+        if (await validatePhoto(image)) {
+          validImages.add(image);
+        }
+      }
       setState(() {
-        photos.addAll(selectedImages);
+        if (photos.length + validImages.length <= maxPhotos) {
+          photos.addAll(validImages);
+        } else {
+          photosError = "Maximum $maxPhotos photos allowed";
+        }
       });
+      validatePhotos();
     }
-
     setState(() {
       dialogAlert = false;
     });
+  }
+
+  Future<bool> validatePhoto(XFile photo) async {
+    final fileSize = await photo.length();
+    final sizeInMB = fileSize / (1024 * 1024);
+    if (sizeInMB > maxPhotoSizeMB) {
+      setState(() {
+        photosError = "Photo size must be less than $maxPhotoSizeMB MB";
+      });
+      return false;
+    }
+    return true;
   }
 
   void removePhoto(int index) {
     setState(() {
       photos.removeAt(index);
     });
+    validatePhotos();
   }
 
-  // -------------- LOCATION PICKING LOGIC --------------
   void pickLocation() async {
     final result = await Navigator.push(
       context,
@@ -399,38 +503,40 @@ class _AddEggScreenState extends State<AddEggScreen> {
         lat = result['lat'] ?? 0.0;
         lng = result['lng'] ?? 0.0;
       });
+      validateLocation();
     }
   }
 
   Future<void> useCurrentLocation() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    //  if (!serviceEnabled) {
-    //    Fluttertoast.showToast(msg: "Location services are disabled.");
-    //    return;
-    //  }
+    if (!serviceEnabled) {
+      Fluttertoast.showToast(msg: "Location services are disabled.");
+      return;
+    }
 
-    //  LocationPermission permission = await Geolocator.checkPermission();
-    //  if (permission == LocationPermission.denied) {
-    //    permission = await Geolocator.requestPermission();
-    //    if (permission == LocationPermission.denied) {
-    //      Fluttertoast.showToast(msg: "Location permission denied");
-    //      return;
-    //    }
-    //  }
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        Fluttertoast.showToast(msg: "Location permission denied");
+        return;
+      }
+    }
 
-    //  if (permission == LocationPermission.deniedForever) {
-    //    Fluttertoast.showToast(msg: "Location permission permanently denied");
-    //    return;
-    //  }
+    if (permission == LocationPermission.deniedForever) {
+      Fluttertoast.showToast(msg: "Location permission permanently denied");
+      return;
+    }
 
-    //  final position = await Geolocator.getCurrentPosition(
-    //    desiredAccuracy: LocationAccuracy.high,
-    //  );
-    //  setState(() {
-    //    lat = position.latitude;
-    //    lng = position.longitude;
-    //    location = "Current Location ($lat, $lng)";
-    //  });
+    final position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+    setState(() {
+      lat = position.latitude;
+      lng = position.longitude;
+      location = "Current Location ($lat, $lng)";
+    });
+    validateLocation();
   }
 
   void showManualLocationDialog() {
@@ -448,9 +554,7 @@ class _AddEggScreenState extends State<AddEggScreen> {
               children: [
                 TextField(
                   controller: locController,
-                  decoration: const InputDecoration(
-                    labelText: "Location Name or Address",
-                  ),
+                  decoration: const InputDecoration(labelText: "Location Name or Address"),
                 ),
                 TextField(
                   controller: latController,
@@ -472,11 +576,22 @@ class _AddEggScreenState extends State<AddEggScreen> {
             ),
             ElevatedButton(
               onPressed: () {
+                final newLat = double.tryParse(latController.text);
+                final newLng = double.tryParse(lonController.text);
+                if (newLat == null || newLat < -90 || newLat > 90) {
+                  Fluttertoast.showToast(msg: "Invalid latitude (-90 to 90)");
+                  return;
+                }
+                if (newLng == null || newLng < -180 || newLng > 180) {
+                  Fluttertoast.showToast(msg: "Invalid longitude (-180 to 180)");
+                  return;
+                }
                 setState(() {
                   location = locController.text;
-                  lat = double.tryParse(latController.text) ?? 0.0;
-                  lng = double.tryParse(lonController.text) ?? 0.0;
+                  lat = newLat;
+                  lng = newLng;
                 });
+                validateLocation();
                 Navigator.pop(context);
               },
               child: const Text("OK"),
@@ -486,39 +601,35 @@ class _AddEggScreenState extends State<AddEggScreen> {
       },
     );
   }
-  // ----------------------------------------------------
 
-  // Validate form fields and submit
+  bool validateForm() {
+    validateName();
+    validateCategory();
+    validateSuburb();
+    validateLocation();
+    validateAmenities();
+    validateDescription();
+    validatePhotos();
+    validateNotice();
+    validateTags();
+
+    return nameError == null &&
+        categoryError == null &&
+        suburbError == null &&
+        locationError == null &&
+        amenitiesError == null &&
+        descriptionError == null &&
+        photosError == null &&
+        noticeError == null &&
+        tagsError == null;
+  }
+
   void updateBtn() {
-    if (nameController.text.isEmpty) {
-      Fluttertoast.showToast(msg: "Enter Venue Name");
-      return;
+    if (validateForm()) {
+      addVenueApi();
+    } else {
+      Fluttertoast.showToast(msg: "Please fix the errors in the form");
     }
-    if (nameofegg.isEmpty) {
-      Fluttertoast.showToast(msg: "Select Category");
-      return;
-    }
-    if (suburbController.text.isEmpty) {
-      Fluttertoast.showToast(msg: "Enter Suburb");
-      return;
-    }
-    if (location.isEmpty) {
-      Fluttertoast.showToast(msg: "Select or Enter Location");
-      return;
-    }
-    if (arrOfAmenities.isEmpty) {
-      Fluttertoast.showToast(msg: "Choose Amenities");
-      return;
-    }
-    if (descriptionController.text.isEmpty) {
-      Fluttertoast.showToast(msg: "Enter Description");
-      return;
-    }
-    if (photos.isEmpty) {
-      Fluttertoast.showToast(msg: "Select at least one image");
-      return;
-    }
-    addVenueApi();
   }
 
   Future<void> addVenueApi() async {
@@ -531,33 +642,24 @@ class _AddEggScreenState extends State<AddEggScreen> {
       request.headers['Authorization'] = 'Bearer $token';
       request.headers['Accept'] = 'application/json';
 
-      request.fields['name'] = nameController.text;
+      request.fields['name'] = nameController.text.trim();
       request.fields['category_id'] = catId;
-      request.fields['suburb'] = suburbController.text;
+      request.fields['suburb'] = suburbController.text.trim();
       request.fields['location'] = location;
       request.fields['lat'] = lat.toString();
       request.fields['lon'] = lng.toString();
-      request.fields['description'] = descriptionController.text;
-      request.fields['important_notice'] = noticeController.text;
-
-      //  for (var tagId in selectedTags) {
-      //    request.fields['tag_ids[]'] = tagId;
-      //  }
+      request.fields['description'] = descriptionController.text.trim();
+      request.fields['important_notice'] = noticeController.text.trim();
 
       for (var i = 0; i < selectedTags.length; i++) {
         request.fields["tag_ids[$i]"] = selectedTags[i];
       }
-
       for (var i = 0; i < arrOfAmenities.length; i++) {
         request.fields["amenity_ids[$i]"] = arrOfAmenities[i];
       }
       for (var i = 0; i < arrOfDietaryTags.length; i++) {
         request.fields["dietary_ids[$i]"] = arrOfDietaryTags[i];
       }
-
-      //  for (var amenityId in arrOfAmenities) {
-      //    request.fields['amenity_ids[]'] = amenityId;
-      //  }
 
       for (var photo in photos) {
         final fileStream = http.ByteStream(photo.openRead());
@@ -581,15 +683,10 @@ class _AddEggScreenState extends State<AddEggScreen> {
     }
   }
 
-  void _handleResponseStatus(
-    http.StreamedResponse response,
-    String responseString,
-  ) {
+  void _handleResponseStatus(http.StreamedResponse response, String responseString) {
     if (response.statusCode < 300) {
       final responseJson = jsonDecode(responseString);
-      Fluttertoast.showToast(
-        msg: responseJson['message'] ?? "Venue added successfully",
-      );
+      Fluttertoast.showToast(msg: responseJson['message'] ?? "Venue added successfully");
       setState(() {
         loader = false;
         confirmPopup = true;
@@ -597,17 +694,14 @@ class _AddEggScreenState extends State<AddEggScreen> {
     } else {
       final responseJson = jsonDecode(responseString);
       if (responseJson['status'] == 1) {
-        Fluttertoast.showToast(
-          msg: responseJson['message'] ?? "Venue status updated to success.",
-        );
+        Fluttertoast.showToast(msg: responseJson['message'] ?? "Venue status updated to success.");
         setState(() {
           loader = false;
           confirmPopup = true;
         });
       } else {
         Fluttertoast.showToast(
-          msg:
-              "Error: ${response.statusCode} - ${responseJson['message'] ?? 'Something went wrong.'}",
+          msg: "Error: ${response.statusCode} - ${responseJson['message'] ?? 'Something went wrong.'}",
         );
         print('Error Response: $responseString');
         setState(() => loader = false);
@@ -622,16 +716,13 @@ class _AddEggScreenState extends State<AddEggScreen> {
     Navigator.pop(context, true);
   }
 
-  // Method to launch URL
   Future<void> _launchURL(String url) async {
     final Uri uri = Uri.parse(url);
     try {
       if (await canLaunchUrl(uri)) {
         await launchUrl(
           uri,
-          mode:
-              LaunchMode
-                  .externalApplication, // Use external app (e.g., browser)
+          mode: LaunchMode.externalApplication,
         );
       } else {
         Fluttertoast.showToast(msg: "Could not launch $url");
@@ -652,12 +743,7 @@ class _AddEggScreenState extends State<AddEggScreen> {
             child: Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.only(
-                    top: 20,
-                    left: 10,
-                    right: 10,
-                    bottom: 10,
-                  ),
+                  padding: const EdgeInsets.only(top: 20, left: 10, right: 10, bottom: 10),
                   child: Row(
                     children: [
                       GestureDetector(
@@ -667,20 +753,13 @@ class _AddEggScreenState extends State<AddEggScreen> {
                           height: 40,
                           width: 34,
                           fit: BoxFit.contain,
-                          // color: const Color.fromRGBO(255, 130, 16, 1.0),
                         ),
                       ),
-
                       Expanded(
                         child: Center(
                           child: Text(
-                            widget.allDetail != null
-                                ? 'Edit Venue'
-                                : 'Add New Venue',
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w600,
-                            ),
+                            widget.allDetail != null ? 'Edit Venue' : 'Add New Venue',
+                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
                           ),
                         ),
                       ),
@@ -698,731 +777,581 @@ class _AddEggScreenState extends State<AddEggScreen> {
                           const SizedBox(height: 10),
                           const Text(
                             'Enter Details',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                            ),
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                           ),
-                          // const SizedBox(height: 20),
-                          // const Text('Name of Venue', style: TextStyle(fontSize: 16)),
                           const SizedBox(height: 18),
-                          AppConstants.customTextField(
-                            controller: nameController,
-                            hintText: 'Enter venue name',
-                            textInputAction:
-                                TextInputAction.next, // or .done, .search, etc.
-                          ),
-
-                          const SizedBox(height: 18),
-
-                          // Add a GlobalKey to position the dropdown
-
-                          // Select Category field with dropdown
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Design.white,
-                              borderRadius: BorderRadius.circular(5),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.withOpacity(0.3),
-                                  spreadRadius: 1,
-                                  blurRadius: 6,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // 👇 Top field - apply rounded corners only to top
-                                GestureDetector(
-                                  key: _categoryFieldKey,
-                                  onTap: () {
-                                    setState(() {
-                                      showCategoryDropdown =
-                                          !showCategoryDropdown;
-                                    });
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 15,
-                                      vertical: 10,
-                                    ),
-                                    decoration: const BoxDecoration(
-                                      color: Design.white,
-                                      borderRadius: BorderRadius.only(
-                                        topLeft: Radius.circular(5),
-                                        topRight: Radius.circular(5),
-                                      ),
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          nameofegg.isEmpty
-                                              ? "Select Category"
-                                              : nameofegg,
-                                          style: const TextStyle(fontSize: 15),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              AppConstants.customTextField(
+                                controller: nameController,
+                                hintText: 'Enter venue name',
+                                textInputAction: TextInputAction.next,
+                                decoration: nameError != null
+                                    ? AppConstants.textFieldDecoration.copyWith(
+                                        border: OutlineInputBorder(
+                                          borderSide: BorderSide(color: Design.errorRed),
                                         ),
-                                        Icon(
-                                          showCategoryDropdown
-                                              ? Icons.arrow_drop_up
-                                              : Icons.arrow_drop_down,
-                                          color: Colors.grey,
-                                        ),
-                                      ],
-                                    ),
+                                      )
+                                    : AppConstants.textFieldDecoration,
+                              ),
+                              if (nameError != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4, left: 12),
+                                  child: Text(
+                                    nameError!,
+                                    style: TextStyle(color: Design.errorRed, fontSize: 12),
                                   ),
                                 ),
-
-                                // 👇 Dropdown container - apply only bottom radius, no margin
-                                if (showCategoryDropdown)
-                                  Container(
-                                    constraints: BoxConstraints(
-                                      maxHeight: 38.0 * 5,
+                            ],
+                          ),
+                          const SizedBox(height: 18),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Design.white,
+                                  borderRadius: BorderRadius.circular(5),
+                                  border: categoryError != null
+                                      ? Border.all(color: Design.errorRed)
+                                      : null,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.grey.withOpacity(0.3),
+                                      spreadRadius: 1,
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 3),
                                     ),
-                                    decoration: const BoxDecoration(
-                                      color: Design.white,
-                                      borderRadius: BorderRadius.only(
-                                        bottomLeft: Radius.circular(5),
-                                        bottomRight: Radius.circular(5),
-                                      ),
-                                    ),
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Flexible(
-                                          child: Scrollbar(
-                                            thumbVisibility: true,
-                                            child: ListView.builder(
-                                              padding: EdgeInsets.zero,
-                                              shrinkWrap: true,
-                                              itemCount: allCategory.length,
-                                              itemBuilder: (context, index) {
-                                                final category =
-                                                    allCategory[index];
-                                                final isSelected =
-                                                    catId ==
-                                                    category['id'].toString();
-                                                return InkWell(
-                                                  onTap: () {
-                                                    setState(() {
-                                                      catId =
-                                                          category['id']
-                                                              .toString();
-                                                      nameofegg =
-                                                          category['name'];
-                                                      showCategoryDropdown =
-                                                          false;
-                                                    });
-                                                  },
-                                                  child: Container(
-                                                    padding:
-                                                        const EdgeInsets.symmetric(
-                                                          horizontal: 20,
-                                                          vertical: 6,
-                                                        ),
-                                                    color:
-                                                        isSelected
-                                                            ? Design
-                                                                .primaryColorOrange
-                                                                .withOpacity(
-                                                                  0.1,
-                                                                )
-                                                            : Colors
-                                                                .transparent,
-                                                    child: Text(
-                                                      category['name'],
-                                                      style: const TextStyle(
-                                                        fontSize: 15,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                );
-                                              },
+                                  ],
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    GestureDetector(
+                                      key: _categoryFieldKey,
+                                      onTap: () {
+                                        setState(() {
+                                          showCategoryDropdown = !showCategoryDropdown;
+                                        });
+                                        validateCategory();
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                                        decoration: const BoxDecoration(
+                                          color: Design.white,
+                                          borderRadius: BorderRadius.only(
+                                            topLeft: Radius.circular(5),
+                                            topRight: Radius.circular(5),
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              nameofegg.isEmpty ? "Select Category" : nameofegg,
+                                              style: const TextStyle(fontSize: 15),
                                             ),
-                                          ),
-                                        ),
-                                        // Padding(
-                                        //   padding: const EdgeInsets.all(6.0),
-                                        //   child: SizedBox(
-                                        //     width: double.infinity,
-                                        //     child: ElevatedButton(
-                                        //       onPressed: () {
-                                        //         setState(() {
-                                        //           showCategoryDropdown = false;
-                                        //         });
-                                        //       },
-                                        //       style: ElevatedButton.styleFrom(
-                                        //         backgroundColor: Design.primaryColorOrange,
-                                        //         shape: RoundedRectangleBorder(
-                                        //           borderRadius: BorderRadius.circular(5),
-                                        //         ),
-                                        //         padding: const EdgeInsets.symmetric(vertical: 8),
-                                        //       ),
-                                        //       child: const Text(
-                                        //         "Done",
-                                        //         style: TextStyle(color: Colors.white),
-                                        //       ),
-                                        //     ),
-                                        //   ),
-                                        // ),
-                                      ],
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-
-                          // const Text('Tags', style: TextStyle(fontSize: 16)),
-                          const SizedBox(height: 18),
-
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Design.lightPurple,
-                              borderRadius: BorderRadius.circular(5),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.withOpacity(0.3),
-                                  spreadRadius: 1,
-                                  blurRadius: 6,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Dropdown Field
-                                GestureDetector(
-                                  key: _tagsFieldKey,
-                                  onTap: () {
-                                    setState(() {
-                                      showTagsDropdown = !showTagsDropdown;
-                                      tagSearchQuery = '';
-                                    });
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 15,
-                                      vertical: 10,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Design.white,
-                                      borderRadius: BorderRadius.circular(5),
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Flexible(
-                                          child: Text(
-                                            selectedTags.isEmpty
-                                                ? "Select Tags"
-                                                : selectedTags
-                                                    .map(
-                                                      (id) =>
-                                                          tags.firstWhere(
-                                                            (tag) =>
-                                                                tag['id']
-                                                                    .toString() ==
-                                                                id,
-                                                            orElse:
-                                                                () => {
-                                                                  'name':
-                                                                      'Unknown',
-                                                                },
-                                                          )['name'],
-                                                    )
-                                                    .join(", "),
-                                            style: const TextStyle(
-                                              fontSize: 15,
+                                            Icon(
+                                              showCategoryDropdown ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+                                              color: Colors.grey,
                                             ),
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
+                                          ],
                                         ),
-                                        Icon(
-                                          showTagsDropdown
-                                              ? Icons.arrow_drop_up
-                                              : Icons.arrow_drop_down,
-                                          color: Colors.grey,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-
-                                // Dropdown Items
-                                if (showTagsDropdown)
-                                  Container(
-                                    constraints: const BoxConstraints(
-                                      maxHeight:
-                                          38.0 * 6 + 48, // 6 items + search bar
-                                    ),
-                                    decoration: const BoxDecoration(
-                                      color: Design.white,
-                                      borderRadius: BorderRadius.only(
-                                        bottomLeft: Radius.circular(5),
-                                        bottomRight: Radius.circular(5),
                                       ),
                                     ),
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        // Search Bar
-                                        Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 15,
-                                            vertical: 6,
-                                          ),
-                                          child: Row(
-                                            children: [
-                                              const Icon(
-                                                Icons.search,
-                                                color: Colors.grey,
-                                                size: 16,
-                                              ),
-                                              const SizedBox(width: 8),
-                                              Expanded(
-                                                child: TextField(
-                                                  decoration:
-                                                      const InputDecoration(
-                                                        hintText:
-                                                            "Search tags...",
-                                                        hintStyle: TextStyle(
-                                                          color: Colors.grey,
-                                                          fontSize: 14,
-                                                        ),
-                                                        border:
-                                                            InputBorder.none,
-                                                        isDense: true,
-                                                        contentPadding:
-                                                            EdgeInsets.zero,
-                                                      ),
-                                                  onChanged: (value) {
-                                                    setState(() {
-                                                      tagSearchQuery = value;
-                                                    });
-                                                  },
-                                                ),
-                                              ),
-                                            ],
+                                    if (showCategoryDropdown)
+                                      Container(
+                                        constraints: BoxConstraints(maxHeight: 38.0 * 5),
+                                        decoration: const BoxDecoration(
+                                          color: Design.white,
+                                          borderRadius: BorderRadius.only(
+                                            bottomLeft: Radius.circular(5),
+                                            bottomRight: Radius.circular(5),
                                           ),
                                         ),
-
-                                        // Filtered Tag List
-                                        Flexible(
-                                          child: Scrollbar(
-                                            thumbVisibility: true,
-                                            child: ListView.builder(
-                                              padding: EdgeInsets.zero,
-                                              shrinkWrap: true,
-                                              itemCount:
-                                                  tags
-                                                      .where(
-                                                        (tag) => tag['name']
-                                                            .toLowerCase()
-                                                            .contains(
-                                                              tagSearchQuery
-                                                                  .toLowerCase(),
-                                                            ),
-                                                      )
-                                                      .length,
-                                              itemBuilder: (context, index) {
-                                                final filteredTags =
-                                                    tags
-                                                        .where(
-                                                          (tag) => tag['name']
-                                                              .toLowerCase()
-                                                              .contains(
-                                                                tagSearchQuery
-                                                                    .toLowerCase(),
-                                                              ),
-                                                        )
-                                                        .toList();
-                                                final tag = filteredTags[index];
-                                                final isSelected = selectedTags
-                                                    .contains(
-                                                      tag['id'].toString(),
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Flexible(
+                                              child: Scrollbar(
+                                                thumbVisibility: true,
+                                                child: ListView.builder(
+                                                  padding: EdgeInsets.zero,
+                                                  shrinkWrap: true,
+                                                  itemCount: allCategory.length,
+                                                  itemBuilder: (context, index) {
+                                                    final category = allCategory[index];
+                                                    final isSelected = catId == category['id'].toString();
+                                                    return InkWell(
+                                                      onTap: () {
+                                                        setState(() {
+                                                          catId = category['id'].toString();
+                                                          nameofegg = category['name'];
+                                                          showCategoryDropdown = false;
+                                                        });
+                                                        validateCategory();
+                                                      },
+                                                      child: Container(
+                                                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+                                                        color: isSelected
+                                                            ? Design.primaryColorOrange.withOpacity(0.1)
+                                                            : Colors.transparent,
+                                                        child: Text(
+                                                          category['name'],
+                                                          style: const TextStyle(fontSize: 15),
+                                                        ),
+                                                      ),
                                                     );
-
-                                                return InkWell(
-                                                  onTap: () {
-                                                    setState(() {
-                                                      final tagId =
-                                                          tag['id'].toString();
-                                                      if (selectedTags.contains(
-                                                        tagId,
-                                                      )) {
-                                                        selectedTags.remove(
-                                                          tagId,
-                                                        );
-                                                      } else {
-                                                        if (selectedTags
-                                                                .length >=
-                                                            5) {
-                                                          Fluttertoast.showToast(
-                                                            msg:
-                                                                "You can select up to 5 tags!",
-                                                          );
-                                                          return;
-                                                        }
-                                                        selectedTags.add(tagId);
-                                                      }
-                                                    });
                                                   },
-                                                  child: Container(
-                                                    padding:
-                                                        const EdgeInsets.symmetric(
-                                                          horizontal: 20,
-                                                          vertical: 6,
-                                                        ),
-                                                    color:
-                                                        isSelected
-                                                            ? Design
-                                                                .primaryColorOrange
-                                                                .withOpacity(
-                                                                  0.1,
-                                                                )
-                                                            : Colors
-                                                                .transparent,
-                                                    child: Row(
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment
-                                                              .spaceBetween,
-                                                      children: [
-                                                        Text(
-                                                          tag['name'],
-                                                          style: TextStyle(
-                                                            fontSize: 15,
-                                                            color:
-                                                                isSelected
-                                                                    ? Design
-                                                                        .primaryColorOrange
-                                                                    : Colors
-                                                                        .black,
-                                                            fontWeight:
-                                                                isSelected
-                                                                    ? FontWeight
-                                                                        .w500
-                                                                    : FontWeight
-                                                                        .normal,
-                                                          ),
-                                                        ),
-                                                        if (isSelected)
-                                                          Icon(
-                                                            Icons.check,
-                                                            size: 18,
-                                                            color:
-                                                                Design
-                                                                    .primaryColorOrange,
-                                                          ),
-                                                      ],
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              if (categoryError != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4, left: 12),
+                                  child: Text(
+                                    categoryError!,
+                                    style: TextStyle(color: Design.errorRed, fontSize: 12),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 18),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Design.lightPurple,
+                                  borderRadius: BorderRadius.circular(5),
+                                  border: tagsError != null ? Border.all(color: Design.errorRed) : null,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.grey.withOpacity(0.3),
+                                      spreadRadius: 1,
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 3),
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    GestureDetector(
+                                      key: _tagsFieldKey,
+                                      onTap: () {
+                                        setState(() {
+                                          showTagsDropdown = !showTagsDropdown;
+                                          tagSearchQuery = '';
+                                        });
+                                        validateTags();
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                                        decoration: BoxDecoration(
+                                          color: Design.white,
+                                          borderRadius: BorderRadius.circular(5),
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Flexible(
+                                              child: Text(
+                                                selectedTags.isEmpty
+                                                    ? "Select Tags"
+                                                    : selectedTags
+                                                        .map((id) => tags.firstWhere(
+                                                              (tag) => tag['id'].toString() == id,
+                                                              orElse: () => {'name': 'Unknown'},
+                                                            )['name'])
+                                                        .join(", "),
+                                                style: const TextStyle(fontSize: 15),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                            Icon(
+                                              showTagsDropdown ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+                                              color: Colors.grey,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    if (showTagsDropdown)
+                                      Container(
+                                        constraints: const BoxConstraints(maxHeight: 38.0 * 6 + 48),
+                                        decoration: const BoxDecoration(
+                                          color: Design.white,
+                                          borderRadius: BorderRadius.only(
+                                            bottomLeft: Radius.circular(5),
+                                            bottomRight: Radius.circular(5),
+                                          ),
+                                        ),
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Padding(
+                                              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 6),
+                                              child: Row(
+                                                children: [
+                                                  const Icon(Icons.search, color: Colors.grey, size: 16),
+                                                  const SizedBox(width: 8),
+                                                  Expanded(
+                                                    child: TextField(
+                                                      decoration: const InputDecoration(
+                                                        hintText: "Search tags...",
+                                                        hintStyle: TextStyle(color: Colors.grey, fontSize: 14),
+                                                        border: InputBorder.none,
+                                                        isDense: true,
+                                                        contentPadding: EdgeInsets.zero,
+                                                      ),
+                                                      onChanged: (value) {
+                                                        setState(() {
+                                                          tagSearchQuery = value;
+                                                        });
+                                                      },
                                                     ),
                                                   ),
-                                                );
-                                              },
+                                                ],
+                                              ),
                                             ),
-                                          ),
-                                        ),
-
-                                        // Done Button
-                                        Padding(
-                                          padding: const EdgeInsets.all(6.0),
-                                          child: SizedBox(
-                                            width: double.infinity,
-                                            child: ElevatedButton(
-                                              onPressed: () {
-                                                setState(() {
-                                                  showTagsDropdown = false;
-                                                });
-                                              },
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor:
-                                                    Design.primaryColorOrange,
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(5),
+                                            Flexible(
+                                              child: Scrollbar(
+                                                thumbVisibility: true,
+                                                child: ListView.builder(
+                                                  padding: EdgeInsets.zero,
+                                                  shrinkWrap: true,
+                                                  itemCount: tags
+                                                      .where((tag) => tag['name']
+                                                          .toLowerCase()
+                                                          .contains(tagSearchQuery.toLowerCase()))
+                                                      .length,
+                                                  itemBuilder: (context, index) {
+                                                    final filteredTags = tags
+                                                        .where((tag) => tag['name']
+                                                            .toLowerCase()
+                                                            .contains(tagSearchQuery.toLowerCase()))
+                                                        .toList();
+                                                    final tag = filteredTags[index];
+                                                    final isSelected = selectedTags.contains(tag['id'].toString());
+                                                    return InkWell(
+                                                      onTap: () {
+                                                        setState(() {
+                                                          final tagId = tag['id'].toString();
+                                                          if (selectedTags.contains(tagId)) {
+                                                            selectedTags.remove(tagId);
+                                                          } else {
+                                                            if (selectedTags.length >= maxTags) {
+                                                              tagsError = "You can select up to $maxTags tags!";
+                                                              return;
+                                                            }
+                                                            selectedTags.add(tagId);
+                                                          }
+                                                        });
+                                                        validateTags();
+                                                      },
+                                                      child: Container(
+                                                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+                                                        color: isSelected
+                                                            ? Design.primaryColorOrange.withOpacity(0.1)
+                                                            : Colors.transparent,
+                                                        child: Row(
+                                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                          children: [
+                                                            Text(
+                                                              tag['name'],
+                                                              style: TextStyle(
+                                                                fontSize: 15,
+                                                                color: isSelected
+                                                                    ? Design.primaryColorOrange
+                                                                    : Colors.black,
+                                                                fontWeight: isSelected
+                                                                    ? FontWeight.w500
+                                                                    : FontWeight.normal,
+                                                              ),
+                                                            ),
+                                                            if (isSelected)
+                                                              Icon(
+                                                                Icons.check,
+                                                                size: 18,
+                                                                color: Design.primaryColorOrange,
+                                                              ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
                                                 ),
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      vertical: 8,
+                                              ),
+                                            ),
+                                            Padding(
+                                              padding: const EdgeInsets.all(6.0),
+                                              child: SizedBox(
+                                                width: double.infinity,
+                                                child: ElevatedButton(
+                                                  onPressed: () {
+                                                    setState(() {
+                                                      showTagsDropdown = false;
+                                                    });
+                                                    validateTags();
+                                                  },
+                                                  style: ElevatedButton.styleFrom(
+                                                    backgroundColor: Design.primaryColorOrange,
+                                                    shape: RoundedRectangleBorder(
+                                                      borderRadius: BorderRadius.circular(5),
                                                     ),
-                                              ),
-                                              child: const Text(
-                                                "Done",
-                                                style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 14,
+                                                    padding: const EdgeInsets.symmetric(vertical: 8),
+                                                  ),
+                                                  child: const Text(
+                                                    "Done",
+                                                    style: TextStyle(color: Colors.white, fontSize: 14),
+                                                  ),
                                                 ),
                                               ),
                                             ),
+                                          ],
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              if (tagsError != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4, left: 12),
+                                  child: Text(
+                                    tagsError!,
+                                    style: TextStyle(color: Design.errorRed, fontSize: 12),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 18),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              AppConstants.suburbField(
+                                controller: suburbController,
+                                decoration: suburbError != null
+                                    ? AppConstants.textFieldDecoration.copyWith(
+                                        border: OutlineInputBorder(
+                                          borderSide: BorderSide(color: Design.errorRed),
+                                        ),
+                                      )
+                                    : AppConstants.textFieldDecoration,
+                              ),
+                              if (suburbError != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4, left: 12),
+                                  child: Text(
+                                    suburbError!,
+                                    style: TextStyle(color: Design.errorRed, fontSize: 12),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 18),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              GestureDetector(
+                                onTap: pickLocation,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+                                  decoration: AppConstants.textFieldBoxDecoration.copyWith(
+                                    border: locationError != null ? Border.all(color: Design.errorRed) : null,
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Flexible(
+                                        child: Text(
+                                          location.isEmpty ? "Pick location" : location,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            fontSize: 14.0,
+                                            fontFamily: 'YourFontFamily',
+                                            color: Colors.grey,
                                           ),
                                         ),
-                                      ],
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-
-                          // const SizedBox(height: 20),
-                          // const Text('Suburb', style: TextStyle(fontSize: 16)),
-                          const SizedBox(height: 18),
-                          AppConstants.suburbField(
-                            controller: suburbController,
-                          ),
-
-                          // const SizedBox(height: 20),
-                          // const Text('Location', style: TextStyle(fontSize: 16)),
-                          const SizedBox(height: 18),
-                          GestureDetector(
-                            onTap: pickLocation,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 15,
-                                vertical: 15,
-                              ),
-                              decoration: AppConstants.textFieldBoxDecoration.copyWith(
-                                // You can also add border decoration if needed,
-                                // but here we simply use the same boxDecoration.
-                              ),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Flexible(
-                                    // Wrap the text in Flexible to allow it to adjust within the available space
-                                    child: Text(
-                                      location.isEmpty
-                                          ? "Pick location"
-                                          : location,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        fontSize: 14.0,
-                                        fontFamily: 'YourFontFamily',
-                                        color: Colors.grey,
                                       ),
-                                    ),
-                                  ),
-                                  const Icon(
-                                    Icons.location_on,
-                                    color: Colors.grey,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-
-                          // const SizedBox(height: 20),
-                          // const Text('Type of Amenities', style: TextStyle(fontSize: 16)),
-                          const SizedBox(height: 18),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Design.white,
-                              borderRadius: BorderRadius.circular(5),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.withOpacity(0.3),
-                                  spreadRadius: 1,
-                                  blurRadius: 6,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                GestureDetector(
-                                  key: _amenityFieldKey,
-                                  onTap: () {
-                                    setState(() {
-                                      showAmenityDropdown =
-                                          !showAmenityDropdown;
-                                    });
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 15,
-                                      vertical: 15,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Design.white,
-                                      borderRadius: BorderRadius.circular(5),
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          arrOfAmenities.isEmpty
-                                              ? "Select Amenities"
-                                              : arrOfAmenities
-                                                  .map(
-                                                    (id) =>
-                                                        allAmenities.firstWhere(
-                                                          (amenity) =>
-                                                              amenity['id']
-                                                                  .toString() ==
-                                                              id,
-                                                        )['name'],
-                                                  )
-                                                  .join(", "),
-                                          style: const TextStyle(fontSize: 15),
-                                        ),
-                                        Icon(
-                                          showAmenityDropdown
-                                              ? Icons.arrow_drop_up
-                                              : Icons.arrow_drop_down,
-                                          color: Colors.grey,
-                                        ),
-                                      ],
-                                    ),
+                                      const Icon(Icons.location_on, color: Colors.grey),
+                                    ],
                                   ),
                                 ),
-                                if (showAmenityDropdown)
-                                  Container(
-                                    constraints: BoxConstraints(
-                                      maxHeight:
-                                          32 * 6 +
-                                          48, // 6 items (32px each) + search bar height (~48px)
+                              ),
+                              if (locationError != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4, left: 12),
+                                  child: Text(
+                                    locationError!,
+                                    style: TextStyle(color: Design.errorRed, fontSize: 12),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 18),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Design.white,
+                                  borderRadius: BorderRadius.circular(5),
+                                  border: amenitiesError != null ? Border.all(color: Design.errorRed) : null,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.grey.withOpacity(0.3),
+                                      spreadRadius: 1,
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 3),
                                     ),
-                                    decoration: BoxDecoration(
-                                      color: Design.white,
-                                      borderRadius: const BorderRadius.only(
-                                        bottomLeft: Radius.circular(5),
-                                        bottomRight: Radius.circular(5),
+                                  ],
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    GestureDetector(
+                                      key: _amenityFieldKey,
+                                      onTap: () {
+                                        setState(() {
+                                          showAmenityDropdown = !showAmenityDropdown;
+                                        });
+                                        validateAmenities();
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+                                        decoration: BoxDecoration(
+                                          color: Design.white,
+                                          borderRadius: BorderRadius.circular(5),
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              arrOfAmenities.isEmpty
+                                                  ? "Select Amenities"
+                                                  : arrOfAmenities
+                                                      .map((id) => allAmenities
+                                                          .firstWhere((amenity) => amenity['id'].toString() == id)['name'])
+                                                      .join(", "),
+                                              style: const TextStyle(fontSize: 15),
+                                            ),
+                                            Icon(
+                                              showAmenityDropdown ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+                                              color: Colors.grey,
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ),
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Flexible(
-                                          child: ListView.builder(
-                                            shrinkWrap: true,
-                                            itemCount: allAmenities.length,
-                                            itemBuilder: (context, index) {
-                                              final amenity =
-                                                  allAmenities[index];
-                                              final isSelected = arrOfAmenities
-                                                  .contains(
-                                                    amenity['id'].toString(),
-                                                  );
-                                              return ListTile(
-                                                dense:
-                                                    true, // Reduces ListTile height
-                                                contentPadding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 15,
-                                                      vertical: 1,
-                                                    ), // Compact spacing
-                                                visualDensity:
-                                                    VisualDensity
-                                                        .compact, // Reduces extra spacing
-                                                title: Text(
-                                                  amenity['name'],
-                                                  style: TextStyle(
-                                                    fontSize: 14,
-                                                    color:
-                                                        arrOfAmenities.contains(
-                                                              amenity['id']
-                                                                  .toString(),
-                                                            )
-                                                            ? Design
-                                                                .primaryColorOrange
-                                                            : Colors
-                                                                .black, // Orange when selected
-                                                    fontWeight:
-                                                        arrOfAmenities.contains(
-                                                              amenity['id']
-                                                                  .toString(),
-                                                            )
+                                    if (showAmenityDropdown)
+                                      Container(
+                                        constraints: BoxConstraints(maxHeight: 32 * 6 + 48),
+                                        decoration: BoxDecoration(
+                                          color: Design.white,
+                                          borderRadius: const BorderRadius.only(
+                                            bottomLeft: Radius.circular(5),
+                                            bottomRight: Radius.circular(5),
+                                          ),
+                                        ),
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Flexible(
+                                              child: ListView.builder(
+                                                shrinkWrap: true,
+                                                itemCount: allAmenities.length,
+                                                itemBuilder: (context, index) {
+                                                  final amenity = allAmenities[index];
+                                                  final isSelected =
+                                                      arrOfAmenities.contains(amenity['id'].toString());
+                                                  return ListTile(
+                                                    dense: true,
+                                                    contentPadding:
+                                                        const EdgeInsets.symmetric(horizontal: 15, vertical: 1),
+                                                    visualDensity: VisualDensity.compact,
+                                                    title: Text(
+                                                      amenity['name'],
+                                                      style: TextStyle(
+                                                        fontSize: 14,
+                                                        color: arrOfAmenities.contains(amenity['id'].toString())
+                                                            ? Design.primaryColorOrange
+                                                            : Colors.black,
+                                                        fontWeight: arrOfAmenities.contains(amenity['id'].toString())
                                                             ? FontWeight.w500
-                                                            : FontWeight
-                                                                .normal, // Medium weight for selected
-                                                  ),
-                                                ),
-                                                trailing:
-                                                    arrOfAmenities.contains(
-                                                          amenity['id']
-                                                              .toString(),
-                                                        )
-                                                        ? Icon(
-                                                          Icons.check,
-                                                          color:
-                                                              Design
-                                                                  .primaryColorOrange,
-                                                          size: 18,
-                                                        ) // Orange tick for selected
-                                                        : null,
-                                                onTap: () {
-                                                  setState(() {
-                                                    if (arrOfAmenities.contains(
-                                                      amenity['id'].toString(),
-                                                    )) {
-                                                      arrOfAmenities.remove(
-                                                        amenity['id']
-                                                            .toString(),
-                                                      );
-                                                    } else {
-                                                      arrOfAmenities.add(
-                                                        amenity['id']
-                                                            .toString(),
-                                                      );
-                                                    }
-                                                  });
-                                                },
-                                              );
-                                            },
-                                          ),
-                                        ),
-                                        // Done button
-                                        Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 15,
-                                            vertical: 8,
-                                          ),
-                                          child: SizedBox(
-                                            width: double.infinity,
-                                            child: ElevatedButton(
-                                              onPressed: () {
-                                                setState(() {
-                                                  showAmenityDropdown = false;
-                                                });
-                                              },
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor:
-                                                    Design.primaryColorOrange,
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(5),
-                                                ),
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      vertical: 12,
+                                                            : FontWeight.normal,
+                                                      ),
                                                     ),
+                                                    trailing: arrOfAmenities.contains(amenity['id'].toString())
+                                                        ? Icon(
+                                                            Icons.check,
+                                                            color: Design.primaryColorOrange,
+                                                            size: 18,
+                                                          )
+                                                        : null,
+                                                    onTap: () {
+                                                      setState(() {
+                                                        if (arrOfAmenities.contains(amenity['id'].toString())) {
+                                                          arrOfAmenities.remove(amenity['id'].toString());
+                                                        } else {
+                                                          arrOfAmenities.add(amenity['id'].toString());
+                                                        }
+                                                      });
+                                                      validateAmenities();
+                                                    },
+                                                  );
+                                                },
                                               ),
-                                              child: const Text(
-                                                "Done",
-                                                style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 14,
+                                            ),
+                                            Padding(
+                                              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                                              child: SizedBox(
+                                                width: double.infinity,
+                                                child: ElevatedButton(
+                                                  onPressed: () {
+                                                    setState(() {
+                                                      showAmenityDropdown = false;
+                                                    });
+                                                    validateAmenities();
+                                                  },
+                                                  style: ElevatedButton.styleFrom(
+                                                    backgroundColor: Design.primaryColorOrange,
+                                                    shape: RoundedRectangleBorder(
+                                                      borderRadius: BorderRadius.circular(5),
+                                                    ),
+                                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                                  ),
+                                                  child: const Text(
+                                                    "Done",
+                                                    style: TextStyle(color: Colors.white, fontSize: 14),
+                                                  ),
                                                 ),
                                               ),
                                             ),
-                                          ),
+                                          ],
                                         ),
-                                      ],
-                                    ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              if (amenitiesError != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4, left: 12),
+                                  child: Text(
+                                    amenitiesError!,
+                                    style: TextStyle(color: Design.errorRed, fontSize: 12),
                                   ),
-                              ],
-                            ),
+                                ),
+                            ],
                           ),
-                          //
-
-                          // Dietary Tags Dropdown
                           const SizedBox(height: 18),
                           Container(
                             decoration: BoxDecoration(
@@ -1440,67 +1369,44 @@ class _AddEggScreenState extends State<AddEggScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // Dropdown field
                                 GestureDetector(
                                   key: _dietaryFieldKey,
                                   onTap: () {
                                     setState(() {
-                                      showDietaryDropdown =
-                                          !showDietaryDropdown;
+                                      showDietaryDropdown = !showDietaryDropdown;
                                     });
                                   },
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 15,
-                                      vertical: 15,
-                                    ),
+                                    padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
                                     decoration: BoxDecoration(
                                       color: Design.white,
                                       borderRadius: BorderRadius.circular(5),
                                     ),
                                     child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
                                         Text(
                                           arrOfDietaryTags.isEmpty
                                               ? "Select Dietary Tags"
                                               : arrOfDietaryTags
-                                                  .map(
-                                                    (id) =>
-                                                        allDietaryTags.firstWhere(
-                                                          (diet) =>
-                                                              diet['id']
-                                                                  .toString() ==
-                                                              id,
-                                                          orElse:
-                                                              () => {
-                                                                'name':
-                                                                    'Unknown',
-                                                              },
-                                                        )['name'],
-                                                  )
+                                                  .map((id) => allDietaryTags.firstWhere(
+                                                        (diet) => diet['id'].toString() == id,
+                                                        orElse: () => {'name': 'Unknown'},
+                                                      )['name'])
                                                   .join(", "),
                                           style: const TextStyle(fontSize: 15),
                                         ),
                                         Icon(
-                                          showDietaryDropdown
-                                              ? Icons.arrow_drop_up
-                                              : Icons.arrow_drop_down,
+                                          showDietaryDropdown ? Icons.arrow_drop_up : Icons.arrow_drop_down,
                                           color: Colors.grey,
                                         ),
                                       ],
                                     ),
                                   ),
                                 ),
-                                // Dropdown items
                                 if (showDietaryDropdown)
                                   Container(
-                                    constraints: const BoxConstraints(
-                                      maxHeight:
-                                          32 * 6 +
-                                          48, // Adjust the height as needed
-                                    ),
+                                    constraints: const BoxConstraints(maxHeight: 32 * 6 + 48),
                                     decoration: const BoxDecoration(
                                       color: Design.white,
                                       borderRadius: BorderRadius.only(
@@ -1516,59 +1422,35 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                             shrinkWrap: true,
                                             itemCount: allDietaryTags.length,
                                             itemBuilder: (context, index) {
-                                              final dietTag =
-                                                  allDietaryTags[index];
-                                              final tagId =
-                                                  dietTag['id'].toString();
-                                              final isSelected =
-                                                  arrOfDietaryTags.contains(
-                                                    tagId,
-                                                  );
+                                              final dietTag = allDietaryTags[index];
+                                              final tagId = dietTag['id'].toString();
+                                              final isSelected = arrOfDietaryTags.contains(tagId);
                                               return ListTile(
                                                 dense: true,
                                                 contentPadding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 15,
-                                                      vertical: 1,
-                                                    ),
-                                                visualDensity:
-                                                    VisualDensity.compact,
+                                                    const EdgeInsets.symmetric(horizontal: 15, vertical: 1),
+                                                visualDensity: VisualDensity.compact,
                                                 title: Text(
                                                   dietTag['name'],
                                                   style: TextStyle(
                                                     fontSize: 14,
-                                                    color:
-                                                        isSelected
-                                                            ? Design
-                                                                .primaryColorOrange
-                                                            : Colors.black,
-                                                    fontWeight:
-                                                        isSelected
-                                                            ? FontWeight.w500
-                                                            : FontWeight.normal,
+                                                    color: isSelected ? Design.primaryColorOrange : Colors.black,
+                                                    fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
                                                   ),
                                                 ),
-                                                trailing:
-                                                    isSelected
-                                                        ? Icon(
-                                                          Icons.check,
-                                                          color:
-                                                              Design
-                                                                  .primaryColorOrange,
-                                                          size: 18,
-                                                        )
-                                                        : null,
+                                                trailing: isSelected
+                                                    ? Icon(
+                                                        Icons.check,
+                                                        color: Design.primaryColorOrange,
+                                                        size: 18,
+                                                      )
+                                                    : null,
                                                 onTap: () {
                                                   setState(() {
-                                                    if (arrOfDietaryTags
-                                                        .contains(tagId)) {
-                                                      arrOfDietaryTags.remove(
-                                                        tagId,
-                                                      );
+                                                    if (arrOfDietaryTags.contains(tagId)) {
+                                                      arrOfDietaryTags.remove(tagId);
                                                     } else {
-                                                      arrOfDietaryTags.add(
-                                                        tagId,
-                                                      );
+                                                      arrOfDietaryTags.add(tagId);
                                                     }
                                                   });
                                                 },
@@ -1576,12 +1458,8 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                             },
                                           ),
                                         ),
-                                        // "Done" button to close the dropdown
                                         Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 15,
-                                            vertical: 8,
-                                          ),
+                                          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
                                           child: SizedBox(
                                             width: double.infinity,
                                             child: ElevatedButton(
@@ -1591,23 +1469,15 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                                 });
                                               },
                                               style: ElevatedButton.styleFrom(
-                                                backgroundColor:
-                                                    Design.primaryColorOrange,
+                                                backgroundColor: Design.primaryColorOrange,
                                                 shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(5),
+                                                  borderRadius: BorderRadius.circular(5),
                                                 ),
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      vertical: 12,
-                                                    ),
+                                                padding: const EdgeInsets.symmetric(vertical: 12),
                                               ),
                                               child: const Text(
                                                 "Done",
-                                                style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 14,
-                                                ),
+                                                style: TextStyle(color: Colors.white, fontSize: 14),
                                               ),
                                             ),
                                           ),
@@ -1618,138 +1488,175 @@ class _AddEggScreenState extends State<AddEggScreen> {
                               ],
                             ),
                           ),
-
-                          const SizedBox(height: 10),
-
-                          // const SizedBox(height: 20),
-                          // const Text('Notice', style: TextStyle(fontSize: 16)),
                           const SizedBox(height: 18),
-                          AppConstants.noticeField(
-                            controller: noticeController,
-                          ),
-
-                          const SizedBox(height: 20),
-                          const Text(
-                            'Description',
-                            style: TextStyle(fontSize: 16),
-                          ),
-                          const SizedBox(height: 18),
-                          Container(
-                            decoration: AppConstants.textFieldBoxDecoration,
-                            child: TextField(
-                              controller: descriptionController,
-                              maxLines: 5,
-                              style: const TextStyle(
-                                color: Colors.black,
-                                fontSize: 14.0,
-                                fontFamily: 'YourFontFamily',
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              AppConstants.noticeField(
+                                controller: noticeController,
+                                decoration: noticeError != null
+                                    ? AppConstants.textFieldDecoration.copyWith(
+                                        border: OutlineInputBorder(
+                                          borderSide: BorderSide(color: Design.errorRed),
+                                        ),
+                                      )
+                                    : AppConstants.textFieldDecoration,
                               ),
-                              decoration: AppConstants.textFieldDecoration
-                                  .copyWith(hintText: "Description"),
-                            ),
+                              if (noticeError != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4, left: 12),
+                                  child: Text(
+                                    noticeError!,
+                                    style: TextStyle(color: Design.errorRed, fontSize: 12),
+                                  ),
+                                ),
+                            ],
                           ),
-
+                          const SizedBox(height: 18),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                decoration: AppConstants.textFieldBoxDecoration.copyWith(
+                                  border: descriptionError != null ? Border.all(color: Design.errorRed) : null,
+                                ),
+                                child: TextField(
+                                  controller: descriptionController,
+                                  maxLines: 5,
+                                  style: const TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 14.0,
+                                    fontFamily: 'YourFontFamily',
+                                  ),
+                                  decoration: AppConstants.textFieldDecoration.copyWith(
+                                    hintText: "Description",
+                                    border: descriptionError != null
+                                        ? OutlineInputBorder(
+                                            borderSide: BorderSide(color: Design.errorRed),
+                                          )
+                                        : null,
+                                  ),
+                                ),
+                              ),
+                              if (descriptionError != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4, left: 12),
+                                  child: Text(
+                                    descriptionError!,
+                                    style: TextStyle(color: Design.errorRed, fontSize: 12),
+                                  ),
+                                ),
+                            ],
+                          ),
                           const SizedBox(height: 20),
                           const Text(
                             'Upload Pictures',
                             style: TextStyle(fontSize: 16),
                           ),
                           const SizedBox(height: 18),
-                          Row(
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              InkWell(
-                                onTap: showImageDialog,
-                                child: Container(
-                                  width: 90,
-                                  height: 90,
-                                  margin: const EdgeInsets.only(right: 10),
-                                  decoration: BoxDecoration(
-                                    color: Design.white,
-                                    borderRadius: BorderRadius.circular(5),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.grey.shade300,
-                                        blurRadius: 5,
-                                        offset: const Offset(0, 3),
+                              Row(
+                                children: [
+                                  InkWell(
+                                    onTap: showImageDialog,
+                                    child: Container(
+                                      width: 90,
+                                      height: 90,
+                                      margin: const EdgeInsets.only(right: 10),
+                                      decoration: BoxDecoration(
+                                        color: Design.white,
+                                        borderRadius: BorderRadius.circular(5),
+                                        border: photosError != null ? Border.all(color: Design.errorRed) : null,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.grey.shade300,
+                                            blurRadius: 5,
+                                            offset: const Offset(0, 3),
+                                          ),
+                                        ],
                                       ),
-                                    ],
-                                  ),
-                                  child: Center(
-                                    child: Image.asset(
-                                      GlobalImages.camera,
-                                      width: 40,
-                                      height: 40,
+                                      child: Center(
+                                        child: Image.asset(
+                                          GlobalImages.camera,
+                                          width: 40,
+                                          height: 40,
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ),
-                              Expanded(
-                                child: SizedBox(
-                                  height: 100,
-                                  child: ListView.builder(
-                                    scrollDirection: Axis.horizontal,
-                                    itemCount: photos.length,
-                                    itemBuilder: (context, index) {
-                                      final XFile photo = photos[index];
-                                      return Container(
-                                        width: 90,
-                                        height: 90,
-                                        margin: const EdgeInsets.only(
-                                          right: 10,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: Design.white,
-                                          borderRadius: BorderRadius.circular(
-                                            5,
-                                          ),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.grey.shade300,
-                                              blurRadius: 5,
-                                              offset: const Offset(0, 3),
+                                  Expanded(
+                                    child: SizedBox(
+                                      height: 100,
+                                      child: ListView.builder(
+                                        scrollDirection: Axis.horizontal,
+                                        itemCount: photos.length,
+                                        itemBuilder: (context, index) {
+                                          final XFile photo = photos[index];
+                                          return Container(
+                                            width: 90,
+                                            height: 90,
+                                            margin: const EdgeInsets.only(right: 10),
+                                            decoration: BoxDecoration(
+                                              color: Design.white,
+                                              borderRadius: BorderRadius.circular(5),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.grey.shade300,
+                                                  blurRadius: 5,
+                                                  offset: const Offset(0, 3),
+                                                ),
+                                              ],
                                             ),
-                                          ],
-                                        ),
-                                        child: Stack(
-                                          children: [
-                                            ClipRRect(
-                                              borderRadius:
-                                                  BorderRadius.circular(5),
-                                              child: Image.file(
-                                                File(photo.path),
-                                                fit: BoxFit.cover,
-                                                width: 90,
-                                                height: 90,
-                                              ),
-                                            ),
-                                            Positioned(
-                                              top: 2,
-                                              right: 2,
-                                              child: InkWell(
-                                                onTap: () => removePhoto(index),
-                                                child: Container(
-                                                  width: 24,
-                                                  height: 24,
-                                                  decoration:
-                                                      const BoxDecoration(
+                                            child: Stack(
+                                              children: [
+                                                ClipRRect(
+                                                  borderRadius: BorderRadius.circular(5),
+                                                  child: Image.file(
+                                                    File(photo.path),
+                                                    fit: BoxFit.cover,
+                                                    width: 90,
+                                                    height: 90,
+                                                  ),
+                                                ),
+                                                Positioned(
+                                                  top: 2,
+                                                  right: 2,
+                                                  child: InkWell(
+                                                    onTap: () => removePhoto(index),
+                                                    child: Container(
+                                                      width: 24,
+                                                      height: 24,
+                                                      decoration: const BoxDecoration(
                                                         shape: BoxShape.circle,
                                                         color: Colors.black54,
                                                       ),
-                                                  child: const Icon(
-                                                    Icons.close,
-                                                    color: Colors.white,
-                                                    size: 18,
+                                                      child: const Icon(
+                                                        Icons.close,
+                                                        color: Colors.white,
+                                                        size: 18,
+                                                      ),
+                                                    ),
                                                   ),
                                                 ),
-                                              ),
+                                              ],
                                             ),
-                                          ],
-                                        ),
-                                      );
-                                    },
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              if (photosError != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4, left: 12),
+                                  child: Text(
+                                    photosError!,
+                                    style: TextStyle(color: Design.errorRed, fontSize: 12),
                                   ),
                                 ),
-                              ),
                             ],
                           ),
                           const SizedBox(height: 40),
@@ -1759,16 +1666,11 @@ class _AddEggScreenState extends State<AddEggScreen> {
                               onPressed: updateBtn,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Design.primaryColorOrange,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 14,
-                                ),
+                                padding: const EdgeInsets.symmetric(vertical: 14),
                               ),
                               child: const Text(
                                 "Save Venue",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.white,
-                                ),
+                                style: TextStyle(fontSize: 16, color: Colors.white),
                               ),
                             ),
                           ),
@@ -1784,18 +1686,13 @@ class _AddEggScreenState extends State<AddEggScreen> {
           if (loader)
             Stack(
               children: [
-                // Semi-transparent dark overlay
-                Container(
-                  color: Colors.black.withOpacity(0.14), // Dark overlay
-                ),
-
-                // Your original container with white tint and loader
+                Container(color: Colors.black.withOpacity(0.14)),
                 Container(
                   color: Colors.white10,
                   child: Center(
                     child: Image.asset(
                       'assets/Bird_Full_Eye_Blinking.gif',
-                      width: 100, // Adjust size as needed
+                      width: 100,
                       height: 100,
                     ),
                   ),
@@ -1836,7 +1733,6 @@ class _AddEggScreenState extends State<AddEggScreen> {
                         ],
                       ),
                     ),
-
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
@@ -1881,10 +1777,7 @@ class _AddEggScreenState extends State<AddEggScreen> {
                           onPressed: onDonePressed,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Design.primaryColorOrange,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 12,
-                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                           ),
                           child: const Text("Done"),
                         ),
@@ -1894,118 +1787,97 @@ class _AddEggScreenState extends State<AddEggScreen> {
                 ),
               ),
             ),
-          // "How do I list a venue?" Dialog
           if (showVenueDialog)
-            if (showVenueDialog)
-              Positioned.fill(
-                child: Container(
-                  color: Colors.black54, // semi-transparent overlay
-                  child: Center(
-                    child: Container(
-                      width: deviceWidth - 30,
-                      padding: const EdgeInsets.symmetric(vertical: 20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        boxShadow: const [
-                          BoxShadow(color: Colors.black26, blurRadius: 8),
-                        ],
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          const Text(
-                            "How do I list a venue?",
-                            style: TextStyle(
-                              fontSize: Design.font18,
-                              fontWeight: FontWeight.w500,
-                              color: Design.black,
-                            ),
-                            textAlign: TextAlign.center,
+            Positioned.fill(
+              child: Container(
+                color: Colors.black54,
+                child: Center(
+                  child: Container(
+                    width: deviceWidth - 30,
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 8)],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const Text(
+                          "How do I list a venue?",
+                          style: TextStyle(
+                            fontSize: Design.font18,
+                            fontWeight: FontWeight.w500,
+                            color: Design.black,
                           ),
-                          const SizedBox(height: 10),
-                          const Padding(
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 10),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 16),
+                          child: Text(
+                            "Users that subscribe their venues to Flock can manage them here in the app.",
+                            style: TextStyle(fontSize: Design.font14, color: Design.black),
+                            textAlign: TextAlign.left,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 16),
+                          child: Text(
+                            "For more information visit here",
+                            style: TextStyle(fontSize: Design.font14, color: Design.black),
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () => launchUrl(Uri.parse('https://getflock.io/business/')),
+                          child: const Padding(
                             padding: EdgeInsets.symmetric(horizontal: 16),
                             child: Text(
-                              "Users that subscribe their venues to Flock can manage them here in the app.",
+                              "https://getflock.io/business/",
+                              style: TextStyle(fontSize: Design.font14, color: Design.blue),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              showVenueDialog = false;
+                            });
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                            decoration: BoxDecoration(
+                              color: Design.white,
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                            child: const Text(
+                              "Got it!",
                               style: TextStyle(
-                                fontSize: Design.font14,
-                                color: Design.black,
-                              ),
-                              textAlign: TextAlign.left,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 16),
-                            child: Text(
-                              "For more information visit here",
-                              style: TextStyle(
-                                fontSize: Design.font14,
-                                color: Design.black,
+                                color: Design.primaryColorOrange,
+                                fontSize: Design.font15,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ),
-                          GestureDetector(
-                            onTap:
-                                () => launchUrl(
-                                  Uri.parse('https://getflock.io/business/'),
-                                ),
-                            child: const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 16),
-                              child: Text(
-                                "https://getflock.io/business/",
-                                style: TextStyle(
-                                  fontSize: Design.font14,
-                                  color: Design.blue,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                showVenueDialog = false; // Close dialog
-                              });
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 10,
-                                horizontal: 20,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Design.white,
-                                borderRadius: BorderRadius.circular(5),
-                              ),
-                              child: const Text(
-                                "Got it!",
-                                style: TextStyle(
-                                  color: Design.primaryColorOrange,
-                                  fontSize: Design.font15,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ),
+            ),
         ],
       ),
     );
   }
 }
 
-// Minimal Location Picker Screen using Google Maps
 class LocationPickerScreen extends StatefulWidget {
   final LatLng initialPosition;
-  const LocationPickerScreen({Key? key, required this.initialPosition})
-    : super(key: key);
+  const LocationPickerScreen({Key? key, required this.initialPosition}) : super(key: key);
 
   @override
   State<LocationPickerScreen> createState() => _LocationPickerScreenState();
@@ -2013,13 +1885,12 @@ class LocationPickerScreen extends StatefulWidget {
 
 class _LocationPickerScreenState extends State<LocationPickerScreen> {
   late GoogleMapController mapController;
-  LatLng pickedPosition = const LatLng(33.6844, 73.0479); // Default position
+  LatLng pickedPosition = const LatLng(33.6844, 73.0479);
 
   @override
   void initState() {
     super.initState();
-    if (widget.initialPosition.latitude != 0.0 &&
-        widget.initialPosition.longitude != 0.0) {
+    if (widget.initialPosition.latitude != 0.0 && widget.initialPosition.longitude != 0.0) {
       pickedPosition = widget.initialPosition;
     }
   }
@@ -2034,7 +1905,18 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
           IconButton(
             icon: const Icon(Icons.check),
             onPressed: () {
-              Navigator.pop(context, pickedPosition);
+              if (pickedPosition.latitude < -90 ||
+                  pickedPosition.latitude > 90 ||
+                  pickedPosition.longitude < -180 ||
+                  pickedPosition.longitude > 180) {
+                Fluttertoast.showToast(msg: "Invalid location coordinates");
+                return;
+              }
+              Navigator.pop(context, {
+                'address': "Selected Location (${pickedPosition.latitude}, ${pickedPosition.longitude})",
+                'lat': pickedPosition.latitude,
+                'lng': pickedPosition.longitude,
+              });
             },
           ),
         ],

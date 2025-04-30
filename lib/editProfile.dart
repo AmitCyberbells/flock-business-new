@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:flock/constants.dart'; // Adjust the import path as needed.
 
 class EditProfileScreen extends StatefulWidget {
@@ -111,10 +112,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           Fluttertoast.showToast(msg: _errorMessage);
         }
       } else {
-        setState(() {
+        setState() {
           _isLoading = false;
           _errorMessage = 'Error ${response.statusCode} fetching profile.';
-        });
+        };
         Fluttertoast.showToast(msg: _errorMessage);
       }
     } catch (e) {
@@ -123,6 +124,25 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         _errorMessage = 'Network error: $e';
       });
       Fluttertoast.showToast(msg: _errorMessage);
+    }
+  }
+
+  Future<bool> _requestCameraPermission() async {
+    var status = await Permission.camera.status;
+    if (status.isDenied) {
+      status = await Permission.camera.request();
+    }
+    if (status.isGranted) {
+      return true;
+    } else if (status.isPermanentlyDenied) {
+      Fluttertoast.showToast(
+        msg: 'Camera permission is permanently denied. Please enable it in settings.',
+      );
+      await openAppSettings();
+      return false;
+    } else {
+      Fluttertoast.showToast(msg: 'Camera permission denied.');
+      return false;
     }
   }
 
@@ -145,14 +165,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   _pickImage(ImageSource.gallery);
                 },
               ),
-              // ListTile(
-              //   leading: const Icon(Icons.camera_alt),
-              //   title: const Text('Take a Photo'),
-              //   onTap: () {
-              //     Navigator.pop(context);
-              //     _pickImage(ImageSource.camera);
-              //   },
-              // ),
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Take a Photo'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  bool hasPermission = await _requestCameraPermission();
+                  if (hasPermission) {
+                    _pickImage(ImageSource.camera);
+                  }
+                },
+              ),
             ],
           ),
         );
@@ -273,277 +296,249 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child:
-                  _isLoading
-                      ? Stack(
-                        children: [
-                          // Semi-transparent dark overlay
-                          Container(
-                            color: Colors.black.withOpacity(
-                              0.14,
-                            ), // Dark overlay
-                          ),
-
-                          // Your original container with white tint and loader
-                          Container(
-                            color: Colors.white10,
-                            child: Center(
-                              child: Image.asset(
-                                'assets/Bird_Full_Eye_Blinking.gif',
-                                width: 100, // Adjust size as needed
-                                height: 100,
-                              ),
-                            ),
-                          ),
-                        ],
-                      )
-                      : SingleChildScrollView(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Row(
-                              children: [
-                                InkWell(
-                                  onTap: () => Navigator.of(context).pop(),
-                                  child: Image.asset(
-                                    'assets/back_updated.png',
-                                    height: 40,
-                                    width: 34,
-                                    fit: BoxFit.contain,
-                                    // color: const Color.fromRGBO(255, 130, 16, 1.0), // Orange tint
-                                  ),
-                                ),
-                                const Expanded(
-                                  child: Center(
-                                    child: Text(
-                                      "Edit Profile",
-                                      style: TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.black,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 24),
-                              ],
-                            ),
-                            const SizedBox(height: 20),
-                            Center(
-                              child: Stack(
-                                clipBehavior: Clip.none,
-                                children: [
-                                  CircleAvatar(
-                                    radius: 50,
-                                    backgroundColor: Colors.grey.shade200,
-                                    backgroundImage:
-                                        _selectedImage != null
-                                            ? FileImage(_selectedImage!)
-                                            : (profilePic.isNotEmpty &&
-                                                        profilePic.startsWith(
-                                                          'http',
-                                                        )
-                                                    ? NetworkImage(profilePic)
-                                                    : null)
-                                                as ImageProvider<Object>?,
-                                    child:
-                                        (profilePic.isEmpty &&
-                                                _selectedImage == null)
-                                            ? const Icon(
-                                              Icons.person,
-                                              size: 60,
-                                              color: Colors.grey,
-                                            )
-                                            : null,
-                                  ),
-                                  Positioned(
-                                    bottom: 0,
-                                    right: 0,
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: Colors.grey.shade300,
-                                        ),
-                                      ),
-                                      child: CircleAvatar(
-                                        radius: 16,
-                                        backgroundColor: const Color.fromRGBO(255, 130, 16, 1),
-                                        child: IconButton(
-                                          onPressed: _selectImage,
-                                          icon: const Icon(
-                                            Icons.camera_alt,
-                                            size: 16,
-                                            color: Colors.white,
-                                          ),
-                                          padding: EdgeInsets.zero,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 30),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: AppConstants.firstNameField(
-                                    controller: firstNameController,
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: AppConstants.lastNameField(
-                                    controller: lastNameController,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 25),
-
-                            TextField(
-                              controller: emailController,
-                              readOnly: true,
-                              keyboardType: TextInputType.emailAddress,
-                              style: const TextStyle(
-                                color: Colors.grey,
-                                fontSize: 14.0,
-                                fontFamily: 'YourFontFamily',
-                              ),
-                              decoration: InputDecoration(
-                                hintText: 'Enter email address',
-                                hintStyle: TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 14.0,
-                                  fontFamily: 'YourFontFamily',
-                                ),
-                                filled: true,
-                                fillColor: Colors.grey.shade100,
-                                contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 15,
-                                  vertical: 15,
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10.0),
-                                  borderSide: BorderSide.none,
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10.0),
-                                  borderSide: BorderSide.none,
-                                ),
-                                disabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10.0),
-                                  borderSide: BorderSide.none,
-                                ),
-                              ),
-                            ),
-
-                            const SizedBox(height: 25),
-                            TextField(
-                              controller: phoneController,
-                              readOnly: true,
-                              keyboardType: TextInputType.phone,
-                              style: const TextStyle(
-                                color: Colors.grey,
-                                fontSize: 14.0,
-                                fontFamily: 'YourFontFamily',
-                              ),
-                              decoration: InputDecoration(
-                                hintText: 'Enter phone number',
-                                hintStyle: TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 14.0,
-                                  fontFamily: 'YourFontFamily',
-                                ),
-                                filled: true,
-                                fillColor: Colors.grey.shade100,
-                                contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 15,
-                                  vertical: 15,
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10.0),
-                                  borderSide: BorderSide.none,
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10.0),
-                                  borderSide: BorderSide.none,
-                                ),
-                                disabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10.0),
-                                  borderSide: BorderSide.none,
-                                ),
-                              ),
-                            ),
-
-                            const SizedBox(height: 25),
-                            // AppConstants.passwordField(
-                            //   controller: passwordController,
-                            //   obscureText: _obscurePassword,
-                            //   toggleObscure: () {
-                            //     setState(() {
-                            //       _obscurePassword = !_obscurePassword;
-                            //     });
-                            //   },
-                            // ),
-                            const SizedBox(height: 30),
-                            if (_errorMessage.isNotEmpty)
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 10),
-                                child: Text(
-                                  _errorMessage,
-                                  style: const TextStyle(color: Colors.red),
-                                ),
-                              ),
-                            SizedBox(
-                              width: double.infinity,
-                              height: 48,
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color.fromRGBO(
-                                    255,
-                                    130,
-                                    16,
-                                    1,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  elevation: 0,
-                                ),
-                                onPressed: _updateProfile,
-                                child: const Text(
-                                  'Update',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                          ],
+              child: _isLoading
+                  ? Stack(
+                      children: [
+                        // Semi-transparent dark overlay
+                        Container(
+                          color: Colors.black.withOpacity(0.14),
                         ),
+                        // Container with white tint and loader
+                        Container(
+                          color: Colors.white10,
+                          child: Center(
+                            child: Image.asset(
+                              'assets/Bird_Full_Eye_Blinking.gif',
+                              width: 100,
+                              height: 100,
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  : SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Row(
+                            children: [
+                              InkWell(
+                                onTap: () => Navigator.of(context).pop(),
+                                child: Image.asset(
+                                  'assets/back_updated.png',
+                                  height: 40,
+                                  width: 34,
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                              const Expanded(
+                                child: Center(
+                                  child: Text(
+                                    "Edit Profile",
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 24),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                          Center(
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                CircleAvatar(
+                                  radius: 50,
+                                  backgroundColor: Colors.grey.shade200,
+                                  backgroundImage: _selectedImage != null
+                                      ? FileImage(_selectedImage!)
+                                      : (profilePic.isNotEmpty &&
+                                              profilePic.startsWith('http')
+                                          ? NetworkImage(profilePic)
+                                          : null) as ImageProvider<Object>?,
+                                  child: (profilePic.isEmpty &&
+                                          _selectedImage == null)
+                                      ? const Icon(
+                                          Icons.person,
+                                          size: 60,
+                                          color: Colors.grey,
+                                        )
+                                      : null,
+                                ),
+                                Positioned(
+                                  bottom: 0,
+                                  right: 0,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Colors.grey.shade300,
+                                      ),
+                                    ),
+                                    child: CircleAvatar(
+                                      radius: 16,
+                                      backgroundColor:
+                                          const Color.fromRGBO(255, 130, 16, 1),
+                                      child: IconButton(
+                                        onPressed: _selectImage,
+                                        icon: const Icon(
+                                          Icons.camera_alt,
+                                          size: 16,
+                                          color: Colors.white,
+                                        ),
+                                        padding: EdgeInsets.zero,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 30),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: AppConstants.firstNameField(
+                                  controller: firstNameController,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: AppConstants.lastNameField(
+                                  controller: lastNameController,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 25),
+                          TextField(
+                            controller: emailController,
+                            readOnly: true,
+                            keyboardType: TextInputType.emailAddress,
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 14.0,
+                              fontFamily: 'YourFontFamily',
+                            ),
+                            decoration: InputDecoration(
+                              hintText: 'Enter email address',
+                              hintStyle: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 14.0,
+                                fontFamily: 'YourFontFamily',
+                              ),
+                              filled: true,
+                              fillColor: Colors.grey.shade100,
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 15,
+                                vertical: 15,
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10.0),
+                                borderSide: BorderSide.none,
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10.0),
+                                borderSide: BorderSide.none,
+                              ),
+                              disabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10.0),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 25),
+                          TextField(
+                            controller: phoneController,
+                            readOnly: true,
+                            keyboardType: TextInputType.phone,
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 14.0,
+                              fontFamily: 'YourFontFamily',
+                            ),
+                            decoration: InputDecoration(
+                              hintText: 'Enter phone number',
+                              hintStyle: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 14.0,
+                                fontFamily: 'YourFontFamily',
+                              ),
+                              filled: true,
+                              fillColor: Colors.grey.shade100,
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 15,
+                                vertical: 15,
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10.0),
+                                borderSide: BorderSide.none,
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10.0),
+                                borderSide: BorderSide.none,
+                              ),
+                              disabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10.0),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 25),
+                          const SizedBox(height: 30),
+                          if (_errorMessage.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 10),
+                              child: Text(
+                                _errorMessage,
+                                style: const TextStyle(color: Colors.red),
+                              ),
+                            ),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 48,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                    const Color.fromRGBO(255, 130, 16, 1),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                elevation: 0,
+                              ),
+                              onPressed: _updateProfile,
+                              child: const Text(
+                                'Update',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                        ],
                       ),
+                    ),
             ),
           ),
           if (_isUpdating)
             Stack(
               children: [
-                // Semi-transparent dark overlay
                 Container(
-                  color: Colors.black.withOpacity(0.14), // Dark overlay
+                  color: Colors.black.withOpacity(0.14),
                 ),
-
-                // Your original container with white tint and loader
                 Container(
                   color: Colors.white10,
                   child: Center(
                     child: Image.asset(
                       'assets/Bird_Full_Eye_Blinking.gif',
-                      width: 100, // Adjust size as needed
+                      width: 100,
                       height: 100,
                     ),
                   ),

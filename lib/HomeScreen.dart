@@ -27,6 +27,7 @@ class _TabDashboardState extends State<TabDashboard>
   String firstName = '';
   String lastName = '';
   bool loader = false;
+  bool isVenueListLoaded = false;
 
   List<Map<String, dynamic>> venueList = [];
   Map<String, dynamic>? selectedVenue;
@@ -57,11 +58,20 @@ class _TabDashboardState extends State<TabDashboard>
       'points': '',
       'img': 'assets/business_eggs.png',
     },
+
+    // {
+    //   'id': 4,
+    //   'slug': 'faq',
+    //   'category': 'FAQ',
+    //   'title': 'Open FAQ',
+    //   'points': '',
+    //   'img': 'assets/feather.png',
+    // },
     {
       'id': 4,
       'slug': 'faq',
-      'category': 'FAQ',
-      'title': 'Open FAQ',
+      'category': 'Activities',
+      'title': 'See Transaction History',
       'points': '',
       'img': 'assets/feather.png',
     },
@@ -173,8 +183,9 @@ class _TabDashboardState extends State<TabDashboard>
                   '${int.tryParse(data['offers_count']?.toString() ?? '0') ?? 0}';
               hotelList[2]['points'] =
                   '${int.tryParse(data['venues_count']?.toString() ?? '0') ?? 0}';
-                  hotelList[3]['points'] =
-                  '${int.tryParse(data['faq_counts']?.toString() ?? '0') ?? 0}';
+
+              hotelList[3]['points'] =
+                    '${int.tryParse(data['history_number']?.toString() ?? '0') ?? 0}';
             });
           }
         } else {
@@ -199,7 +210,10 @@ class _TabDashboardState extends State<TabDashboard>
     final token = prefs.getString('access_token');
     if (token == null || token.isEmpty) {
       Fluttertoast.showToast(msg: 'No token found, please login again.');
-      setState(() => loader = false);
+      setState(() {
+        loader = false;
+        isVenueListLoaded = true; // Set flag even on failure
+      });
       return;
     }
     final url = Uri.parse("http://165.232.152.77/api/vendor/venues");
@@ -213,6 +227,7 @@ class _TabDashboardState extends State<TabDashboard>
       );
       setState(() {
         loader = false;
+        isVenueListLoaded = true; // API call completed
       });
       if (response.statusCode == 200) {
         final responseJson = json.decode(response.body);
@@ -236,6 +251,7 @@ class _TabDashboardState extends State<TabDashboard>
     } catch (e) {
       setState(() {
         loader = false;
+        isVenueListLoaded = true; // Set flag even on error
       });
       Fluttertoast.showToast(msg: 'Error: $e');
     }
@@ -275,7 +291,7 @@ class _TabDashboardState extends State<TabDashboard>
     } else if (slug == "venues") {
       Navigator.pushNamed(context, '/tab_egg');
     } else if (slug == "faq") {
-      Navigator.pushNamed(context, '/faq');
+      Navigator.pushNamed(context, '/history');
     }
   }
 
@@ -317,6 +333,11 @@ class _TabDashboardState extends State<TabDashboard>
       return;
     }
 
+    if (selectedVenue == null) {
+      Fluttertoast.showToast(msg: 'Please select a venue first!');
+      return;
+    }
+
     var status = await Permission.camera.status;
     print("Initial camera permission status: $status");
 
@@ -326,18 +347,17 @@ class _TabDashboardState extends State<TabDashboard>
     }
 
     if (status.isGranted) {
-      _navigateToQRScanScreen();
+      _navigateToQRScanScreen(selectedVenue!['id'].toString());
     } else if (status.isPermanentlyDenied) {
       Fluttertoast.showToast(
         msg:
             'Camera permission is permanently denied. Please enable it in settings.',
       );
       await openAppSettings();
-      // Wait for app to resume and re-check permission
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         var newStatus = await Permission.camera.status;
         if (newStatus.isGranted) {
-          _navigateToQRScanScreen();
+          _navigateToQRScanScreen(selectedVenue!['id'].toString());
         }
       });
     } else {
@@ -345,15 +365,70 @@ class _TabDashboardState extends State<TabDashboard>
     }
   }
 
-  void _navigateToQRScanScreen() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const QRScanScreen()),
-    );
+Future<void> _navigateToQRScanScreen(String venueId) async {
+  final prefs = await SharedPreferences.getInstance();
+  String? token = prefs.getString('access_token');
+  if (token == null) {
+    Fluttertoast.showToast(msg: 'No token found. Please log in.');
+    return;
   }
 
-  void _handleScannedQRCode(String qrCode) {
-    Fluttertoast.showToast(msg: 'Scanned QR Code: $qrCode');
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => QRScanScreen(
+        venueId: venueId,
+        token: token,
+      ),
+    ),
+  ).then((qrCode) {
+    if (qrCode != null) {
+      _handleScannedQRCode(qrCode, venueId);
+    }
+  });
+}
+
+  // void _handleScannedQRCode(String qrCode, String venueId) {
+  //   Fluttertoast.showToast(
+  //     msg: 'Scanned QR Code: $qrCode for Venue ID: $venueId',
+  //   );
+  // }
+
+  // void _navigateToQRScanScreen(String venueId) {
+  //   Navigator.push(
+  //     context,
+  //     MaterialPageRoute(builder: (context) => QRScanScreen(venueId: venueId)),
+  //   );
+  // }
+
+  Future<void> _handleScannedQRCode(String qrCode, String venueId) async {
+    startLoader();
+    final token = await SharedPreferences.getInstance().then(
+      (prefs) => prefs.getString('access_token'),
+    );
+    final url = Uri.parse("http://165.232.152.77/api/vendor/verify-voucher");
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({'qr_code': qrCode, 'venue_id': venueId}),
+      );
+      setState(() => loader = false);
+      if (response.statusCode == 200) {
+        Fluttertoast.showToast(msg: 'Voucher verified successfully!');
+      } else {
+        Fluttertoast.showToast(
+          // msg: 'Error verifying voucher: ${response.statusCode}',
+           msg: 'Error verifying voucher',
+        );
+      }
+    } catch (e) {
+      setState(() => loader = false);
+      Fluttertoast.showToast(msg: 'Error: $e');
+    }
   }
 
   /// Custom dropdown design for selecting venue.
@@ -494,53 +569,52 @@ class _TabDashboardState extends State<TabDashboard>
   }
 
   /// Updated venue list with QR Codes method (includes the custom dropdown)
-  /// 
-/// Updated venue list with QR Codes method (includes the custom dropdown)
-/// 
-Widget venueListWithQRCodes() {
-  if (!hasPermission('verify_voucher')) {
-    return const SizedBox.shrink();
-  }
-  if (venueList.isEmpty) {
-    return Padding(
-      padding: const EdgeInsets.all(10.0),
-      child: Center(
-        child: Text(
-          'You don’t have any venues yet, please add a venue by clicking on the Bird icon in the bottom bar.',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 16,
-            color: Colors.grey[600],
+  ///
+  /// Updated venue list with QR Codes method (includes the custom dropdown)
+  Widget venueListWithQRCodes() {
+    if (!hasPermission('verify_voucher')) {
+      return const SizedBox.shrink();
+    }
+    if (!isVenueListLoaded) {
+      return const SizedBox.shrink(); // Don't show anything until API call completes
+    }
+    if (venueList.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(10.0),
+        child: Center(
+          child: Text(
+            'You don’t have any venues yet, please add a venue by clicking on the "Bird Image" at the bottom.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 16, color: Colors.grey[600]),
           ),
         ),
-      ),
-    );
-  }
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      customVenueDropdown(),
-      if (selectedVenue != null)
-        Padding(
-          padding: const EdgeInsets.all(10),
-          child: Center(
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.transparent,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: QrImageView(
-                data: selectedVenue!['id'].toString(),
-                version: QrVersions.auto,
-                size: 150.0,
-                backgroundColor: Colors.transparent,
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        customVenueDropdown(),
+        if (selectedVenue != null)
+          Padding(
+            padding: const EdgeInsets.all(10),
+            child: Center(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: QrImageView(
+                  data: selectedVenue!['id'].toString(),
+                  version: QrVersions.auto,
+                  size: 150.0,
+                  backgroundColor: Colors.transparent,
+                ),
               ),
             ),
           ),
-        ),
-    ],
-  );
-}
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -675,13 +749,15 @@ Widget venueListWithQRCodes() {
                                                       item['category'],
                                                       style: TextStyle(
                                                         fontSize:
-                                                            deviceWidth * 0.042,
+                                                            deviceWidth * 0.040,
                                                         color: Colors.black,
                                                         fontWeight:
                                                             FontWeight.w600,
                                                       ),
+                                                      softWrap: true,
+                                                      maxLines: 2,
                                                       overflow:
-                                                          TextOverflow.ellipsis,
+                                                          TextOverflow.visible,
                                                     ),
                                                   ),
                                                 ],
@@ -769,25 +845,25 @@ Widget venueListWithQRCodes() {
           ),
           if (loader)
             Stack(
-  children: [
-    // Semi-transparent dark overlay
-    Container(
-      color: Colors.black.withOpacity(0.14), // Dark overlay
-    ),
+              children: [
+                // Semi-transparent dark overlay
+                Container(
+                  color: Colors.black.withOpacity(0.14), // Dark overlay
+                ),
 
-    // Your original container with white tint and loader
-    Container(
-      color: Colors.white10,
-      child: Center(
-        child: Image.asset(
-          'assets/Bird_Full_Eye_Blinking.gif',
-          width: 100, // Adjust size as needed
-          height: 100,
-        ),
-      ),
-    ),
-  ],
-)
+                // Your original container with white tint and loader
+                Container(
+                  color: Colors.white10,
+                  child: Center(
+                    child: Image.asset(
+                      'assets/Bird_Full_Eye_Blinking.gif',
+                      width: 100, // Adjust size as needed
+                      height: 100,
+                    ),
+                  ),
+                ),
+              ],
+            ),
         ],
       ),
     );

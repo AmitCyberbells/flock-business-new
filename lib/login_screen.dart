@@ -74,7 +74,6 @@ class _LoginScreenState extends State<LoginScreen> {
       // Prepare payload (adjust based on API requirements)
       final body = {
         'fcm_token': fcmToken,
-        // Add other device info if required (e.g., device_id, platform)
         'platform': 'android', // or 'ios' based on Platform.isIOS
       };
 

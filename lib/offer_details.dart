@@ -343,7 +343,8 @@ class _OfferDetailsState extends State<OfferDetails> {
       _setLoading(false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Invalid QR code: Not a valid JSON format.'),
+          // content: Text('Invalid QR code: Not a valid JSON format.'),
+            content: Text('Invalid QR code.'),
         ),
       );
       return;
@@ -353,7 +354,8 @@ class _OfferDetailsState extends State<OfferDetails> {
     if (redeemId == null) {
       _setLoading(false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Invalid QR code: Missing redeem_id.')),
+        // const SnackBar(content: Text('Invalid QR code: Missing redeem_id.')),
+         const SnackBar(content: Text('Invalid QR code')),
       );
       return;
     }
@@ -361,20 +363,22 @@ class _OfferDetailsState extends State<OfferDetails> {
     int? parsedRedeemId;
     try {
       parsedRedeemId = int.parse(redeemId.toString());
-      print('Parsed Redeem ID: $parsedRedeemId');
+      // print('Parsed Redeem ID: $parsedRedeemId');
     } catch (e) {
       _setLoading(false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Invalid QR code: redeem_id must be a valid number.'),
+          // content: Text('Invalid QR code: redeem_id must be a valid number.'),
+          content: Text('Invalid QR code'),
         ),
       );
       return;
     }
-
+  print('before url');
     try {
       final url = Uri.parse(
-        'http://165.232.152.77/api/vendor/redeemed-offers/$parsedRedeemId/verify?offer_id=$offerId',
+      
+        'http://165.232.152.77/api/vendor/redeemed-offers/$parsedRedeemId/verify?venue_id=$venueId',
       );
       print('Sending verification request to: $url');
       final response = await http.post(
