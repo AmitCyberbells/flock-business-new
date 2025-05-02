@@ -1,3 +1,4 @@
+
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
@@ -40,8 +41,14 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
       _emailController.text = widget.existingMember!['email'] ?? '';
       _phoneController.text = widget.existingMember!['phone'] ?? '';
       _selectedVenues = widget.existingMember!['venue']?.split(',') ?? [];
-      _selectedPermissions =
-          widget.existingMember!['permission']?.split(',') ?? [];
+      _selectedPermissions = widget.existingMember!['permission']?.split(',') ?? [];
+      // Ensure id=2 is included for existing member
+      if (!_selectedPermissions.contains('2')) {
+        _selectedPermissions.add('2');
+      }
+    } else {
+      // For new member, initialize with id=2
+      _selectedPermissions = ['2'];
     }
     fetchDropdownData();
   }
@@ -83,6 +90,11 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
       if (permissionResponse.statusCode == 200) {
         setState(() {
           _permissionList = permissionResponse.data['data'] ?? [];
+          // Ensure id=2 is in _selectedPermissions if it exists in _permissionList
+          if (_permissionList.any((p) => p['id'].toString() == '2') &&
+              !_selectedPermissions.contains('2')) {
+            _selectedPermissions.add('2');
+          }
         });
       }
     } catch (e) {
@@ -103,11 +115,23 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
   }
 
   Future<void> _submitForm() async {
+    // Validate required fields
     if (_firstNameController.text.isEmpty ||
         _emailController.text.isEmpty ||
         (_passwordController.text.isEmpty && widget.existingMember == null)) {
       _showError('Please fill in all required fields');
       return;
+    }
+
+    // Validate venue selection
+    if (_selectedVenues.isEmpty) {
+      _showError('Please Assign Venue');
+      return;
+    }
+
+    // Ensure id=2 is always included
+    if (!_selectedPermissions.contains('2')) {
+      _selectedPermissions.add('2');
     }
 
     setState(() => _isLoading = true);
@@ -189,9 +213,7 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
 
   void _showError(String message) {
     if (context.mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
     }
   }
 
@@ -202,10 +224,7 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
       appBar: AppConstants.customAppBar(
         context: context,
         title: 'Add Member',
-        // Optionally, if you want a different back icon, you can pass:
-        // backIconAsset: 'assets/your_custom_back.png',
-      ), // 'back' is a String holding the asset path, e.g., 'assets/images/back_icon.png'
-
+      ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16),
         child: Column(
@@ -220,10 +239,9 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
                     backgroundColor: Colors.grey[300],
                     backgroundImage:
                         _pickedImage != null ? FileImage(_pickedImage!) : null,
-                    child:
-                        _pickedImage == null
-                            ? Icon(Icons.person, size: 60, color: Colors.grey)
-                            : null,
+                    child: _pickedImage == null
+                        ? Icon(Icons.person, size: 60, color: Colors.grey)
+                        : null,
                   ),
                   Positioned(
                     bottom: -10,
@@ -246,7 +264,6 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
               ),
             ),
             SizedBox(height: 30),
-            // First Name and Last Name in one row
             Row(
               children: [
                 Expanded(
@@ -263,13 +280,10 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
               ],
             ),
             SizedBox(height: 15),
-            // Reusable Email Field
             AppConstants.emailField(controller: _emailController),
             SizedBox(height: 15),
-            // Reusable Phone Number Field
             AppConstants.phoneField(controller: _phoneController),
             SizedBox(height: 15),
-            // Reusable Password Field
             AppConstants.passwordField(
               controller: _passwordController,
               obscureText: _obscurePassword,
@@ -280,32 +294,30 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
               },
             ),
             SizedBox(height: 15),
-            // For assigning venues:
             AppConstants.assignVenuesDropdown(
               venueList: _venueList,
               selectedVenues: _selectedVenues,
               onConfirm: (values) {
                 setState(() {
-                  print("Selected Venues: $_selectedVenues");
-
                   _selectedVenues = values.cast<String>();
                 });
               },
             ),
             SizedBox(height: 15),
-
-            // For assigning permissions:
             AppConstants.assignPermissionsDropdown(
               permissionList: _permissionList,
               selectedPermissions: _selectedPermissions,
+              mandatoryPermissionId: '2', // Indicate id=2 is mandatory
               onConfirm: (values) {
                 setState(() {
-                  print("Selected permission: $_selectedPermissions");
                   _selectedPermissions = values.cast<String>();
+                  // Ensure id=2 is always included
+                  if (!_selectedPermissions.contains('2')) {
+                    _selectedPermissions.add('2');
+                  }
                 });
-              },
+              }, context: context,
             ),
-
             const SizedBox(height: 40),
             AppConstants.fullWidthButton(
               text: "Submit",

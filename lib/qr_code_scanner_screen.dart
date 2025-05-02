@@ -63,7 +63,10 @@ class _QRScanScreenState extends State<QRScanScreen> {
     }
   }
 
-  Future<void> _verifyCouponCode(String couponCode, BuildContext screenContext) async {
+  Future<void> _verifyCouponCode(
+    String couponCode,
+    BuildContext screenContext,
+  ) async {
     if (mounted && !_isScanned) {
       setState(() {
         _isScanned = true;
@@ -72,7 +75,8 @@ class _QRScanScreenState extends State<QRScanScreen> {
 
       try {
         String token = widget.token;
-        String apiUrl = 'http://165.232.152.77/api/vendor/redeemed-offers/verify/coupon';
+        String apiUrl =
+            'http://165.232.152.77/api/vendor/redeemed-offers/verify/coupon';
         print('Calling Coupon API: $apiUrl with coupon_code: $couponCode');
 
         final response = await http.post(
@@ -90,7 +94,8 @@ class _QRScanScreenState extends State<QRScanScreen> {
         String dialogMessage;
         if (response.statusCode == 200) {
           var responseData = jsonDecode(response.body);
-          dialogMessage = responseData['message'] ?? 'Coupon verified successfully!';
+          dialogMessage =
+              responseData['message'] ?? 'Coupon verified successfully!';
           Fluttertoast.showToast(msg: dialogMessage);
           print('Coupon API Response: $responseData');
         } else if (response.statusCode == 401) {
@@ -100,7 +105,8 @@ class _QRScanScreenState extends State<QRScanScreen> {
           return;
         } else {
           var responseData = jsonDecode(response.body);
-          dialogMessage = responseData['message'] ??
+          dialogMessage =
+              responseData['message'] ??
               'Failed to verify coupon code: ${response.statusCode}';
           print('Coupon API Error: ${response.statusCode} - ${response.body}');
         }
@@ -108,20 +114,21 @@ class _QRScanScreenState extends State<QRScanScreen> {
         showDialog(
           context: screenContext,
           barrierDismissible: false,
-          builder: (dialogContext) => AlertDialog(
-            title: const Text('Coupon Code Verification'),
-            content: Text(dialogMessage),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  print('Dialog OK button pressed');
-                  Navigator.of(dialogContext).pop();
-                  Navigator.of(screenContext).pop();
-                },
-                child: const Text('OK'),
+          builder:
+              (dialogContext) => AlertDialog(
+                title: const Text('Coupon Code Verification'),
+                content: Text(dialogMessage),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      print('Dialog OK button pressed');
+                      Navigator.of(dialogContext).pop();
+                      Navigator.of(screenContext).pop();
+                    },
+                    child: const Text('OK'),
+                  ),
+                ],
               ),
-            ],
-          ),
         );
       } catch (e, stackTrace) {
         print('Error during coupon API call: $e\n$stackTrace');
@@ -129,28 +136,29 @@ class _QRScanScreenState extends State<QRScanScreen> {
         showDialog(
           context: screenContext,
           barrierDismissible: false,
-          builder: (dialogContext) => AlertDialog(
-            title: const Text('Error'),
-            content: Text('An error occurred: $e'),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(dialogContext).pop();
-                  setState(() {
-                    _isScanned = false;
-                  });
-                },
-                child: const Text('Retry'),
+          builder:
+              (dialogContext) => AlertDialog(
+                title: const Text('Error'),
+                content: Text('An error occurred: $e'),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(dialogContext).pop();
+                      setState(() {
+                        _isScanned = false;
+                      });
+                    },
+                    child: const Text('Retry'),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(dialogContext).pop();
+                      Navigator.of(screenContext).pop();
+                    },
+                    child: const Text('OK'),
+                  ),
+                ],
               ),
-              TextButton(
-                onPressed: () {
-                  Navigator.of(dialogContext).pop();
-                  Navigator.of(screenContext).pop();
-                },
-                child: const Text('OK'),
-              ),
-            ],
-          ),
         );
       }
     }
@@ -175,7 +183,9 @@ class _QRScanScreenState extends State<QRScanScreen> {
             if (match != null) {
               parsedRedeemId = match.group(0)!;
             } else {
-              throw FormatException('QR code does not contain a valid redeem ID');
+              throw FormatException(
+                'QR code does not contain a valid redeem ID',
+              );
             }
           }
           try {
@@ -183,7 +193,9 @@ class _QRScanScreenState extends State<QRScanScreen> {
             if (jsonData['redeemId'] != null) {
               parsedRedeemId = jsonData['redeemId'].toString();
               if (int.tryParse(parsedRedeemId) == null) {
-                throw FormatException('Redeem ID in JSON is not a valid number');
+                throw FormatException(
+                  'Redeem ID in JSON is not a valid number',
+                );
               }
             }
           } catch (_) {}
@@ -192,30 +204,35 @@ class _QRScanScreenState extends State<QRScanScreen> {
           showDialog(
             context: screenContext,
             barrierDismissible: false,
-            builder: (dialogContext) => AlertDialog(
-              title: const Text('Invalid QR Code'),
-              content: Text('The QR code does not contain a valid redeem ID: $e'),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(dialogContext).pop();
-                    setState(() {
-                      _isScanned = false;
-                      _scannerController.start();
-                    });
-                  },
-                  child: const Text('Retry'),
+            builder:
+                (dialogContext) => AlertDialog(
+                  title: const Text('Invalid QR Code'),
+                  content: Text(
+                    'The QR code does not contain a valid redeem ID: $e',
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(dialogContext).pop();
+                        setState(() {
+                          _isScanned = false;
+                          _scannerController.start();
+                        });
+                      },
+                      child: const Text('Retry'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(dialogContext).pop();
+                        Navigator.of(screenContext).pop();
+                      },
+                      child: const Text('OK'),
+                    ),
+                  ],
                 ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(dialogContext).pop();
-                    Navigator.of(screenContext).pop();
-                  },
-                  child: const Text('OK'),
-                ),
-              ],
-            ),
           );
+
           return;
         }
 
@@ -241,7 +258,8 @@ class _QRScanScreenState extends State<QRScanScreen> {
         String dialogMessage;
         if (response.statusCode == 200) {
           var responseData = jsonDecode(response.body);
-          dialogMessage = responseData['message'] ??
+          dialogMessage =
+              responseData['message'] ??
               'Voucher verified successfully for venue ID $venueId!';
           Fluttertoast.showToast(msg: dialogMessage);
           print('API Response: $responseData');
@@ -252,28 +270,48 @@ class _QRScanScreenState extends State<QRScanScreen> {
           return;
         } else {
           var responseData = jsonDecode(response.body);
-          dialogMessage = responseData['message'] ??
+          dialogMessage =
+              responseData['message'] ??
               'Failed to verify QR Code: ${response.statusCode}';
           print('API Error: ${response.statusCode} - ${response.body}');
         }
-
         showDialog(
           context: screenContext,
           barrierDismissible: false,
-          builder: (dialogContext) => AlertDialog(
-            title: const Text('QR Code Scanned'),
-            content: Text(dialogMessage),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  print('Dialog OK button pressed');
-                  Navigator.of(dialogContext).pop();
-                  Navigator.of(screenContext).pop();
-                },
-                child: const Text('OK'),
+          builder:
+              (dialogContext) => AlertDialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                title: const Text(
+                  'QR Code Scanned',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                content: Text(dialogMessage, textAlign: TextAlign.center),
+                contentPadding: const EdgeInsets.fromLTRB(
+                  24.0,
+                  20.0,
+                  24.0,
+                  0,
+                ), // Less bottom padding
+                actionsPadding: const EdgeInsets.only(
+                  right: 8.0,
+                  bottom: 8.0,
+                ), // Tighten button space
+                actionsAlignment:
+                    MainAxisAlignment.end, // Align button to the right
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      print('Dialog OK button pressed');
+                      Navigator.of(dialogContext).pop();
+                      Navigator.of(screenContext).pop();
+                    },
+                    child: const Text('OK'),
+                  ),
+                ],
               ),
-            ],
-          ),
         );
       } catch (e, stackTrace) {
         print('Error during API call or dialog: $e\n$stackTrace');
@@ -281,19 +319,23 @@ class _QRScanScreenState extends State<QRScanScreen> {
         showDialog(
           context: screenContext,
           barrierDismissible: false,
-          builder: (dialogContext) => AlertDialog(
-            title: const Text('Error'),
-            content: Text('An error occurred: $e'),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(dialogContext).pop();
-                  Navigator.of(screenContext).pop();
-                },
-                child: const Text('OK'),
+          builder:
+              (dialogContext) => AlertDialog(
+                title: const Text('Error'),
+                content: Text(
+                  'An error occurred: $e',
+                  style: TextStyle(color: Colors.red), // Display error in red
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(dialogContext).pop();
+                      Navigator.of(screenContext).pop();
+                    },
+                    child: const Text('OK'),
+                  ),
+                ],
               ),
-            ],
-          ),
         );
       }
     }
@@ -306,14 +348,18 @@ class _QRScanScreenState extends State<QRScanScreen> {
         backgroundColor: const Color(0xFF2A4CE1),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: _isLoading
-              ? null
-              : () {
-                  print('AppBar back button pressed');
-                  Navigator.pop(context);
-                },
+          onPressed:
+              _isLoading
+                  ? null
+                  : () {
+                    print('AppBar back button pressed');
+                    Navigator.pop(context);
+                  },
         ),
-        title: const Text('Scan QR Code', style: TextStyle(color: Colors.white)),
+        title: const Text(
+          'Scan QR Code',
+          style: TextStyle(color: Colors.white),
+        ),
         centerTitle: true,
       ),
       body: Stack(
@@ -325,7 +371,10 @@ class _QRScanScreenState extends State<QRScanScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 20),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 20,
+                    ),
                     child: Text(
                       'Please place the QR code within the frame or enter the coupon code below.',
                       textAlign: TextAlign.center,
@@ -341,37 +390,38 @@ class _QRScanScreenState extends State<QRScanScreen> {
                       children: [
                         ClipRRect(
                           borderRadius: BorderRadius.circular(5),
-                          child: _isPermissionGranted
-                              ? MobileScanner(
-                                  controller: _scannerController,
-                                  onDetect: (capture) {
-                                    if (!_isScanned) {
-                                      final barcodes = capture.barcodes;
-                                      if (barcodes.isNotEmpty) {
-                                        final qrCode =
-                                            barcodes.first.rawValue ?? '';
-                                        _handleScannedQRCode(qrCode, context);
+                          child:
+                              _isPermissionGranted
+                                  ? MobileScanner(
+                                    controller: _scannerController,
+                                    onDetect: (capture) {
+                                      if (!_isScanned) {
+                                        final barcodes = capture.barcodes;
+                                        if (barcodes.isNotEmpty) {
+                                          final qrCode =
+                                              barcodes.first.rawValue ?? '';
+                                          _handleScannedQRCode(qrCode, context);
+                                        }
                                       }
-                                    }
-                                  },
-                                )
-                              : Stack(
-                                  children: [
-                                    Container(
-                                      color: Colors.black.withOpacity(0.14),
-                                    ),
-                                    Container(
-                                      color: Colors.white10,
-                                      child: Center(
-                                        child: Image.asset(
-                                          'assets/Bird_Full_Eye_Blinking.gif',
-                                          width: 100,
-                                          height: 100,
+                                    },
+                                  )
+                                  : Stack(
+                                    children: [
+                                      Container(
+                                        color: Colors.black.withOpacity(0.14),
+                                      ),
+                                      Container(
+                                        color: Colors.white10,
+                                        child: Center(
+                                          child: Image.asset(
+                                            'assets/Bird_Full_Eye_Blinking.gif',
+                                            width: 100,
+                                            height: 100,
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                  ],
-                                ),
+                                    ],
+                                  ),
                         ),
                         Container(
                           width: 250,
@@ -389,7 +439,9 @@ class _QRScanScreenState extends State<QRScanScreen> {
                             height: 60,
                             padding: const EdgeInsets.all(1.0),
                             child: Image.asset(
-                                'assets/bird.png', fit: BoxFit.contain),
+                              'assets/bird.png',
+                              fit: BoxFit.contain,
+                            ),
                           ),
                         ),
                       ],
@@ -406,7 +458,7 @@ class _QRScanScreenState extends State<QRScanScreen> {
                   ),
                   const SizedBox(height: 10),
 
-                   const Text(
+                  const Text(
                     'OR ',
                     style: TextStyle(
                       color: Colors.white,
@@ -414,7 +466,7 @@ class _QRScanScreenState extends State<QRScanScreen> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                     const SizedBox(height: 10),
+                  const SizedBox(height: 10),
 
                   //          const Text(
                   //   'Enter Coupon Code',
@@ -426,51 +478,52 @@ class _QRScanScreenState extends State<QRScanScreen> {
                   // ),
                   //    const SizedBox(height: 20),
                   Container(
-  // color: Colors.white,
-  padding: const EdgeInsets.symmetric(horizontal: 48),
-  child: TextField(
-    controller: _couponController,
-    style: const TextStyle(color: Colors.black),
-    decoration: InputDecoration(
-      hintText: 'Enter Coupon Code',
-      hintStyle: const TextStyle(color: Colors.grey),
-      filled: true,
-      fillColor: Colors.white,
-      enabledBorder: OutlineInputBorder(
-        borderSide: const BorderSide(color: Colors.black),
-        borderRadius: BorderRadius.circular(5),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderSide: const BorderSide(color: Colors.black),
-        borderRadius: BorderRadius.circular(5),
-      ),
-    ),
-  ),
-),
+                    // color: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 48),
+                    child: TextField(
+                      controller: _couponController,
+                      style: const TextStyle(color: Colors.black),
+                      decoration: InputDecoration(
+                        hintText: 'Enter Coupon Code',
+                        hintStyle: const TextStyle(color: Colors.grey),
+                        filled: true,
+                        fillColor: Colors.white,
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: const BorderSide(color: Colors.black),
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: const BorderSide(color: Colors.black),
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                      ),
+                    ),
+                  ),
 
                   const SizedBox(height: 20),
                   ElevatedButton(
-                    onPressed: _isLoading
-                        ? null
-                        : () {
-                            final couponCode = _couponController.text.trim();
-                            if (couponCode.isEmpty) {
-                              Fluttertoast.showToast(
-                                  msg: 'Please enter a coupon code');
-                              return;
-                            }
-                            _verifyCouponCode(couponCode, context);
-                          },
+                    onPressed:
+                        _isLoading
+                            ? null
+                            : () {
+                              final couponCode = _couponController.text.trim();
+                              if (couponCode.isEmpty) {
+                                Fluttertoast.showToast(
+                                  msg: 'Please enter a coupon code',
+                                );
+                                return;
+                              }
+                              _verifyCouponCode(couponCode, context);
+                            },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color.fromRGBO(255, 130, 16, 1),
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 30, vertical: 15),
+                        horizontal: 30,
+                        vertical: 15,
+                      ),
                     ),
-                    child: const Text(
-                      'Submit',
-                      style: TextStyle(fontSize: 16),
-                    ),
+                    child: const Text('Submit', style: TextStyle(fontSize: 16)),
                   ),
                   const SizedBox(height: 40),
                 ],

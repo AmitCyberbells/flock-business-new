@@ -458,6 +458,7 @@ class AppConstants {
   }
 
   static Widget assignVenuesDropdown({
+    
     required List<dynamic> venueList,
     required List<String> selectedVenues,
     required ValueChanged<List<String>> onConfirm,
@@ -499,13 +500,19 @@ class AppConstants {
       ),
     );
   }
-
-  // Reusable Dropdown for assigning permissions.
-  static Widget assignPermissionsDropdown({
+static Widget assignPermissionsDropdown({
+    required BuildContext context, // Added context parameter
     required List<dynamic> permissionList,
     required List<String> selectedPermissions,
     required ValueChanged<List<String>> onConfirm,
+    String? mandatoryPermissionId = '2',
   }) {
+    // Ensure mandatoryPermissionId is included in initial selection
+    List<String> initialSelection = List.from(selectedPermissions);
+    if (mandatoryPermissionId != null && !initialSelection.contains(mandatoryPermissionId)) {
+      initialSelection.add(mandatoryPermissionId);
+    }
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -518,38 +525,174 @@ class AppConstants {
           ),
         ],
       ),
-      child: MultiSelectDialogField<String>(
-        items:
-            permissionList.map((permission) {
-              return MultiSelectItem<String>(
-                permission["id"].toString(),
-                permission["name"].toString(),
-              );
-            }).toList(),
-        initialValue: selectedPermissions,
-        onConfirm: onConfirm,
-        selectedColor: const Color.fromRGBO(255, 130, 16, 1),
-        chipDisplay: MultiSelectChipDisplay<String>(
-          chipColor: const Color.fromRGBO(255, 130, 16, 1),
-          textStyle: const TextStyle(color: Colors.white),
+      child: InkWell(
+        onTap: () {
+          _showPermissionsDialog(
+            context: context,
+            permissionList: permissionList,
+            selectedPermissions: initialSelection,
+            mandatoryPermissionId: mandatoryPermissionId,
+            onConfirm: (values) {
+              // Ensure mandatoryPermissionId is included in the confirmed list
+              List<String> confirmedValues = List.from(values);
+              if (mandatoryPermissionId != null && !confirmedValues.contains(mandatoryPermissionId)) {
+                confirmedValues.add(mandatoryPermissionId);
+              }
+              onConfirm(confirmedValues);
+            },
+          );
+        },
+        child: Column(
+          children: [
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    initialSelection.isEmpty
+                        ? 'Assign permissions'
+                        : '${initialSelection.length} selected',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                  Icon(Icons.arrow_drop_down, color: Colors.grey),
+                ],
+              ),
+            ),
+            MultiSelectChipDisplay<String>(
+              items: initialSelection.map((id) {
+                final permission = permissionList.firstWhere(
+                  (p) => p['id'].toString() == id,
+                  orElse: () => {'id': id, 'name': 'Unknown'},
+                );
+                return MultiSelectItem<String>(id, permission['name'].toString());
+              }).toList(),
+              chipColor: const Color.fromRGBO(255, 130, 16, 1),
+              textStyle: const TextStyle(color: Colors.white),
+              onTap: (value) {
+                if (value != mandatoryPermissionId) {
+                  initialSelection.remove(value);
+                  onConfirm(initialSelection);
+                }
+              },
+            ),
+          ],
         ),
-        buttonText: const Text(
-          "Assign permissions",
-          style: TextStyle(color: Colors.grey),
-        ),
-        decoration: BoxDecoration(borderRadius: BorderRadius.circular(10)),
-        buttonIcon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
-        title: const Text(
-          "Select Permissions",
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-        // Use itemBuilder if available in your version to reduce spacing
-        // Removed the unsupported 'itemBuilder' parameter and its code.
-        // Note: 'dialog' and 'listBuilder' are not supported in older versions
       ),
     );
   }
 
+  static void _showPermissionsDialog({
+    required BuildContext context,
+    required List<dynamic> permissionList,
+    required List<String> selectedPermissions,
+    required ValueChanged<List<String>> onConfirm,
+    String? mandatoryPermissionId,
+  }) {
+    List<String> tempSelected = List.from(selectedPermissions);
+    bool selectAll = permissionList.every((p) => tempSelected.contains(p['id'].toString()));
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            void updateSelectAll() {
+              selectAll = permissionList.every((p) => tempSelected.contains(p['id'].toString()));
+              setState(() {});
+            }
+
+            return AlertDialog(
+              title: Text(
+                'Select Permissions',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CheckboxListTile(
+                      title: Text('Select All'),
+                      value: selectAll,
+                      activeColor: const Color.fromRGBO(255, 130, 16, 1),
+                      onChanged: (value) {
+                        setState(() {
+                          if (value == true) {
+                            tempSelected = permissionList.map((p) => p['id'].toString()).toList();
+                          } else {
+                            tempSelected = mandatoryPermissionId != null
+                                ? [mandatoryPermissionId]
+                                : [];
+                          }
+                          selectAll = value ?? false;
+                        });
+                      },
+                    ),
+                    Divider(),
+                    Flexible(
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: permissionList.length,
+                        itemBuilder: (context, index) {
+                          final permission = permissionList[index];
+                          final permissionId = permission['id'].toString();
+                          final isMandatory = permissionId == mandatoryPermissionId;
+
+                          return CheckboxListTile(
+                            title: Text(permission['name'] ?? 'Permission $permissionId'),
+                            value: tempSelected.contains(permissionId),
+                            activeColor: const Color.fromRGBO(255, 130, 16, 1),
+                            onChanged: isMandatory
+                                ? null // Disable checkbox for mandatory permission
+                                : (value) {
+                                    setState(() {
+                                      if (value == true) {
+                                        if (!tempSelected.contains(permissionId)) {
+                                          tempSelected.add(permissionId);
+                                        }
+                                      } else {
+                                        tempSelected.remove(permissionId);
+                                      }
+                                      updateSelectAll();
+                                    });
+                                  },
+                            enabled: !isMandatory,
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    onConfirm(tempSelected);
+                    Navigator.pop(dialogContext);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color.fromRGBO(255, 130, 16, 1),
+                    foregroundColor: Colors.white,
+                  ),
+                  child: Text('Confirm'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+  
   // Reusable "Enter Venue Name" field
  static Widget customTextField({
     required TextEditingController controller,

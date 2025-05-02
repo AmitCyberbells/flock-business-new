@@ -103,7 +103,6 @@ void main() async {
 
   runApp(const MyApp());
 }
-
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -112,6 +111,13 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Flock Login',
+      builder: (context, child) {
+        final mediaQuery = MediaQuery.of(context);
+        return MediaQuery(
+          data: mediaQuery.copyWith(textScaleFactor: 1.0), // Prevent font scaling
+          child: child!,
+        );
+      },
       theme: ThemeData(
         primaryColor: const Color.fromRGBO(255, 130, 16, 1),
         textSelectionTheme: TextSelectionThemeData(
@@ -174,6 +180,7 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
 
 class LoadingScreen extends StatefulWidget {
   const LoadingScreen({super.key});

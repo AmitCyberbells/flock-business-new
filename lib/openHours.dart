@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-
 class OpenHoursScreen extends StatefulWidget {
   const OpenHoursScreen({Key? key}) : super(key: key);
 
@@ -16,7 +15,6 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
   List<Map<String, dynamic>> _venues = [];
   Map<String, dynamic>? _selectedVenue;
 
-  // _baseDays now includes an "updated" flag.
   final List<Map<String, dynamic>> _baseDays = [
     {
       "day": "Mon",
@@ -139,7 +137,6 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
       });
     }
 
-    // ✅ Auto-select the first venue
     if (_venues.isNotEmpty && _selectedVenue == null) {
       setState(() {
         _selectedVenue = _venues.first;
@@ -197,7 +194,8 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
             final localDay = dayMap[serverDay] ?? serverDay;
             final openTime = item['start_time'] ?? '00:00';
             final closeTime = item['end_time'] ?? '00:00';
-            bool isOpen = (openTime != '00:00' || closeTime != '00:00');
+            final status = item['status']?.toString();
+            bool isOpen = status == '1';
             final bool isUpdated = item['updated_at'] != null;
 
             final index = updatedDays.indexWhere((d) => d['day'] == localDay);
@@ -205,8 +203,8 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
               updatedDays[index] = {
                 "day": localDay,
                 "isOpen": isOpen,
-                "openTime": _convertTo12HrFormat(openTime),
-                "closeTime": _convertTo12HrFormat(closeTime),
+                "openTime": isOpen ? _convertTo12HrFormat(openTime) : "12:00 AM",
+                "closeTime": isOpen ? _convertTo12HrFormat(closeTime) : "12:00 AM",
                 "updated": isUpdated,
               };
             }
@@ -275,9 +273,8 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
     for (int i = 0; i < _days.length; i++) {
       final d = _days[i];
       final String serverDay = dayMap[d["day"]] ?? d["day"];
-      final String openT = d["isOpen"] ? d["openTime"].toString() : "12:00 AM";
-      final String closeT =
-          d["isOpen"] ? d["closeTime"].toString() : "12:00 AM";
+      final String openT = d["isOpen"] ? d["openTime"].toString() : "00:00";
+      final String closeT = d["isOpen"] ? d["closeTime"].toString() : "00:00";
       final String status = d["isOpen"] ? "1" : "0";
 
       request.fields['opening_hours[$i][day]'] = serverDay;
@@ -304,6 +301,13 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
               content: Text(data['message'] ?? 'Hours updated successfully!'),
             ),
           );
+          setState(() {
+            for (var day in _days) {
+              if (day['isOpen']) {
+                day['updated'] = true;
+              }
+            }
+          });
         } else {
           setState(() {
             _errorMessage = data['message'] ?? 'Failed to update hours.';
@@ -327,6 +331,9 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
       if (time24.toLowerCase().contains('am') ||
           time24.toLowerCase().contains('pm')) {
         return time24;
+      }
+      if (time24 == "00:00") {
+        return "12:00 AM";
       }
       final parts = time24.split(":");
       int hour = int.parse(parts[0]);
@@ -352,7 +359,6 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
             child: SingleChildScrollView(
               child: Column(
                 children: [
-                  // Top bar
                   Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16.0,
@@ -367,7 +373,6 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
                             height: 40,
                             width: 34,
                             fit: BoxFit.contain,
-                            // color: const Color.fromRGBO(255, 130, 16, 1.0), // Orange tint
                           ),
                         ),
                         const Expanded(
@@ -387,7 +392,6 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  // Venue dropdown
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: InkWell(
@@ -429,8 +433,6 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
                       ),
                     ),
                   ),
-
-                  // Error message
                   if (_errorMessage.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -444,7 +446,6 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
                         ),
                       ),
                     ),
-                  // List of days
                   SizedBox(
                     height: 520,
                     child: ListView.builder(
@@ -455,7 +456,6 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
                       },
                     ),
                   ),
-                  // Save button
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: SizedBox(
@@ -485,22 +485,16 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
               ),
             ),
           ),
-          // Loading overlay
           if (_isLoading)
             Stack(
               children: [
-                // Semi-transparent dark overlay
-                Container(
-                  color: Colors.black.withOpacity(0.14), // Dark overlay
-                ),
-
-                // Your original container with white tint and loader
+                Container(color: Colors.black.withOpacity(0.14)),
                 Container(
                   color: Colors.white10,
                   child: Center(
                     child: Image.asset(
                       'assets/Bird_Full_Eye_Blinking.gif',
-                      width: 100, // Adjust size as needed
+                      width: 100,
                       height: 100,
                     ),
                   ),
@@ -540,10 +534,9 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
                     Navigator.pop(context);
                   },
                   child: Container(
-                    color:
-                        isSelected
-                            ? Design.primaryColorOrange.withOpacity(0.1)
-                            : Colors.transparent,
+                    color: isSelected
+                        ? const Color.fromRGBO(255, 130, 16, 1).withOpacity(0.1)
+                        : Colors.transparent,
                     padding: const EdgeInsets.symmetric(
                       vertical: 10,
                       horizontal: 8,
@@ -585,33 +578,46 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
           border: Border.all(color: Colors.grey.shade300),
         ),
         margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Row(
           children: [
             SizedBox(
               width: 40,
-              child: Text(dayInfo["day"], style: const TextStyle(fontSize: 16)),
+              child: Text(
+                dayInfo["day"],
+                style: const TextStyle(fontSize: 16),
+              ),
             ),
             SizedBox(
               width: 60,
-              child: Container(
-                alignment: Alignment.center,
-                child: Switch(
-                  value: dayInfo["isOpen"],
-                  activeColor:
-                      dayInfo["updated"] == true
-                          ? Colors.green
-                          : const Color.fromRGBO(255, 130, 16, 1),
-                  onChanged: (value) {
-                    setState(() {
-                      _days[index]["isOpen"] = value;
-                      if (!value) {
-                        _days[index]["openTime"] = "12:00 AM";
-                        _days[index]["closeTime"] = "12:00 AM";
-                      }
-                      _days[index]["updated"] = false;
-                    });
-                  },
+              child: GestureDetector(
+             onTap: () {
+  setState(() {
+    _days[index]["isOpen"] = !_days[index]["isOpen"];
+    if (!_days[index]["isOpen"]) {
+      _days[index]["updated"] = false;
+    }
+  });
+},
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: dayInfo["isOpen"]
+                        ? (dayInfo["updated"]
+                            ? Colors.green
+                            : const Color.fromRGBO(255, 130, 16, 1))
+                        : Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    dayInfo["isOpen"] ? "On" : "Off",
+                    style: TextStyle(
+                      color: dayInfo["isOpen"] ? Colors.white : Colors.black54,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
               ),
             ),
@@ -634,11 +640,13 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
             IconButton(
               icon: const Icon(
                 Icons.access_time,
-                color: const Color.fromRGBO(255, 130, 16, 1),
+                color: Color.fromRGBO(255, 130, 16, 1),
               ),
-              onPressed: () {
-                _showDayDialog(dayInfo["day"], index);
-              },
+              onPressed: dayInfo["isOpen"]
+                  ? () {
+                      _showDayDialog(dayInfo["day"], index);
+                    }
+                  : null,
             ),
           ],
         ),
@@ -668,9 +676,8 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
                         initialEntryMode: TimePickerEntryMode.input,
                         builder: (BuildContext context, Widget? child) {
                           return MediaQuery(
-                            data: MediaQuery.of(
-                              context,
-                            ).copyWith(alwaysUse24HourFormat: false),
+                            data: MediaQuery.of(context)
+                                .copyWith(alwaysUse24HourFormat: false),
                             child: child!,
                           );
                         },
@@ -698,9 +705,8 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
                         initialEntryMode: TimePickerEntryMode.input,
                         builder: (BuildContext context, Widget? child) {
                           return MediaQuery(
-                            data: MediaQuery.of(
-                              context,
-                            ).copyWith(alwaysUse24HourFormat: false),
+                            data: MediaQuery.of(context)
+                                .copyWith(alwaysUse24HourFormat: false),
                             child: child!,
                           );
                         },
@@ -765,13 +771,13 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
             _days[i]["openTime"] = result['tempOpen'];
             _days[i]["closeTime"] = result['tempClose'];
             _days[i]["isOpen"] = true;
-            _days[i]["updated"] = true;
+            _days[i]["updated"] = false;
           }
         } else {
           _days[index]["openTime"] = result['tempOpen'];
           _days[index]["closeTime"] = result['tempClose'];
           _days[index]["isOpen"] = true;
-          _days[index]["updated"] = true;
+          _days[index]["updated"] = false;
         }
       });
     }
@@ -796,8 +802,8 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
     final hour = time.hourOfPeriod;
     final minute = time.minute;
     final period = time.period == DayPeriod.am ? 'AM' : 'PM';
-    final hourStr = hour.toString().padLeft(2, '0');
-    final minStr = minute.toString().padLeft(2, '0');
+    final hourStr = time.hourOfPeriod.toString().padLeft(2, '0');
+    final minStr = time.minute.toString().padLeft(2, '0');
     return '$hourStr:$minStr $period';
   }
 }

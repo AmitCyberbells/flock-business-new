@@ -24,6 +24,7 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
   final _venuePointsController   = TextEditingController();
   final _appPointsController     = TextEditingController();
   final _redemptionLimitController = TextEditingController();
+  bool _venueValidationError = false;
 
   /* ---------------- page state ---------------- */
   List<Map<String, dynamic>> _venues = [
@@ -122,6 +123,8 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
     final name        = _nameController.text.trim();
     final desc        = _descriptionController.text.trim();
     final limitRaw    = _redemptionLimitController.text.trim();
+    
+
 
     /* redemption-limit → int */
     int redemptionLimit = -1;
@@ -134,10 +137,18 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
     }
 
     /* venue selection */
-    if (_selectedVenue == null || _selectedVenue!['id'] == null) {
-      _errorMessage = 'Please select a valid venue.';
-      _scrollToError(); return;
-    }
+if (_selectedVenue == null || _selectedVenue!['id'] == null) {
+  setState(() {
+    _venueValidationError = true;
+    _errorMessage = '';
+  });
+  _scrollToError(); return;
+} else {
+  setState(() {
+    _venueValidationError = false;
+  });
+}
+
 
     /* at least one redeem type */
     if (!_useVenuePoints && !_useAppPoints) {
@@ -303,41 +314,69 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
   );
 
   /* -------- Dropdown, checkboxes, inputs (unchanged except free-offer commented) ------- */
-
-  Widget _buildVenueDropdown() => Container(
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(10),
-      border: Border.all(color: Colors.grey.shade300),
-      boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.1), spreadRadius: 1, blurRadius: 2, offset: const Offset(0, 1))],
-    ),
-    child: _isVenuesLoading
-        ? Padding(
-            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-            child: Row(children: [
-              const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2)),
-              const SizedBox(width: 8),
-              const Text('Loading venues...', style: TextStyle(color: Colors.grey, fontSize: 14)),
-            ]),
-          )
-        : DropdownButtonHideUnderline(
-            child: ButtonTheme(
-              alignedDropdown: true,
-              child: DropdownButton<Map<String, dynamic>>(
-                value: _selectedVenue,
-                isExpanded: true,
-                icon: Icon(Icons.keyboard_arrow_down, color: Design.primaryColorOrange),
-                items: _venues
-                    .map((v) => DropdownMenuItem<Map<String, dynamic>>(
-                          value: v,
-                          child: Text(v['name'] ?? 'Unnamed', style: const TextStyle(fontSize: 14)),
-                        ))
-                    .toList(),
-                onChanged: (v) => setState(() => _selectedVenue = v),
+Widget _buildVenueDropdown() => Column(
+  crossAxisAlignment: CrossAxisAlignment.start,
+  children: [
+    Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: _venueValidationError ? Colors.red : Colors.grey.shade300,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 2,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: _isVenuesLoading
+          ? Padding(
+              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+              child: Row(
+                children: [
+                  const SizedBox(
+                      height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+                  const SizedBox(width: 8),
+                  const Text('Loading venues...', style: TextStyle(color: Colors.grey, fontSize: 14)),
+                ],
+              ),
+            )
+          : DropdownButtonHideUnderline(
+              child: ButtonTheme(
+                alignedDropdown: true,
+                child: DropdownButton<Map<String, dynamic>>(
+                  value: _selectedVenue,
+                  isExpanded: true,
+                  icon: Icon(Icons.keyboard_arrow_down, color: Design.primaryColorOrange),
+                  items: _venues
+                      .map((v) => DropdownMenuItem<Map<String, dynamic>>(
+                            value: v,
+                            child: Text(v['name'] ?? 'Unnamed', style: const TextStyle(fontSize: 14)),
+                          ))
+                      .toList(),
+                  onChanged: (v) => setState(() {
+                    _selectedVenue = v;
+                    _venueValidationError = false;
+                  }),
+                ),
               ),
             ),
-          ),
-  );
+    ),
+    if (_venueValidationError)
+      const Padding(
+        padding: EdgeInsets.only(top: 6, left: 8),
+        child: Text(
+          'Please select a valid venue.',
+          style: TextStyle(color: Colors.red, fontSize: 12),
+        ),
+      ),
+  ],
+);
+
 
   Widget _buildRedeemTypeRow() {
     Color _label(bool enabled) => enabled ? Colors.black : Colors.grey.shade500;
