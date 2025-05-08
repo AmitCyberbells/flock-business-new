@@ -13,7 +13,8 @@ class NewPasswordScreen extends StatefulWidget {
 
 class _NewPasswordScreenState extends State<NewPasswordScreen> {
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
@@ -28,20 +29,17 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
       return;
     }
     if (password != confirmPassword) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Passwords do not match')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Passwords do not match')));
       return;
     }
 
     try {
       final response = await http.post(
-        Uri.parse('http://165.232.152.77/api/vendor/reset-password'),
+        Uri.parse('https://api.getflock.io/api/vendor/reset-password'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': widget.email,
-          'password': password,
-        }),
+        body: jsonEncode({'email': widget.email, 'password': password}),
       );
 
       if (response.statusCode == 200) {
@@ -55,9 +53,9 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('An error occurred')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('An error occurred')));
     }
   }
 

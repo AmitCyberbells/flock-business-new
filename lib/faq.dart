@@ -41,7 +41,7 @@ class _FaqScreenState extends State<FaqScreen> {
       return;
     }
 
-    final url = Uri.parse('http://165.232.152.77/api/vendor/faqs');
+    final url = Uri.parse('https://api.getflock.io/api/vendor/faqs');
 
     try {
       final response = await http.get(
@@ -91,12 +91,12 @@ class _FaqScreenState extends State<FaqScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-       appBar: AppConstants.customAppBar(
-    context: context,
-    title: 'FAQs',
-    // Optionally, if you want a different back icon, you can pass:
-    // backIconAsset: 'assets/your_custom_back.png',
-  ),// 'b
+      appBar: AppConstants.customAppBar(
+        context: context,
+        title: 'FAQs',
+        // Optionally, if you want a different back icon, you can pass:
+        // backIconAsset: 'assets/your_custom_back.png',
+      ), // 'b
       body: Padding(
         padding: const EdgeInsets.all(10.0),
         child: Column(
@@ -108,117 +108,119 @@ class _FaqScreenState extends State<FaqScreen> {
             ),
             SizedBox(height: 15),
             Expanded(
-              child: isLoading
-                  ?      Stack(
-  children: [
-    // Semi-transparent dark overlay
-    Container(
-      color: Colors.black.withOpacity(0.14), // Dark overlay
-    ),
-
-    // Your original container with white tint and loader
-    Container(
-      color: Colors.white10,
-      child: Center(
-        child: Image.asset(
-          'assets/Bird_Full_Eye_Blinking.gif',
-          width: 100, // Adjust size as needed
-          height: 100,
-        ),
-      ),
-    ),
-  ],
-)
-
-                  : errorMessage.isNotEmpty
-                      ? Center(
-                          child: Text(
-                            errorMessage,
-                            style: TextStyle(color: Colors.red, fontSize: 16),
+              child:
+                  isLoading
+                      ? Stack(
+                        children: [
+                          // Semi-transparent dark overlay
+                          Container(
+                            color: Colors.black.withOpacity(
+                              0.14,
+                            ), // Dark overlay
                           ),
-                        )
-                      : faqList.isNotEmpty
-                          ? ListView.builder(
-                              itemCount: faqList.length,
-                              itemBuilder: (context, index) {
-                                final item = faqList[index];
-                                final isActive = (activeFaq == item['id']);
-                                return Container(
-                                  margin: const EdgeInsets.only(bottom: 10),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(10),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.grey.withOpacity(0.3),
-                                        spreadRadius: 1,
-                                        blurRadius: 4,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Column(
-                                    children: [
-                                      GestureDetector(
-                                        onTap: () => toggleFaq(item['id']),
-                                        child: Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 15, vertical: 15),
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Expanded(
-                                                child: Text(
-                                                  item['question'] ?? '',
-                                                  style: const TextStyle(
-                                                  
-                                                    fontSize: 16,
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                                ),
-                                              ),
-                                              Icon(
-                                                isActive
-                                                    ? Icons.keyboard_arrow_up
-                                                    : Icons.keyboard_arrow_down,
-                                                size: 24,
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                      if (isActive)
-                                        Container(
-                                          width: double.infinity,
-                                          padding: const EdgeInsets.all(15),
-                                          decoration: BoxDecoration(
-                                            color: Colors.grey.shade100,
-                                            borderRadius:
-                                                const BorderRadius.only(
-                                              bottomLeft: Radius.circular(10),
-                                              bottomRight: Radius.circular(10),
-                                            ),
-                                          ),
-                                          child: Text(
-                                            item['answer'] ?? '',
-                                            style: const TextStyle(
-                                              fontSize: 14,
-                                              height: 1.4,
-                                            ),
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            )
-                          : Center(
-                              child: Text(
-                                'No record found!',
-                                style: TextStyle(fontSize: 16),
+
+                          // Your original container with white tint and loader
+                          Container(
+                            color: Colors.white10,
+                            child: Center(
+                              child: Image.asset(
+                                'assets/Bird_Full_Eye_Blinking.gif',
+                                width: 100, // Adjust size as needed
+                                height: 100,
                               ),
                             ),
+                          ),
+                        ],
+                      )
+                      : errorMessage.isNotEmpty
+                      ? Center(
+                        child: Text(
+                          errorMessage,
+                          style: TextStyle(color: Colors.red, fontSize: 16),
+                        ),
+                      )
+                      : faqList.isNotEmpty
+                      ? ListView.builder(
+                        itemCount: faqList.length,
+                        itemBuilder: (context, index) {
+                          final item = faqList[index];
+                          final isActive = (activeFaq == item['id']);
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 10),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.grey.withOpacity(0.3),
+                                  spreadRadius: 1,
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              children: [
+                                GestureDetector(
+                                  onTap: () => toggleFaq(item['id']),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 15,
+                                      vertical: 15,
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            item['question'] ?? '',
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ),
+                                        Icon(
+                                          isActive
+                                              ? Icons.keyboard_arrow_up
+                                              : Icons.keyboard_arrow_down,
+                                          size: 24,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                if (isActive)
+                                  Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.all(15),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.shade100,
+                                      borderRadius: const BorderRadius.only(
+                                        bottomLeft: Radius.circular(10),
+                                        bottomRight: Radius.circular(10),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      item['answer'] ?? '',
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        height: 1.4,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          );
+                        },
+                      )
+                      : Center(
+                        child: Text(
+                          'No record found!',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                      ),
             ),
           ],
         ),

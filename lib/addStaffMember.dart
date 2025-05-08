@@ -1,4 +1,3 @@
-
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
@@ -41,7 +40,8 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
       _emailController.text = widget.existingMember!['email'] ?? '';
       _phoneController.text = widget.existingMember!['phone'] ?? '';
       _selectedVenues = widget.existingMember!['venue']?.split(',') ?? [];
-      _selectedPermissions = widget.existingMember!['permission']?.split(',') ?? [];
+      _selectedPermissions =
+          widget.existingMember!['permission']?.split(',') ?? [];
       // Ensure id=2 is included for existing member
       if (!_selectedPermissions.contains('2')) {
         _selectedPermissions.add('2');
@@ -60,7 +60,7 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
 
     try {
       final venueResponse = await dio.get(
-        'http://165.232.152.77/api/vendor/venues',
+        'https://api.getflock.io/api/vendor/venues',
         options: Options(
           headers: {
             'Authorization': 'Bearer $token',
@@ -79,7 +79,7 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
 
     try {
       final permissionResponse = await dio.get(
-        'http://165.232.152.77/api/vendor/permissions',
+        'https://api.getflock.io/api/vendor/permissions',
         options: Options(
           headers: {
             'Authorization': 'Bearer $token',
@@ -125,7 +125,7 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
 
     // Validate venue selection
     if (_selectedVenues.isEmpty) {
-      _showError('Please Assign Venue');
+      _showError('Please Aassign Venue');
       return;
     }
 
@@ -169,8 +169,8 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
       final dio = Dio();
       final String url =
           widget.existingMember != null && widget.existingMember!['id'] != null
-              ? "http://165.232.152.77/api/vendor/teams/${widget.existingMember!['id']}"
-              : "http://165.232.152.77/api/vendor/teams";
+              ? "https://api.getflock.io/api/vendor/teams/${widget.existingMember!['id']}"
+              : "https://api.getflock.io/api/vendor/teams";
 
       final response = await dio.post(
         url,
@@ -213,7 +213,9 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
 
   void _showError(String message) {
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
     }
   }
 
@@ -221,10 +223,7 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppConstants.customAppBar(
-        context: context,
-        title: 'Add Member',
-      ),
+      appBar: AppConstants.customAppBar(context: context, title: 'Add Member'),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16),
         child: Column(
@@ -239,9 +238,10 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
                     backgroundColor: Colors.grey[300],
                     backgroundImage:
                         _pickedImage != null ? FileImage(_pickedImage!) : null,
-                    child: _pickedImage == null
-                        ? Icon(Icons.person, size: 60, color: Colors.grey)
-                        : null,
+                    child:
+                        _pickedImage == null
+                            ? Icon(Icons.person, size: 60, color: Colors.grey)
+                            : null,
                   ),
                   Positioned(
                     bottom: -10,
@@ -316,7 +316,8 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
                     _selectedPermissions.add('2');
                   }
                 });
-              }, context: context,
+              },
+              context: context,
             ),
             const SizedBox(height: 40),
             AppConstants.fullWidthButton(

@@ -15,7 +15,7 @@ class OtpVerificationScreen1 extends StatefulWidget {
 
 class _OtpVerificationScreen1State extends State<OtpVerificationScreen1> {
   final TextEditingController _otpController = TextEditingController();
-  final String _otpUrl = 'http://165.232.152.77/api/vendor/otp-login';
+  final String _otpUrl = 'https://api.getflock.io/api/vendor/otp-login';
 
   @override
   void dispose() {

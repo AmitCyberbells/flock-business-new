@@ -150,7 +150,7 @@ class _TabDashboardState extends State<TabDashboard>
       if (mounted) setState(() => loader = false);
       return;
     }
-    final url = Uri.parse("http://165.232.152.77/api/vendor/dashboard");
+    final url = Uri.parse("https://api.getflock.io/api/vendor/dashboard");
     try {
       final response = await http.get(
         url,
@@ -185,7 +185,7 @@ class _TabDashboardState extends State<TabDashboard>
                   '${int.tryParse(data['venues_count']?.toString() ?? '0') ?? 0}';
 
               hotelList[3]['points'] =
-                    '${int.tryParse(data['history_number']?.toString() ?? '0') ?? 0}';
+                  '${int.tryParse(data['history_number']?.toString() ?? '0') ?? 0}';
             });
           }
         } else {
@@ -216,7 +216,7 @@ class _TabDashboardState extends State<TabDashboard>
       });
       return;
     }
-    final url = Uri.parse("http://165.232.152.77/api/vendor/venues");
+    final url = Uri.parse("https://api.getflock.io/api/vendor/venues");
     try {
       final response = await http.get(
         url,
@@ -365,28 +365,25 @@ class _TabDashboardState extends State<TabDashboard>
     }
   }
 
-Future<void> _navigateToQRScanScreen(String venueId) async {
-  final prefs = await SharedPreferences.getInstance();
-  String? token = prefs.getString('access_token');
-  if (token == null) {
-    Fluttertoast.showToast(msg: 'No token found. Please log in.');
-    return;
-  }
-
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => QRScanScreen(
-        venueId: venueId,
-        token: token,
-      ),
-    ),
-  ).then((qrCode) {
-    if (qrCode != null) {
-      _handleScannedQRCode(qrCode, venueId);
+  Future<void> _navigateToQRScanScreen(String venueId) async {
+    final prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('access_token');
+    if (token == null) {
+      Fluttertoast.showToast(msg: 'No token found. Please log in.');
+      return;
     }
-  });
-}
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => QRScanScreen(venueId: venueId, token: token),
+      ),
+    ).then((qrCode) {
+      if (qrCode != null) {
+        _handleScannedQRCode(qrCode, venueId);
+      }
+    });
+  }
 
   // void _handleScannedQRCode(String qrCode, String venueId) {
   //   Fluttertoast.showToast(
@@ -406,7 +403,7 @@ Future<void> _navigateToQRScanScreen(String venueId) async {
     final token = await SharedPreferences.getInstance().then(
       (prefs) => prefs.getString('access_token'),
     );
-    final url = Uri.parse("http://165.232.152.77/api/vendor/verify-voucher");
+    final url = Uri.parse("https://api.getflock.io/api/vendor/verify-voucher");
     try {
       final response = await http.post(
         url,
@@ -422,7 +419,7 @@ Future<void> _navigateToQRScanScreen(String venueId) async {
       } else {
         Fluttertoast.showToast(
           // msg: 'Error verifying voucher: ${response.statusCode}',
-           msg: 'Error verifying voucher',
+          msg: 'Error verifying voucher',
         );
       }
     } catch (e) {
@@ -571,6 +568,7 @@ Future<void> _navigateToQRScanScreen(String venueId) async {
   /// Updated venue list with QR Codes method (includes the custom dropdown)
   ///
   /// Updated venue list with QR Codes method (includes the custom dropdown)
+
   Widget venueListWithQRCodes() {
     if (!hasPermission('verify_voucher')) {
       return const SizedBox.shrink();

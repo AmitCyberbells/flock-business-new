@@ -12,19 +12,31 @@ class DeleteAccountScreen extends StatefulWidget {
 }
 
 class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
-  final TextEditingController _nameController = TextEditingController(
-    text: "Amit Kumar",
-  );
-  final TextEditingController _emailController = TextEditingController(
-    text: "iitianamit2019@gmail.com",
-  );
-  final TextEditingController _phoneController = TextEditingController(
-    text: "0987654321",
-  );
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _reasonController = TextEditingController();
 
   bool _isDeleting = false;
   String _errorMessage = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserDetails(); // Load user details when the screen initializes
+  }
+
+  /// Retrieve user details from SharedPreferences
+  Future<void> _loadUserDetails() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      String firstName = prefs.getString('firstName') ?? '';
+      String lastName = prefs.getString('lastName') ?? '';
+      _nameController.text = '$firstName $lastName'.trim(); // Combine names
+      _emailController.text = prefs.getString('email') ?? '';
+      _phoneController.text = prefs.getString('phone') ?? '';
+    });
+  }
 
   /// Retrieve token from SharedPreferences
   Future<String?> _getToken() async {
@@ -38,9 +50,8 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
     final String email = _emailController.text.trim();
     final String phone = _phoneController.text.trim();
     final String reason = _reasonController.text.trim();
-
-    if (name.isEmpty || email.isEmpty || phone.isEmpty || reason.isEmpty) {
-      Fluttertoast.showToast(msg: "Please fill all fields");
+    if (name.isEmpty || email.isEmpty || reason.isEmpty) {
+      Fluttertoast.showToast(msg: 'Please fill name, email, and reason fields');
       return;
     }
 
@@ -54,26 +65,25 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
       setState(() {
         _isDeleting = false;
       });
-      Fluttertoast.showToast(msg: "No token found. Please login again.");
+      Fluttertoast.showToast(msg: 'No token found. Please login again.');
       return;
     }
 
-    final url = Uri.parse("http://165.232.152.77/api/vendor/profile/delete");
+    final url = Uri.parse('https://api.getflock.io/api/vendor/profile/delete');
 
-    // Adjust keys if your backend expects different field names
     final body = {
-      "name": name,
-      "email": email,
-      "phone": phone,
-      "reason": reason,
+      'name': name,
+      'email': email,
+      if (phone.isNotEmpty) 'phone': phone, // Include phone only if provided
+      'reason': reason,
     };
 
     try {
       final response = await http.post(
         url,
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $token",
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
         },
         body: jsonEncode(body),
       );
@@ -85,12 +95,9 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['status'] == 'success') {
-          // If your API always returns status = 'success' on a successful delete
           Fluttertoast.showToast(msg: data['message'] ?? 'Account deleted.');
-          // Possibly log out the user or pop to login
-          Navigator.pop(context);
+          if (mounted) Navigator.pop(context);
         } else {
-          // Show message from server
           Fluttertoast.showToast(msg: data['message'] ?? 'Delete failed.');
         }
       } else {
@@ -100,8 +107,8 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
       setState(() {
         _isDeleting = false;
       });
-      Fluttertoast.showToast(msg: "An error occurred. Please try again.");
-      debugPrint("Delete account error: $e");
+      Fluttertoast.showToast(msg: 'An error occurred. Please try again.');
+      debugPrint('Delete account error: $e');
     }
   }
 
@@ -113,7 +120,6 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
         children: [
           SafeArea(
             child: SingleChildScrollView(
-              // Allows scrolling if needed
               child: Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
@@ -122,18 +128,16 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Top bar with back arrow and title
                     Row(
                       children: [
                         InkWell(
                           onTap: () => Navigator.of(context).pop(),
-                            child: Image.asset(
-    'assets/back_updated.png',
-    height: 40,
-    width: 34,
-    fit: BoxFit.contain,
-    // color: const Color.fromRGBO(255, 130, 16, 1.0), // Orange tint
-  ),
+                          child: Image.asset(
+                            'assets/back_updated.png',
+                            height: 40,
+                            width: 34,
+                            fit: BoxFit.contain,
+                          ),
                         ),
                         const Expanded(
                           child: Center(
@@ -152,16 +156,16 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Show error if any
                     if (_errorMessage.isNotEmpty)
                       Text(
                         _errorMessage,
                         style: const TextStyle(color: Colors.red),
                       ),
 
-                    // Name field
+                    // Name field (read-only)
                     TextField(
                       controller: _nameController,
+                      readOnly: true, // Make field read-only
                       decoration: InputDecoration(
                         hintText: "Name",
                         hintStyle: const TextStyle(fontSize: 16),
@@ -176,9 +180,10 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                     ),
                     const SizedBox(height: 15),
 
-                    // Email field
+                    // Email field (read-only)
                     TextField(
                       controller: _emailController,
+                      readOnly: true, // Make field read-only
                       decoration: InputDecoration(
                         hintText: "Email",
                         hintStyle: const TextStyle(fontSize: 16),
@@ -193,11 +198,12 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                     ),
                     const SizedBox(height: 15),
 
-                    // Phone field
+                    // Phone field (read-only)
                     TextField(
                       controller: _phoneController,
+                      readOnly: true, // Make field read-only
                       decoration: InputDecoration(
-                        hintText: "Phone Number",
+                        hintText: "Phone Number(Optional)",
                         hintStyle: const TextStyle(fontSize: 16),
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16,
@@ -210,7 +216,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                     ),
                     const SizedBox(height: 15),
 
-                    // Reason to delete (multiline)
+                    // Reason to delete (editable)
                     TextField(
                       controller: _reasonController,
                       maxLines: 5,
@@ -232,7 +238,12 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                       child: ElevatedButton(
                         onPressed: _deleteAccount,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color.fromRGBO(255, 130, 16, 1),
+                          backgroundColor: const Color.fromRGBO(
+                            255,
+                            130,
+                            16,
+                            1,
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -252,28 +263,32 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
 
           // Loading overlay
           if (_isDeleting)
-                 Stack(
-  children: [
-    // Semi-transparent dark overlay
-    Container(
-      color: Colors.black.withOpacity(0.14), // Dark overlay
-    ),
-
-    // Your original container with white tint and loader
-    Container(
-      color: Colors.white10,
-      child: Center(
-        child: Image.asset(
-          'assets/Bird_Full_Eye_Blinking.gif',
-          width: 100, // Adjust size as needed
-          height: 100,
-        ),
-      ),
-    ),
-  ],
-)
+            Stack(
+              children: [
+                Container(color: Colors.black.withOpacity(0.14)),
+                Container(
+                  color: Colors.white10,
+                  child: Center(
+                    child: Image.asset(
+                      'assets/Bird_Full_Eye_Blinking.gif',
+                      width: 100,
+                      height: 100,
+                    ),
+                  ),
+                ),
+              ],
+            ),
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    _reasonController.dispose();
+    super.dispose();
   }
 }

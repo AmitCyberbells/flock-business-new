@@ -21,8 +21,9 @@ class _LoginScreenState extends State<LoginScreen> {
   String? _emailError;
   String? _passwordError;
 
-  final String _loginUrl = 'http://165.232.152.77/api/vendor/login';
-  final String _deviceUpdateUrl = 'http://165.232.152.77/api/vendor/devices/update';
+  final String _loginUrl = 'https://api.getflock.io/api/vendor/login';
+  final String _deviceUpdateUrl =
+      'https://api.getflock.io/api/vendor/devices/update';
 
   @override
   void dispose() {
@@ -117,7 +118,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (response.statusCode == 200) {
         if (responseData['message'] != null &&
-            responseData['message'].toString().toLowerCase().contains('success')) {
+            responseData['message'].toString().toLowerCase().contains(
+              'success',
+            )) {
           final token = responseData['data']['access_token'];
 
           String? userId;
@@ -125,13 +128,20 @@ class _LoginScreenState extends State<LoginScreen> {
           String? fName;
           String? lName;
 
-          if (responseData['data'] != null && responseData['data']['user'] != null) {
+          if (responseData['data'] != null &&
+              responseData['data']['user'] != null) {
             userId = responseData['data']['user']['id']?.toString();
             userEmail = responseData['data']['user']['email']?.toString();
             fName = responseData['data']['user']['first_name']?.toString();
             lName = responseData['data']['user']['last_name']?.toString();
+
+            print('First name from API: $fName');
+            print('Last name from API: $lName');
+            print('User details: ${responseData['data']['user']}');
           } else {
-            userId = responseData['userId']?.toString() ?? responseData['vendor_id']?.toString();
+            userId =
+                responseData['userId']?.toString() ??
+                responseData['vendor_id']?.toString();
           }
 
           SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -142,16 +152,23 @@ class _LoginScreenState extends State<LoginScreen> {
           if (fName != null) await prefs.setString('firstName', fName);
           if (lName != null) await prefs.setString('lastName', lName);
 
+          print('Stored firstName: ${prefs.getString('firstName')}');
+          print('Stored lastName: ${prefs.getString('lastName')}');
+
           // Call API to update device token after successful login
           await _updateDeviceToken(token);
 
           Navigator.pushReplacementNamed(context, '/home');
         } else {
-          _showError(responseData['message'] ?? 'Please check your email or password');
+          _showError(
+            responseData['message'] ?? 'Please check your email or password',
+          );
         }
       } else {
         if (response.statusCode == 401) {
-          _showError('Invalid credentials. Please check your email or password.');
+          _showError(
+            'Invalid credentials. Please check your email or password.',
+          );
         } else {
           final message = responseData['message'] ?? 'Login failed.';
           _showError(message);
@@ -165,16 +182,17 @@ class _LoginScreenState extends State<LoginScreen> {
   void _showError(String message) {
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Login Failed'),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
+      builder:
+          (_) => AlertDialog(
+            title: const Text('Login Failed'),
+            content: Text(message),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -285,7 +303,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(
-                            onPressed: () => Navigator.pushNamed(context, '/forgot-password'),
+                            onPressed:
+                                () => Navigator.pushNamed(
+                                  context,
+                                  '/forgot-password',
+                                ),
                             child: const Text.rich(
                               TextSpan(
                                 style: TextStyle(fontSize: 14),
@@ -310,9 +332,11 @@ class _LoginScreenState extends State<LoginScreen> {
                           text: 'Continue',
                           onPressed: _login,
                         ),
+
                         const SizedBox(height: 20),
                         TextButton(
-                          onPressed: () => Navigator.pushNamed(context, '/register'),
+                          onPressed:
+                              () => Navigator.pushNamed(context, '/register'),
                           child: const Text.rich(
                             TextSpan(
                               text: 'Don’t have an account? ',

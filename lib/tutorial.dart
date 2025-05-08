@@ -49,7 +49,7 @@ class _TutorialsScreenState extends State<TutorialsScreen> {
       }
 
       final response = await http.get(
-        Uri.parse('http://165.232.152.77/api/vendor/tutorials'),
+        Uri.parse('https://api.getflock.io/api/vendor/tutorials'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',

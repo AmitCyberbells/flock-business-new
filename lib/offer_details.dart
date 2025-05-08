@@ -93,7 +93,7 @@ class _OfferDetailsState extends State<OfferDetails> {
 
     try {
       final url = Uri.parse(
-        'http://165.232.152.77/api/vendor/offers/$offerId/redeemed-count',
+        'https://api.getflock.io/api/vendor/offers/$offerId/redeemed-count',
       );
       final request = http.MultipartRequest('GET', url);
       request.headers['Authorization'] = 'Bearer $token';
@@ -148,7 +148,9 @@ class _OfferDetailsState extends State<OfferDetails> {
       return;
     }
     try {
-      final url = Uri.parse('http://165.232.152.77/api/vendor/offers/$offerId');
+      final url = Uri.parse(
+        'https://api.getflock.io/api/vendor/offers/$offerId',
+      );
       final response = await http.delete(
         url,
         headers: {
@@ -189,7 +191,7 @@ class _OfferDetailsState extends State<OfferDetails> {
     }
     try {
       final url = Uri.parse(
-        'http://165.232.152.77/api/vendor/offers/$offerId/expire-toggle',
+        'https://api.getflock.io/api/vendor/offers/$offerId/expire-toggle',
       );
       final response = await http.post(
         url,
@@ -344,7 +346,7 @@ class _OfferDetailsState extends State<OfferDetails> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           // content: Text('Invalid QR code: Not a valid JSON format.'),
-            content: Text('Invalid QR code.'),
+          content: Text('Invalid QR code.'),
         ),
       );
       return;
@@ -355,7 +357,7 @@ class _OfferDetailsState extends State<OfferDetails> {
       _setLoading(false);
       ScaffoldMessenger.of(context).showSnackBar(
         // const SnackBar(content: Text('Invalid QR code: Missing redeem_id.')),
-         const SnackBar(content: Text('Invalid QR code')),
+        const SnackBar(content: Text('Invalid QR code')),
       );
       return;
     }
@@ -374,11 +376,10 @@ class _OfferDetailsState extends State<OfferDetails> {
       );
       return;
     }
-  print('before url');
+    print('before url');
     try {
       final url = Uri.parse(
-      
-        'http://165.232.152.77/api/vendor/redeemed-offers/$parsedRedeemId/verify?venue_id=$venueId',
+        'https://api.getflock.io/api/vendor/redeemed-offers/$parsedRedeemId/verify?venue_id=$venueId',
       );
       print('Sending verification request to: $url');
       final response = await http.post(

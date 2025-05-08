@@ -40,12 +40,13 @@ class GlobalImages {
 // Server endpoints
 class Server {
   static const String categoryList =
-      'http://165.232.152.77/api/vendor/categories';
-  static const String getProfile = 'http://165.232.152.77/api/vendor/profile';
-  static const String getVenueData = 'http://165.232.152.77/api/vendor/venues';
-  static const String removeVenue = 'http://165.232.152.77/api/vendor/venues';
-  static const String updateVenue = 'http://165.232.152.77/api/vendor/venues';
-  static const String venueList = 'http://165.232.152.77/api/vendor/venues';
+      'https://api.getflock.io/api/vendor/categories';
+  static const String getProfile = 'https://api.getflock.io/api/vendor/profile';
+  static const String getVenueData =
+      'https://api.getflock.io/api/vendor/venues';
+  static const String removeVenue = 'https://api.getflock.io/api/vendor/venues';
+  static const String updateVenue = 'https://api.getflock.io/api/vendor/venues';
+  static const String venueList = 'https://api.getflock.io/api/vendor/venues';
 }
 
 // Permissions placeholder

@@ -27,7 +27,7 @@ class _TermsAndConditionsPageState extends State<TermsAndConditionsPage> {
     });
 
     try {
-      const String termsUrl = 'http://165.232.152.77/api/vendor/terms';
+      const String termsUrl = 'https://api.getflock.io/api/vendor/terms';
       final response = await http.get(Uri.parse(termsUrl));
 
       debugPrint("API Response Status: ${response.statusCode}");

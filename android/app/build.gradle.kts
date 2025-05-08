@@ -22,8 +22,8 @@ android {
 
     defaultConfig {
         applicationId = "com.flockbusiness"
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        minSdk = 21
+        targetSdk = 34
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         multiDexEnabled = true

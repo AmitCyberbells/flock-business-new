@@ -53,7 +53,7 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
     try {
       final dio = Dio();
       final response = await dio.get(
-        'http://165.232.152.77/api/vendor/teams',
+        'https://api.getflock.io/api/vendor/teams',
         options: Options(
           headers: {
             'Authorization': 'Bearer $_authToken',
@@ -132,7 +132,7 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
     try {
       final dio = Dio();
       final response = await dio.delete(
-        'http://165.232.152.77/api/vendor/teams/$memberId',
+        'https://api.getflock.io/api/vendor/teams/$memberId',
         options: Options(
           headers: {
             'Authorization': 'Bearer $_authToken',
@@ -230,7 +230,10 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: const [
-                                  Icon(Icons.add_circle, color: Color.fromRGBO(255, 130, 16, 1)),
+                                  Icon(
+                                    Icons.add_circle,
+                                    color: Color.fromRGBO(255, 130, 16, 1),
+                                  ),
                                   SizedBox(width: 4),
                                   Text(
                                     "Add Member",
@@ -360,13 +363,12 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                                                             context,
                                                           ).pop(); // Close the dialog
                                                         },
-                                                     child: const Text(
-  'CANCEL',
-  style: TextStyle(
-    color: Colors.grey,
-  ),
-),
-
+                                                        child: const Text(
+                                                          'CANCEL',
+                                                          style: TextStyle(
+                                                            color: Colors.grey,
+                                                          ),
+                                                        ),
                                                       ),
                                                       TextButton(
                                                         onPressed: () {

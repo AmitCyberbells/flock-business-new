@@ -42,7 +42,7 @@ class _TabProfileState extends State<TabProfile> {
 
     try {
       final response = await http.get(
-        Uri.parse('http://165.232.152.77/api/vendor/profile'),
+        Uri.parse('https://api.getflock.io/api/vendor/profile'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -133,14 +133,14 @@ class _TabProfileState extends State<TabProfile> {
     final screenHeight = MediaQuery.of(context).size.height;
 
     return CustomScaffold(
-      currentIndex: 3,
+      currentIndex: 4,
       body: Container(
         color: Colors.white,
         child: Stack(
           children: [
             SingleChildScrollView(
               child: Padding(
-                padding: const EdgeInsets.only(bottom: 16.0), // Reduced bottom padding
+                padding: const EdgeInsets.only(bottom: 16.0),
                 child: Column(
                   children: [
                     Container(
@@ -172,6 +172,24 @@ class _TabProfileState extends State<TabProfile> {
                                 width: 120,
                                 height: 120,
                                 fit: BoxFit.cover,
+                                loadingBuilder: (context, child, loadingProgress) {
+                                  if (loadingProgress == null) {
+                                    // Image is fully loaded
+                                    return child;
+                                  }
+                                  return Container(
+                                    width: 120,
+                                    height: 120,
+                                    color: Colors.grey.shade200,
+                                    child: Center(
+                                      child: Image.asset(
+                                        'assets/Bird_Full_Eye_Blinking.gif',
+                                        width: 60, // Smaller size for profile loader
+                                        height: 60,
+                                      ),
+                                    ),
+                                  );
+                                },
                                 errorBuilder: (context, error, stackTrace) {
                                   print("Error loading profile image: $error");
                                   return Image.asset(
@@ -198,10 +216,7 @@ class _TabProfileState extends State<TabProfile> {
                     const SizedBox(height: 4),
                     Text(
                       email.isEmpty ? 'Email not available' : email,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey,
-                      ),
+                      style: const TextStyle(fontSize: 16, color: Colors.grey),
                     ),
                     const SizedBox(height: 14),
                     Column(
@@ -219,8 +234,7 @@ class _TabProfileState extends State<TabProfile> {
                                 'profilePic': profilePic,
                               },
                             );
-                            if (updatedProfile != null &&
-                                updatedProfile is Map<String, dynamic>) {
+                            if (updatedProfile != null && updatedProfile is Map<String, dynamic>) {
                               detailFunc();
                             }
                           },

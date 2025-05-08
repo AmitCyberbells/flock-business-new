@@ -28,12 +28,18 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     });
 
     try {
-      final url = Uri.parse("http://165.232.152.77/api/vendor/forgot-password");
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email}),
-      ).timeout(const Duration(seconds: 10)); // Add a timeout for the request
+      final url = Uri.parse(
+        "https://api.getflock.io/api/vendor/forgot-password",
+      );
+      final response = await http
+          .post(
+            url,
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'email': email}),
+          )
+          .timeout(
+            const Duration(seconds: 10),
+          ); // Add a timeout for the request
 
       setState(() {
         _isLoading = false;
@@ -42,34 +48,42 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       final responseData = jsonDecode(response.body);
       if (response.statusCode == 200) {
         if (responseData['message'] != null &&
-            responseData['message'].toString().toLowerCase().contains('success')) {
-          Fluttertoast.showToast(msg: "Reset instructions have been sent to your email.");
-             Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => OtpVerificationScreen1(
-          email: email,
-        ),
-      ),
-    );
-        }
-         
-       else {
-          Fluttertoast.showToast(msg: responseData['message'] ?? 'Reset failed.');
+            responseData['message'].toString().toLowerCase().contains(
+              'success',
+            )) {
+          Fluttertoast.showToast(
+            msg: "Reset instructions have been sent to your email.",
+          );
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => OtpVerificationScreen1(email: email),
+            ),
+          );
+        } else {
+          Fluttertoast.showToast(
+            msg: responseData['message'] ?? 'Reset failed.',
+          );
         }
       } else if (response.statusCode == 422) {
         // Handle 422 Unprocessable Entity
         if (responseData['errors'] != null) {
           final errors = responseData['errors'] as Map<String, dynamic>;
-          final errorMessage = errors.entries.map((e) => '${e.key}: ${e.value.join(', ')}').join('\n');
+          final errorMessage = errors.entries
+              .map((e) => '${e.key}: ${e.value.join(', ')}')
+              .join('\n');
           Fluttertoast.showToast(msg: errorMessage);
         } else {
-          Fluttertoast.showToast(msg: responseData['message'] ?? 'Validation failed.');
+          Fluttertoast.showToast(
+            msg: responseData['message'] ?? 'Validation failed.',
+          );
         }
       } else {
         // Handle other status codes
         debugPrint("Error response: ${response.body}");
-        Fluttertoast.showToast(msg: "Reset failed with status: ${response.statusCode}");
+        Fluttertoast.showToast(
+          msg: "Reset failed with status: ${response.statusCode}",
+        );
       }
     } on TimeoutException catch (e) {
       // Handle timeout errors
@@ -83,7 +97,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       setState(() {
         _isLoading = false;
       });
-      Fluttertoast.showToast(msg: "Network error. Please check your internet connection.");
+      Fluttertoast.showToast(
+        msg: "Network error. Please check your internet connection.",
+      );
       debugPrint("Network error: $e");
     } catch (error) {
       // Handle all other errors
@@ -119,7 +135,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   size: 20,
                 ),
                 onPressed: () {
-                  Navigator.pop(context); // Navigate back to the previous screen
+                  Navigator.pop(
+                    context,
+                  ); // Navigate back to the previous screen
                 },
               ),
               // const Text(
@@ -153,7 +171,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   // Logo
-                  Image.asset('assets/business_logo.png', height: 120, width: 120),
+                  Image.asset(
+                    'assets/business_logo.png',
+                    height: 120,
+                    width: 120,
+                  ),
                   const SizedBox(height: 40),
                   // Title
                   const Text(
@@ -192,30 +214,28 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             ),
           ),
           if (_isLoading)
-               Stack(
-  children: [
-    // Semi-transparent dark overlay
-    Container(
-      color: Colors.black.withOpacity(0.14), // Dark overlay
-    ),
+            Stack(
+              children: [
+                // Semi-transparent dark overlay
+                Container(
+                  color: Colors.black.withOpacity(0.14), // Dark overlay
+                ),
 
-    // Your original container with white tint and loader
-    Container(
-      color: Colors.white10,
-      child: Center(
-        child: Image.asset(
-          'assets/Bird_Full_Eye_Blinking.gif',
-          width: 100, // Adjust size as needed
-          height: 100,
-        ),
-      ),
-    ),
-  ],
-)
+                // Your original container with white tint and loader
+                Container(
+                  color: Colors.white10,
+                  child: Center(
+                    child: Image.asset(
+                      'assets/Bird_Full_Eye_Blinking.gif',
+                      width: 100, // Adjust size as needed
+                      height: 100,
+                    ),
+                  ),
+                ),
+              ],
+            ),
         ],
       ),
     );
   }
 }
-
-

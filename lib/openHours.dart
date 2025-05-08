@@ -96,7 +96,7 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
       });
       return;
     }
-    final url = Uri.parse('http://165.232.152.77/api/vendor/venues');
+    final url = Uri.parse('https://api.getflock.io/api/vendor/venues');
     try {
       final response = await http.get(
         url,
@@ -159,7 +159,7 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
       return;
     }
     final url = Uri.parse(
-      'http://165.232.152.77/api/vendor/venues/$venueId/opening-hours',
+      'https://api.getflock.io/api/vendor/venues/$venueId/opening-hours',
     );
     try {
       final response = await http.get(
@@ -203,8 +203,10 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
               updatedDays[index] = {
                 "day": localDay,
                 "isOpen": isOpen,
-                "openTime": isOpen ? _convertTo12HrFormat(openTime) : "12:00 AM",
-                "closeTime": isOpen ? _convertTo12HrFormat(closeTime) : "12:00 AM",
+                "openTime":
+                    isOpen ? _convertTo12HrFormat(openTime) : "12:00 AM",
+                "closeTime":
+                    isOpen ? _convertTo12HrFormat(closeTime) : "12:00 AM",
                 "updated": isUpdated,
               };
             }
@@ -264,7 +266,7 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
     };
 
     final url = Uri.parse(
-      'http://165.232.152.77/api/vendor/venues/$venueId/opening-hours',
+      'https://api.getflock.io/api/vendor/venues/$venueId/opening-hours',
     );
     final request = http.MultipartRequest('POST', url);
     request.headers['Authorization'] = 'Bearer $token';
@@ -534,9 +536,15 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
                     Navigator.pop(context);
                   },
                   child: Container(
-                    color: isSelected
-                        ? const Color.fromRGBO(255, 130, 16, 1).withOpacity(0.1)
-                        : Colors.transparent,
+                    color:
+                        isSelected
+                            ? const Color.fromRGBO(
+                              255,
+                              130,
+                              16,
+                              1,
+                            ).withOpacity(0.1)
+                            : Colors.transparent,
                     padding: const EdgeInsets.symmetric(
                       vertical: 10,
                       horizontal: 8,
@@ -583,30 +591,31 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
           children: [
             SizedBox(
               width: 40,
-              child: Text(
-                dayInfo["day"],
-                style: const TextStyle(fontSize: 16),
-              ),
+              child: Text(dayInfo["day"], style: const TextStyle(fontSize: 16)),
             ),
             SizedBox(
               width: 60,
               child: GestureDetector(
-             onTap: () {
-  setState(() {
-    _days[index]["isOpen"] = !_days[index]["isOpen"];
-    if (!_days[index]["isOpen"]) {
-      _days[index]["updated"] = false;
-    }
-  });
-},
+                onTap: () {
+                  setState(() {
+                    _days[index]["isOpen"] = !_days[index]["isOpen"];
+                    if (!_days[index]["isOpen"]) {
+                      _days[index]["updated"] = false;
+                    }
+                  });
+                },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
-                    color: dayInfo["isOpen"]
-                        ? (dayInfo["updated"]
-                            ? Colors.green
-                            : const Color.fromRGBO(255, 130, 16, 1))
-                        : Colors.grey.shade300,
+                    color:
+                        dayInfo["isOpen"]
+                            ? (dayInfo["updated"]
+                                ? const Color.fromRGBO(255, 130, 16, 1)
+                                : const Color.fromRGBO(255, 130, 16, 1))
+                            : Colors.grey.shade300,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -642,11 +651,12 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
                 Icons.access_time,
                 color: Color.fromRGBO(255, 130, 16, 1),
               ),
-              onPressed: dayInfo["isOpen"]
-                  ? () {
-                      _showDayDialog(dayInfo["day"], index);
-                    }
-                  : null,
+              onPressed:
+                  dayInfo["isOpen"]
+                      ? () {
+                        _showDayDialog(dayInfo["day"], index);
+                      }
+                      : null,
             ),
           ],
         ),
@@ -676,8 +686,9 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
                         initialEntryMode: TimePickerEntryMode.input,
                         builder: (BuildContext context, Widget? child) {
                           return MediaQuery(
-                            data: MediaQuery.of(context)
-                                .copyWith(alwaysUse24HourFormat: false),
+                            data: MediaQuery.of(
+                              context,
+                            ).copyWith(alwaysUse24HourFormat: false),
                             child: child!,
                           );
                         },
@@ -705,8 +716,9 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
                         initialEntryMode: TimePickerEntryMode.input,
                         builder: (BuildContext context, Widget? child) {
                           return MediaQuery(
-                            data: MediaQuery.of(context)
-                                .copyWith(alwaysUse24HourFormat: false),
+                            data: MediaQuery.of(
+                              context,
+                            ).copyWith(alwaysUse24HourFormat: false),
                             child: child!,
                           );
                         },

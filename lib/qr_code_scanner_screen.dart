@@ -76,7 +76,7 @@ class _QRScanScreenState extends State<QRScanScreen> {
       try {
         String token = widget.token;
         String apiUrl =
-            'http://165.232.152.77/api/vendor/redeemed-offers/verify/coupon';
+            'https://api.getflock.io/api/vendor/redeemed-offers/verify/coupon';
         print('Calling Coupon API: $apiUrl with coupon_code: $couponCode');
 
         final response = await http.post(
@@ -240,7 +240,7 @@ class _QRScanScreenState extends State<QRScanScreen> {
         String token = widget.token;
 
         String apiUrl =
-            'http://165.232.152.77/api/vendor/redeemed-offers/$parsedRedeemId/verify';
+            'https://api.getflock.io/api/vendor/redeemed-offers/$parsedRedeemId/verify';
         print('Calling API: $apiUrl');
 
         final response = await http.post(
@@ -383,7 +383,7 @@ class _QRScanScreenState extends State<QRScanScreen> {
                   ),
                   const SizedBox(height: 20),
                   Container(
-                    width: 250,
+                    width: 280,
                     height: 300,
                     child: Stack(
                       clipBehavior: Clip.none,
@@ -424,7 +424,7 @@ class _QRScanScreenState extends State<QRScanScreen> {
                                   ),
                         ),
                         Container(
-                          width: 250,
+                          width: 280,
                           height: 300,
                           decoration: BoxDecoration(
                             border: Border.all(color: Colors.white, width: 2),
@@ -525,7 +525,7 @@ class _QRScanScreenState extends State<QRScanScreen> {
                     ),
                     child: const Text('Submit', style: TextStyle(fontSize: 16)),
                   ),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 100),
                 ],
               ),
             ),

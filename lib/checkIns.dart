@@ -61,7 +61,7 @@ class _CheckInsScreenState extends State<CheckInsScreen> {
               : null;
 
       final uri = Uri.parse(
-        'http://165.232.152.77/api/vendor/venues-checkins',
+        'https://api.getflock.io/api/vendor/venues-checkins',
       ).replace(queryParameters: queryParams);
 
       final response = await http
@@ -239,39 +239,45 @@ class _CheckInsScreenState extends State<CheckInsScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // 👇 Manually include the app bar as a widget
-            AppConstants.customAppBar(context: context, title: 'Check-Ins'),
+   AppConstants.customAppBar(
+  context: context,
+  title: 'Check-Ins',
+  backIconAsset: 'assets/back_updated.png',
 
-            // Date selector aligned to the right
-            Align(
-              alignment: Alignment.centerRight,
-              child: Padding(
-                padding: const EdgeInsets.only(right: 16, top: 8),
-                child: TextButton(
-                  onPressed: () => _selectDate(context),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        selectedDate == null
-                            ? "Choose Date"
-                            : DateFormat('MMM d, yyyy').format(selectedDate!),
-                        style: const TextStyle(
-                          color: Color.fromRGBO(255, 130, 16, 1.0),
-                          fontSize: 16,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(width: 4),
-                      const Icon(
-                        Icons.arrow_drop_down,
-                        color: Color.fromRGBO(255, 130, 16, 1.0),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+),
+
+
+// Date selector aligned to the right
+Align(
+  alignment: Alignment.centerRight,
+  child: Padding(
+    padding: const EdgeInsets.only(right: 16, top: 8),
+    child: TextButton(
+      onPressed: () => _selectDate(context),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            selectedDate == null
+                ? "Choose Date"
+                : DateFormat('MMM d, yyyy').format(selectedDate!),
+            style: const TextStyle(
+              color: Color.fromRGBO(255, 130, 16, 1.0),
+              fontSize: 16,
             ),
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(width: 4),
+          const Icon(
+            Icons.arrow_drop_down,
+            color: Color.fromRGBO(255, 130, 16, 1.0),
+          ),
+        ],
+      ),
+    ),
+  ),
+),
+
 
             const SizedBox(height: 8),
 

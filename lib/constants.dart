@@ -109,7 +109,9 @@ class AppConstants {
             ),
           ),
 
-          onPressed: () => Navigator.of(context).pop(),
+     onPressed: () {
+ 
+ Navigator.pushNamed(context, '/dashboard');},
         ),
       ),
       title: Text(
@@ -700,6 +702,7 @@ static Widget assignPermissionsDropdown({
     required TextInputAction textInputAction,
     String? Function(String?)? validator,
     InputDecoration? decoration, // Made decoration optional
+    VoidCallback? onTap, // Optional onTap callback
   }) {
     return Container(
       decoration: textFieldBoxDecoration,
@@ -714,6 +717,7 @@ static Widget assignPermissionsDropdown({
             textFieldDecoration.copyWith(hintText: hintText),
         textInputAction: textInputAction,
         validator: validator,
+        onTap: onTap,
       ),
     );
   }

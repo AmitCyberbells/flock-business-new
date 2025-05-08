@@ -43,13 +43,13 @@ class NotificationModel {
   });
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'title': title,
-        'body': body,
-        'screen': screen,
-        'timestamp': timestamp.toIso8601String(),
-        'isRead': isRead,
-      };
+    'id': id,
+    'title': title,
+    'body': body,
+    'screen': screen,
+    'timestamp': timestamp.toIso8601String(),
+    'isRead': isRead,
+  };
 
   factory NotificationModel.fromJson(Map<String, dynamic> json) =>
       NotificationModel(
@@ -66,7 +66,7 @@ class NotificationModel {
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
   print('Background message received: ${message.toMap()}');
-  
+
   // Store notification locally
   await _storeNotification(message);
 }
@@ -76,12 +76,18 @@ Future<void> _storeNotification(RemoteMessage message) async {
   final prefs = await SharedPreferences.getInstance();
   final notification = NotificationModel(
     id: message.messageId ?? DateTime.now().millisecondsSinceEpoch.toString(),
-    title: message.notification?.title ?? message.data['title'] ?? 'New Notification',
-    body: message.notification?.body ?? message.data['body'] ?? 'No details available',
+    title:
+        message.notification?.title ??
+        message.data['title'] ??
+        'New Notification',
+    body:
+        message.notification?.body ??
+        message.data['body'] ??
+        'No details available',
     screen: message.data['screen'],
     timestamp: DateTime.now(),
   );
-  
+
   List<String> notifications = prefs.getStringList('notifications') ?? [];
   notifications.add(jsonEncode(notification.toJson()));
   await prefs.setStringList('notifications', notifications);
@@ -103,6 +109,7 @@ void main() async {
 
   runApp(const MyApp());
 }
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -114,7 +121,9 @@ class MyApp extends StatelessWidget {
       builder: (context, child) {
         final mediaQuery = MediaQuery.of(context);
         return MediaQuery(
-          data: mediaQuery.copyWith(textScaleFactor: 1.0), // Prevent font scaling
+          data: mediaQuery.copyWith(
+            textScaleFactor: 1.0,
+          ), // Prevent font scaling
           child: child!,
         );
       },
@@ -176,11 +185,11 @@ class MyApp extends StatelessWidget {
         '/offers': (context) => const OffersScreen(),
         '/HistoryScreen': (context) => const HistoryScreen(),
         '/history': (context) => const HistoryScreen(),
+        '/dashboard': (context) => TabDashboard(),
       },
     );
   }
 }
-
 
 class LoadingScreen extends StatefulWidget {
   const LoadingScreen({super.key});
@@ -192,7 +201,6 @@ class LoadingScreen extends StatefulWidget {
 class _LoadingScreenState extends State<LoadingScreen> {
   int _unreadNotifications = 0;
   List<NotificationModel> _notifications = [];
-  
 
   @override
   void initState() {
@@ -205,14 +213,17 @@ class _LoadingScreenState extends State<LoadingScreen> {
   Future<void> _loadNotifications() async {
     final prefs = await SharedPreferences.getInstance();
     final notificationStrings = prefs.getStringList('notifications') ?? [];
-    final notifications = notificationStrings
-        .map((string) => NotificationModel.fromJson(jsonDecode(string)))
-        .toList();
+    final notifications =
+        notificationStrings
+            .map((string) => NotificationModel.fromJson(jsonDecode(string)))
+            .toList();
     setState(() {
       _notifications = notifications;
       _unreadNotifications = notifications.where((n) => !n.isRead).length;
     });
-    print('Loaded ${_notifications.length} notifications, $_unreadNotifications unread');
+    print(
+      'Loaded ${_notifications.length} notifications, $_unreadNotifications unread',
+    );
   }
 
   Future<void> _setupFCM() async {
@@ -244,18 +255,26 @@ class _LoadingScreenState extends State<LoadingScreen> {
       FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
         print('Foreground message received: ${message.toMap()}');
         await _storeNotification(message);
-      setState(() {
-    _notifications.add(
-      NotificationModel(
-        id: message.messageId ?? DateTime.now().millisecondsSinceEpoch.toString(),
-        title: message.notification?.title ?? message.data['title'] ?? 'New Notification',
-        body: message.notification?.body ?? message.data['body'] ?? 'No details available',
-        screen: message.data['screen'],
-        timestamp: DateTime.now(),
-      ),
-    );
-    _unreadNotifications = _notifications.where((n) => !n.isRead).length;
-  });
+        setState(() {
+          _notifications.add(
+            NotificationModel(
+              id:
+                  message.messageId ??
+                  DateTime.now().millisecondsSinceEpoch.toString(),
+              title:
+                  message.notification?.title ??
+                  message.data['title'] ??
+                  'New Notification',
+              body:
+                  message.notification?.body ??
+                  message.data['body'] ??
+                  'No details available',
+              screen: message.data['screen'],
+              timestamp: DateTime.now(),
+            ),
+          );
+          _unreadNotifications = _notifications.where((n) => !n.isRead).length;
+        });
 
         // Show SnackBar with a valid ScaffoldMessenger
         if (mounted) {
@@ -267,13 +286,14 @@ class _LoadingScreenState extends State<LoadingScreen> {
               ),
               backgroundColor: AppColors.primary,
               duration: const Duration(seconds: 5),
-              action: message.data['screen'] != null
-                  ? SnackBarAction(
-                      label: 'View',
-                      textColor: Colors.white,
-                      onPressed: () => _handleMessageNavigation(message),
-                    )
-                  : null,
+              action:
+                  message.data['screen'] != null
+                      ? SnackBarAction(
+                        label: 'View',
+                        textColor: Colors.white,
+                        onPressed: () => _handleMessageNavigation(message),
+                      )
+                      : null,
             ),
           );
         }
@@ -301,37 +321,42 @@ class _LoadingScreenState extends State<LoadingScreen> {
 
   Future<void> _markNotificationAsRead(String? messageId) async {
     if (messageId == null) return;
-    
+
     final prefs = await SharedPreferences.getInstance();
     final notificationStrings = prefs.getStringList('notifications') ?? [];
-    final notifications = notificationStrings
-        .map((string) => NotificationModel.fromJson(jsonDecode(string)))
-        .toList();
-    
-    final updatedNotifications = notifications.map((n) {
-      if (n.id == messageId) {
-        return NotificationModel(
-          id: n.id,
-          title: n.title,
-          body: n.body,
-          screen: n.screen,
-          timestamp: n.timestamp,
-          isRead: true,
-        );
-      }
-      return n;
-    }).toList();
-    
+    final notifications =
+        notificationStrings
+            .map((string) => NotificationModel.fromJson(jsonDecode(string)))
+            .toList();
+
+    final updatedNotifications =
+        notifications.map((n) {
+          if (n.id == messageId) {
+            return NotificationModel(
+              id: n.id,
+              title: n.title,
+              body: n.body,
+              screen: n.screen,
+              timestamp: n.timestamp,
+              isRead: true,
+            );
+          }
+          return n;
+        }).toList();
+
     await prefs.setStringList(
       'notifications',
       updatedNotifications.map((n) => jsonEncode(n.toJson())).toList(),
     );
-    
+
     setState(() {
       _notifications = updatedNotifications;
-      _unreadNotifications = updatedNotifications.where((n) => !n.isRead).length;
+      _unreadNotifications =
+          updatedNotifications.where((n) => !n.isRead).length;
     });
-    print('Marked notification $messageId as read, $_unreadNotifications unread remaining');
+    print(
+      'Marked notification $messageId as read, $_unreadNotifications unread remaining',
+    );
   }
 
   void _handleMessageNavigation(RemoteMessage message) {
@@ -341,7 +366,10 @@ class _LoadingScreenState extends State<LoadingScreen> {
       SharedPreferences.getInstance().then((prefs) {
         final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
         if (isLoggedIn && mounted) {
-          Navigator.pushNamed(context, screen == 'checkin' ? '/tab_checkin' : '/offers');
+          Navigator.pushNamed(
+            context,
+            screen == 'checkin' ? '/tab_checkin' : '/offers',
+          );
         }
       });
     }
@@ -359,7 +387,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
     try {
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse('http://165.232.152.77/api/vendor/devices/update'),
+        Uri.parse('https://api.getflock.io/api/vendor/devices/update'),
       );
 
       request.headers.addAll({'Authorization': 'Bearer $accessToken'});
@@ -387,12 +415,11 @@ class _LoadingScreenState extends State<LoadingScreen> {
       print('Error sending FCM token: $e');
     }
   }
-  
 
   Future<void> _checkLoginStatus() async {
     // Wait for notifications to load
     await Future.delayed(const Duration(seconds: 1));
-    
+
     final prefs = await SharedPreferences.getInstance();
     final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
     final token = prefs.getString('access_token');
@@ -414,8 +441,6 @@ class _LoadingScreenState extends State<LoadingScreen> {
 
   @override
   Widget build(BuildContext context) {
-     return Scaffold(
-     
-     );
+    return Scaffold();
   }
 }

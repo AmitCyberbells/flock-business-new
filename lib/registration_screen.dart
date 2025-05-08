@@ -38,8 +38,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String? _emailError;
   String? _phoneError;
   String? _passwordError;
+  String? _termsError;
 
-  final String _signupUrl = 'http://165.232.152.77/api/vendor/signup';
+  final String _signupUrl = 'https://api.getflock.io/api/vendor/signup';
 
   @override
   void dispose() {
@@ -71,6 +72,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _emailError = null;
       _phoneError = null;
       _passwordError = null;
+      _termsError = null; // Reset terms error
     });
 
     final firstName = _firstNameController.text.trim();
@@ -95,6 +97,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
     if (password.isEmpty) {
       _passwordError = 'Password is required';
+      isValid = false;
+    }
+    // Add terms checkbox validation
+    if (!isChecked) {
+      _termsError = 'Please accept terms and conditions to proceed';
       isValid = false;
     }
     return isValid;
@@ -190,7 +197,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
           _showError(responseData['message'] ?? 'Registration failed.');
         }
       } else {
-        _showError('Registration failed with status: ${response.statusCode}.');
+        // _showError('Registration failed with status: ${response.statusCode}.');
+
+        _showError(
+          'Registration failed. Please try again later or contact support if issue persists.',
+        );
       }
     } catch (error) {
       debugPrint("Error during signup: $error");
@@ -288,6 +299,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        toolbarHeight: 28, // Set desired height (default is 56)
         leading: Padding(
           padding: const EdgeInsets.only(left: 10.0),
           child: IconButton(
@@ -303,6 +315,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
         leadingWidth: 80,
       ),
+
       body: Stack(
         children: [
           Positioned.fill(
@@ -380,7 +393,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                       if (pickedDate != null) {
                         String formattedDate =
-                            "${pickedDate.day}/${pickedDate.month}/${pickedDate.year}";
+                            "${pickedDate.day}-${pickedDate.month}-${pickedDate.year}";
                         _dobController.text = formattedDate;
                       }
                     },
@@ -423,73 +436,105 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ),
                   const SizedBox(height: 30),
-                  Row(
+                  Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: Checkbox(
-                          value: isChecked,
-                          activeColor: const Color.fromRGBO(255, 130, 16, 1),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          onChanged: (bool? value) {
-                            setState(() {
-                              isChecked = value!;
-                            });
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text.rich(
-                          TextSpan(
-                            text: 'I am 18 years of age and agree to the ',
-                            style: const TextStyle(color: Colors.black87),
-                            children: [
-                              TextSpan(
-                                text: 'Terms and Conditions',
-                                style: const TextStyle(
-                                  color: const Color.fromRGBO(255, 130, 16, 1),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              border:
+                                  _termsError != null
+                                      ? Border.all(color: Colors.red, width: 1)
+                                      : null,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: Checkbox(
+                                value: isChecked,
+                                activeColor: const Color.fromRGBO(
+                                  255,
+                                  130,
+                                  16,
+                                  1,
                                 ),
-                                recognizer:
-                                    TapGestureRecognizer()
-                                      ..onTap = () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder:
-                                                (context) =>
-                                                    const TermsAndConditionsPage(),
-                                          ),
-                                        );
-                                      },
-                              ),
-                              const TextSpan(text: ' as set out by the '),
-                              TextSpan(
-                                text: 'User Agreement.',
-                                style: const TextStyle(
-                                  color: const Color.fromRGBO(255, 130, 16, 1),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(4),
                                 ),
-                                recognizer:
-                                    TapGestureRecognizer()
-                                      ..onTap = () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder:
-                                                (context) =>
-                                                    const TermsAndConditionsPage(),
-                                          ),
-                                        );
-                                      },
+                                onChanged: (bool? value) {
+                                  setState(() {
+                                    isChecked = value!;
+                                    _termsError =
+                                        null; // Clear error when checkbox is toggled
+                                  });
+                                },
                               ),
-                            ],
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text.rich(
+                              TextSpan(
+                                text: 'I am 18 years of age and agree to the ',
+                                style: const TextStyle(color: Colors.black87),
+                                children: [
+                                  TextSpan(
+                                    text: 'Terms and Conditions',
+                                    style: const TextStyle(
+                                      color: Color.fromRGBO(255, 130, 16, 1),
+                                    ),
+                                    recognizer:
+                                        TapGestureRecognizer()
+                                          ..onTap = () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder:
+                                                    (context) =>
+                                                        const TermsAndConditionsPage(),
+                                              ),
+                                            );
+                                          },
+                                  ),
+                                  const TextSpan(text: ' as set out by the '),
+                                  TextSpan(
+                                    text: 'User Agreement.',
+                                    style: const TextStyle(
+                                      color: Color.fromRGBO(255, 130, 16, 1),
+                                    ),
+                                    recognizer:
+                                        TapGestureRecognizer()
+                                          ..onTap = () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder:
+                                                    (context) =>
+                                                        const TermsAndConditionsPage(),
+                                              ),
+                                            );
+                                          },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (_termsError != null)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 34.0, top: 4),
+                          child: Text(
+                            _termsError!,
+                            style: const TextStyle(
+                              color: Colors.red,
+                              fontSize: 12,
+                            ),
                           ),
                         ),
-                      ),
                     ],
                   ),
                   const SizedBox(height: 30),

@@ -36,10 +36,12 @@ class GlobalImages {
 }
 
 class Server {
-  static const String venues = "http://165.232.152.77/api/vendor/venues";
-  static const String tags = "http://165.232.152.77/api/vendor/tags";
-  static const String categoryList = "http://165.232.152.77/api/vendor/categories";
-  static const String amenities = "http://165.232.152.77/api/vendor/amenities";
+  static const String venues = "https://api.getflock.io/api/vendor/venues";
+  static const String tags = "https://api.getflock.io/api/vendor/tags";
+  static const String categoryList =
+      "https://api.getflock.io/api/vendor/categories";
+  static const String amenities =
+      "https://api.getflock.io/api/vendor/amenities";
 }
 
 class AddEggScreen extends StatefulWidget {
@@ -169,7 +171,8 @@ class _AddEggScreenState extends State<AddEggScreen> {
       if (nameController.text.trim().isEmpty) {
         nameError = "Venue name is required";
       } else if (nameController.text.trim().length < minVenueNameLength) {
-        nameError = "Venue name must be at least $minVenueNameLength characters";
+        nameError =
+            "Venue name must be at least $minVenueNameLength characters";
       } else {
         nameError = null;
       }
@@ -224,8 +227,10 @@ class _AddEggScreenState extends State<AddEggScreen> {
     setState(() {
       if (descriptionController.text.trim().isEmpty) {
         descriptionError = "Description is required";
-      } else if (descriptionController.text.trim().length < minDescriptionLength) {
-        descriptionError = "Description must be at least $minDescriptionLength characters";
+      } else if (descriptionController.text.trim().length <
+          minDescriptionLength) {
+        descriptionError =
+            "Description must be at least $minDescriptionLength characters";
       } else {
         descriptionError = null;
       }
@@ -290,7 +295,8 @@ class _AddEggScreenState extends State<AddEggScreen> {
           tags = tagsJson['data'] ?? [];
         });
       } else {
-        Fluttertoast.showToast(msg: "Failed to load tags: ${response.statusCode}");
+        // Fluttertoast.showToast(msg: "Failed to load tags: ${response.statusCode}");
+        Fluttertoast.showToast(msg: "Failed to load tags");
       }
     } catch (e) {
       Fluttertoast.showToast(msg: "Error fetching tags: $e");
@@ -301,7 +307,7 @@ class _AddEggScreenState extends State<AddEggScreen> {
     try {
       final token = await getToken();
       final dietaryResponse = await http.get(
-        Uri.parse("http://165.232.152.77/api/vendor/dietary-tags"),
+        Uri.parse("https://api.getflock.io/api/vendor/dietary-tags"),
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
@@ -313,7 +319,9 @@ class _AddEggScreenState extends State<AddEggScreen> {
           allDietaryTags = dietaryJson['data'] ?? [];
         });
       } else {
-        Fluttertoast.showToast(msg: "Failed to load dietary tags: ${dietaryResponse.statusCode}");
+        Fluttertoast.showToast(
+          msg: "Failed to load dietary tags: ${dietaryResponse.statusCode}",
+        );
       }
     } catch (e) {
       Fluttertoast.showToast(msg: "Error fetching dietary tags: $e");
@@ -327,15 +335,23 @@ class _AddEggScreenState extends State<AddEggScreen> {
         'Authorization': 'Bearer $token',
         'Accept': 'application/json',
       };
-      final categoriesResponse = await http.get(Uri.parse(Server.categoryList), headers: headers);
-      final amenitiesResponse = await http.get(Uri.parse(Server.amenities), headers: headers);
+      final categoriesResponse = await http.get(
+        Uri.parse(Server.categoryList),
+        headers: headers,
+      );
+      final amenitiesResponse = await http.get(
+        Uri.parse(Server.amenities),
+        headers: headers,
+      );
       if (categoriesResponse.statusCode == 200) {
         final categoriesJson = jsonDecode(categoriesResponse.body);
         setState(() {
           allCategory = categoriesJson['data'] ?? [];
         });
       } else {
-        Fluttertoast.showToast(msg: "Failed to load categories: ${categoriesResponse.statusCode}");
+        Fluttertoast.showToast(
+          msg: "Failed to load categories: ${categoriesResponse.statusCode}",
+        );
       }
       if (amenitiesResponse.statusCode == 200) {
         final amenitiesJson = jsonDecode(amenitiesResponse.body);
@@ -343,7 +359,9 @@ class _AddEggScreenState extends State<AddEggScreen> {
           allAmenities = amenitiesJson['data'] ?? [];
         });
       } else {
-        Fluttertoast.showToast(msg: "Failed to load amenities: ${amenitiesResponse.statusCode}");
+        Fluttertoast.showToast(
+          msg: "Failed to load amenities: ${amenitiesResponse.statusCode}",
+        );
       }
     } catch (e) {
       Fluttertoast.showToast(msg: "Error fetching categories/amenities: $e");
@@ -554,7 +572,9 @@ class _AddEggScreenState extends State<AddEggScreen> {
               children: [
                 TextField(
                   controller: locController,
-                  decoration: const InputDecoration(labelText: "Location Name or Address"),
+                  decoration: const InputDecoration(
+                    labelText: "Location Name or Address",
+                  ),
                 ),
                 TextField(
                   controller: latController,
@@ -583,7 +603,9 @@ class _AddEggScreenState extends State<AddEggScreen> {
                   return;
                 }
                 if (newLng == null || newLng < -180 || newLng > 180) {
-                  Fluttertoast.showToast(msg: "Invalid longitude (-180 to 180)");
+                  Fluttertoast.showToast(
+                    msg: "Invalid longitude (-180 to 180)",
+                  );
                   return;
                 }
                 setState(() {
@@ -683,10 +705,15 @@ class _AddEggScreenState extends State<AddEggScreen> {
     }
   }
 
-  void _handleResponseStatus(http.StreamedResponse response, String responseString) {
+  void _handleResponseStatus(
+    http.StreamedResponse response,
+    String responseString,
+  ) {
     if (response.statusCode < 300) {
       final responseJson = jsonDecode(responseString);
-      Fluttertoast.showToast(msg: responseJson['message'] ?? "Venue added successfully");
+      Fluttertoast.showToast(
+        msg: responseJson['message'] ?? "Venue added successfully",
+      );
       setState(() {
         loader = false;
         confirmPopup = true;
@@ -694,14 +721,17 @@ class _AddEggScreenState extends State<AddEggScreen> {
     } else {
       final responseJson = jsonDecode(responseString);
       if (responseJson['status'] == 1) {
-        Fluttertoast.showToast(msg: responseJson['message'] ?? "Venue status updated to success.");
+        Fluttertoast.showToast(
+          msg: responseJson['message'] ?? "Venue status updated to success.",
+        );
         setState(() {
           loader = false;
           confirmPopup = true;
         });
       } else {
         Fluttertoast.showToast(
-          msg: "Error: ${response.statusCode} - ${responseJson['message'] ?? 'Something went wrong.'}",
+          msg:
+              "Error: ${response.statusCode} - ${responseJson['message'] ?? 'Something went wrong.'}",
         );
         print('Error Response: $responseString');
         setState(() => loader = false);
@@ -720,10 +750,7 @@ class _AddEggScreenState extends State<AddEggScreen> {
     final Uri uri = Uri.parse(url);
     try {
       if (await canLaunchUrl(uri)) {
-        await launchUrl(
-          uri,
-          mode: LaunchMode.externalApplication,
-        );
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
       } else {
         Fluttertoast.showToast(msg: "Could not launch $url");
       }
@@ -743,7 +770,12 @@ class _AddEggScreenState extends State<AddEggScreen> {
             child: Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.only(top: 20, left: 10, right: 10, bottom: 10),
+                  padding: const EdgeInsets.only(
+                    top: 20,
+                    left: 10,
+                    right: 10,
+                    bottom: 10,
+                  ),
                   child: Row(
                     children: [
                       GestureDetector(
@@ -758,8 +790,13 @@ class _AddEggScreenState extends State<AddEggScreen> {
                       Expanded(
                         child: Center(
                           child: Text(
-                            widget.allDetail != null ? 'Edit Venue' : 'Add New Venue',
-                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+                            widget.allDetail != null
+                                ? 'Edit Venue'
+                                : 'Add New Venue',
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ),
@@ -777,7 +814,10 @@ class _AddEggScreenState extends State<AddEggScreen> {
                           const SizedBox(height: 10),
                           const Text(
                             'Enter Details',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                           const SizedBox(height: 18),
                           Column(
@@ -787,20 +827,30 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                 controller: nameController,
                                 hintText: 'Enter venue name',
                                 textInputAction: TextInputAction.next,
-                                decoration: nameError != null
-                                    ? AppConstants.textFieldDecoration.copyWith(
-                                        border: OutlineInputBorder(
-                                          borderSide: BorderSide(color: Design.errorRed),
-                                        ),
-                                      )
-                                    : AppConstants.textFieldDecoration,
+                                decoration:
+                                    nameError != null
+                                        ? AppConstants.textFieldDecoration
+                                            .copyWith(
+                                              border: OutlineInputBorder(
+                                                borderSide: BorderSide(
+                                                  color: Design.errorRed,
+                                                ),
+                                              ),
+                                            )
+                                        : AppConstants.textFieldDecoration,
                               ),
                               if (nameError != null)
                                 Padding(
-                                  padding: const EdgeInsets.only(top: 4, left: 12),
+                                  padding: const EdgeInsets.only(
+                                    top: 4,
+                                    left: 12,
+                                  ),
                                   child: Text(
                                     nameError!,
-                                    style: TextStyle(color: Design.errorRed, fontSize: 12),
+                                    style: TextStyle(
+                                      color: Design.errorRed,
+                                      fontSize: 12,
+                                    ),
                                   ),
                                 ),
                             ],
@@ -813,9 +863,10 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                 decoration: BoxDecoration(
                                   color: Design.white,
                                   borderRadius: BorderRadius.circular(5),
-                                  border: categoryError != null
-                                      ? Border.all(color: Design.errorRed)
-                                      : null,
+                                  border:
+                                      categoryError != null
+                                          ? Border.all(color: Design.errorRed)
+                                          : null,
                                   boxShadow: [
                                     BoxShadow(
                                       color: Colors.grey.withOpacity(0.3),
@@ -832,12 +883,16 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                       key: _categoryFieldKey,
                                       onTap: () {
                                         setState(() {
-                                          showCategoryDropdown = !showCategoryDropdown;
+                                          showCategoryDropdown =
+                                              !showCategoryDropdown;
                                         });
                                         validateCategory();
                                       },
                                       child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 15,
+                                          vertical: 10,
+                                        ),
                                         decoration: const BoxDecoration(
                                           color: Design.white,
                                           borderRadius: BorderRadius.only(
@@ -846,14 +901,21 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                           ),
                                         ),
                                         child: Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
                                           children: [
                                             Text(
-                                              nameofegg.isEmpty ? "Select Category" : nameofegg,
-                                              style: const TextStyle(fontSize: 15),
+                                              nameofegg.isEmpty
+                                                  ? "Select Category"
+                                                  : nameofegg,
+                                              style: const TextStyle(
+                                                fontSize: 15,
+                                              ),
                                             ),
                                             Icon(
-                                              showCategoryDropdown ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+                                              showCategoryDropdown
+                                                  ? Icons.arrow_drop_up
+                                                  : Icons.arrow_drop_down,
                                               color: Colors.grey,
                                             ),
                                           ],
@@ -862,7 +924,9 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                     ),
                                     if (showCategoryDropdown)
                                       Container(
-                                        constraints: BoxConstraints(maxHeight: 38.0 * 5),
+                                        constraints: BoxConstraints(
+                                          maxHeight: 38.0 * 5,
+                                        ),
                                         decoration: const BoxDecoration(
                                           color: Design.white,
                                           borderRadius: BorderRadius.only(
@@ -880,26 +944,50 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                                   padding: EdgeInsets.zero,
                                                   shrinkWrap: true,
                                                   itemCount: allCategory.length,
-                                                  itemBuilder: (context, index) {
-                                                    final category = allCategory[index];
-                                                    final isSelected = catId == category['id'].toString();
+                                                  itemBuilder: (
+                                                    context,
+                                                    index,
+                                                  ) {
+                                                    final category =
+                                                        allCategory[index];
+                                                    final isSelected =
+                                                        catId ==
+                                                        category['id']
+                                                            .toString();
                                                     return InkWell(
                                                       onTap: () {
                                                         setState(() {
-                                                          catId = category['id'].toString();
-                                                          nameofegg = category['name'];
-                                                          showCategoryDropdown = false;
+                                                          catId =
+                                                              category['id']
+                                                                  .toString();
+                                                          nameofegg =
+                                                              category['name'];
+                                                          showCategoryDropdown =
+                                                              false;
                                                         });
                                                         validateCategory();
                                                       },
                                                       child: Container(
-                                                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-                                                        color: isSelected
-                                                            ? Design.primaryColorOrange.withOpacity(0.1)
-                                                            : Colors.transparent,
+                                                        padding:
+                                                            const EdgeInsets.symmetric(
+                                                              horizontal: 20,
+                                                              vertical: 6,
+                                                            ),
+                                                        color:
+                                                            isSelected
+                                                                ? Design
+                                                                    .primaryColorOrange
+                                                                    .withOpacity(
+                                                                      0.1,
+                                                                    )
+                                                                : Colors
+                                                                    .transparent,
                                                         child: Text(
                                                           category['name'],
-                                                          style: const TextStyle(fontSize: 15),
+                                                          style:
+                                                              const TextStyle(
+                                                                fontSize: 15,
+                                                              ),
                                                         ),
                                                       ),
                                                     );
@@ -915,10 +1003,16 @@ class _AddEggScreenState extends State<AddEggScreen> {
                               ),
                               if (categoryError != null)
                                 Padding(
-                                  padding: const EdgeInsets.only(top: 4, left: 12),
+                                  padding: const EdgeInsets.only(
+                                    top: 4,
+                                    left: 12,
+                                  ),
                                   child: Text(
                                     categoryError!,
-                                    style: TextStyle(color: Design.errorRed, fontSize: 12),
+                                    style: TextStyle(
+                                      color: Design.errorRed,
+                                      fontSize: 12,
+                                    ),
                                   ),
                                 ),
                             ],
@@ -931,7 +1025,10 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                 decoration: BoxDecoration(
                                   color: Design.lightPurple,
                                   borderRadius: BorderRadius.circular(5),
-                                  border: tagsError != null ? Border.all(color: Design.errorRed) : null,
+                                  border:
+                                      tagsError != null
+                                          ? Border.all(color: Design.errorRed)
+                                          : null,
                                   boxShadow: [
                                     BoxShadow(
                                       color: Colors.grey.withOpacity(0.3),
@@ -954,30 +1051,50 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                         validateTags();
                                       },
                                       child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 15,
+                                          vertical: 10,
+                                        ),
                                         decoration: BoxDecoration(
                                           color: Design.white,
-                                          borderRadius: BorderRadius.circular(5),
+                                          borderRadius: BorderRadius.circular(
+                                            5,
+                                          ),
                                         ),
                                         child: Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
                                           children: [
                                             Flexible(
                                               child: Text(
                                                 selectedTags.isEmpty
                                                     ? "Select Tags"
                                                     : selectedTags
-                                                        .map((id) => tags.firstWhere(
-                                                              (tag) => tag['id'].toString() == id,
-                                                              orElse: () => {'name': 'Unknown'},
-                                                            )['name'])
+                                                        .map(
+                                                          (id) =>
+                                                              tags.firstWhere(
+                                                                (tag) =>
+                                                                    tag['id']
+                                                                        .toString() ==
+                                                                    id,
+                                                                orElse:
+                                                                    () => {
+                                                                      'name':
+                                                                          'Unknown',
+                                                                    },
+                                                              )['name'],
+                                                        )
                                                         .join(", "),
-                                                style: const TextStyle(fontSize: 15),
+                                                style: const TextStyle(
+                                                  fontSize: 15,
+                                                ),
                                                 overflow: TextOverflow.ellipsis,
                                               ),
                                             ),
                                             Icon(
-                                              showTagsDropdown ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+                                              showTagsDropdown
+                                                  ? Icons.arrow_drop_up
+                                                  : Icons.arrow_drop_down,
                                               color: Colors.grey,
                                             ),
                                           ],
@@ -986,7 +1103,9 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                     ),
                                     if (showTagsDropdown)
                                       Container(
-                                        constraints: const BoxConstraints(maxHeight: 38.0 * 6 + 48),
+                                        constraints: const BoxConstraints(
+                                          maxHeight: 38.0 * 6 + 48,
+                                        ),
                                         decoration: const BoxDecoration(
                                           color: Design.white,
                                           borderRadius: BorderRadius.only(
@@ -998,23 +1117,43 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
                                             Padding(
-                                              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 6),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 15,
+                                                    vertical: 6,
+                                                  ),
                                               child: Row(
                                                 children: [
-                                                  const Icon(Icons.search, color: Colors.grey, size: 16),
+                                                  const Icon(
+                                                    Icons.search,
+                                                    color: Colors.grey,
+                                                    size: 16,
+                                                  ),
                                                   const SizedBox(width: 8),
                                                   Expanded(
                                                     child: TextField(
-                                                      decoration: const InputDecoration(
-                                                        hintText: "Search tags...",
-                                                        hintStyle: TextStyle(color: Colors.grey, fontSize: 14),
-                                                        border: InputBorder.none,
-                                                        isDense: true,
-                                                        contentPadding: EdgeInsets.zero,
-                                                      ),
+                                                      decoration:
+                                                          const InputDecoration(
+                                                            hintText:
+                                                                "Search tags...",
+                                                            hintStyle:
+                                                                TextStyle(
+                                                                  color:
+                                                                      Colors
+                                                                          .grey,
+                                                                  fontSize: 14,
+                                                                ),
+                                                            border:
+                                                                InputBorder
+                                                                    .none,
+                                                            isDense: true,
+                                                            contentPadding:
+                                                                EdgeInsets.zero,
+                                                          ),
                                                       onChanged: (value) {
                                                         setState(() {
-                                                          tagSearchQuery = value;
+                                                          tagSearchQuery =
+                                                              value;
                                                         });
                                                       },
                                                     ),
@@ -1028,60 +1167,113 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                                 child: ListView.builder(
                                                   padding: EdgeInsets.zero,
                                                   shrinkWrap: true,
-                                                  itemCount: tags
-                                                      .where((tag) => tag['name']
-                                                          .toLowerCase()
-                                                          .contains(tagSearchQuery.toLowerCase()))
-                                                      .length,
-                                                  itemBuilder: (context, index) {
-                                                    final filteredTags = tags
-                                                        .where((tag) => tag['name']
-                                                            .toLowerCase()
-                                                            .contains(tagSearchQuery.toLowerCase()))
-                                                        .toList();
-                                                    final tag = filteredTags[index];
-                                                    final isSelected = selectedTags.contains(tag['id'].toString());
+                                                  itemCount:
+                                                      tags
+                                                          .where(
+                                                            (tag) => tag['name']
+                                                                .toLowerCase()
+                                                                .contains(
+                                                                  tagSearchQuery
+                                                                      .toLowerCase(),
+                                                                ),
+                                                          )
+                                                          .length,
+                                                  itemBuilder: (
+                                                    context,
+                                                    index,
+                                                  ) {
+                                                    final filteredTags =
+                                                        tags
+                                                            .where(
+                                                              (
+                                                                tag,
+                                                              ) => tag['name']
+                                                                  .toLowerCase()
+                                                                  .contains(
+                                                                    tagSearchQuery
+                                                                        .toLowerCase(),
+                                                                  ),
+                                                            )
+                                                            .toList();
+                                                    final tag =
+                                                        filteredTags[index];
+                                                    final isSelected =
+                                                        selectedTags.contains(
+                                                          tag['id'].toString(),
+                                                        );
                                                     return InkWell(
                                                       onTap: () {
                                                         setState(() {
-                                                          final tagId = tag['id'].toString();
-                                                          if (selectedTags.contains(tagId)) {
-                                                            selectedTags.remove(tagId);
+                                                          final tagId =
+                                                              tag['id']
+                                                                  .toString();
+                                                          if (selectedTags
+                                                              .contains(
+                                                                tagId,
+                                                              )) {
+                                                            selectedTags.remove(
+                                                              tagId,
+                                                            );
                                                           } else {
-                                                            if (selectedTags.length >= maxTags) {
-                                                              tagsError = "You can select up to $maxTags tags!";
+                                                            if (selectedTags
+                                                                    .length >=
+                                                                maxTags) {
+                                                              tagsError =
+                                                                  "You can select up to $maxTags tags!";
                                                               return;
                                                             }
-                                                            selectedTags.add(tagId);
+                                                            selectedTags.add(
+                                                              tagId,
+                                                            );
                                                           }
                                                         });
                                                         validateTags();
                                                       },
                                                       child: Container(
-                                                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-                                                        color: isSelected
-                                                            ? Design.primaryColorOrange.withOpacity(0.1)
-                                                            : Colors.transparent,
+                                                        padding:
+                                                            const EdgeInsets.symmetric(
+                                                              horizontal: 20,
+                                                              vertical: 6,
+                                                            ),
+                                                        color:
+                                                            isSelected
+                                                                ? Design
+                                                                    .primaryColorOrange
+                                                                    .withOpacity(
+                                                                      0.1,
+                                                                    )
+                                                                : Colors
+                                                                    .transparent,
                                                         child: Row(
-                                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .spaceBetween,
                                                           children: [
                                                             Text(
                                                               tag['name'],
                                                               style: TextStyle(
                                                                 fontSize: 15,
-                                                                color: isSelected
-                                                                    ? Design.primaryColorOrange
-                                                                    : Colors.black,
-                                                                fontWeight: isSelected
-                                                                    ? FontWeight.w500
-                                                                    : FontWeight.normal,
+                                                                color:
+                                                                    isSelected
+                                                                        ? Design
+                                                                            .primaryColorOrange
+                                                                        : Colors
+                                                                            .black,
+                                                                fontWeight:
+                                                                    isSelected
+                                                                        ? FontWeight
+                                                                            .w500
+                                                                        : FontWeight
+                                                                            .normal,
                                                               ),
                                                             ),
                                                             if (isSelected)
                                                               Icon(
                                                                 Icons.check,
                                                                 size: 18,
-                                                                color: Design.primaryColorOrange,
+                                                                color:
+                                                                    Design
+                                                                        .primaryColorOrange,
                                                               ),
                                                           ],
                                                         ),
@@ -1092,7 +1284,9 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                               ),
                                             ),
                                             Padding(
-                                              padding: const EdgeInsets.all(6.0),
+                                              padding: const EdgeInsets.all(
+                                                6.0,
+                                              ),
                                               child: SizedBox(
                                                 width: double.infinity,
                                                 child: ElevatedButton(
@@ -1103,15 +1297,26 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                                     validateTags();
                                                   },
                                                   style: ElevatedButton.styleFrom(
-                                                    backgroundColor: Design.primaryColorOrange,
+                                                    backgroundColor:
+                                                        Design
+                                                            .primaryColorOrange,
                                                     shape: RoundedRectangleBorder(
-                                                      borderRadius: BorderRadius.circular(5),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            5,
+                                                          ),
                                                     ),
-                                                    padding: const EdgeInsets.symmetric(vertical: 8),
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          vertical: 8,
+                                                        ),
                                                   ),
                                                   child: const Text(
                                                     "Done",
-                                                    style: TextStyle(color: Colors.white, fontSize: 14),
+                                                    style: TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 14,
+                                                    ),
                                                   ),
                                                 ),
                                               ),
@@ -1124,10 +1329,16 @@ class _AddEggScreenState extends State<AddEggScreen> {
                               ),
                               if (tagsError != null)
                                 Padding(
-                                  padding: const EdgeInsets.only(top: 4, left: 12),
+                                  padding: const EdgeInsets.only(
+                                    top: 4,
+                                    left: 12,
+                                  ),
                                   child: Text(
                                     tagsError!,
-                                    style: TextStyle(color: Design.errorRed, fontSize: 12),
+                                    style: TextStyle(
+                                      color: Design.errorRed,
+                                      fontSize: 12,
+                                    ),
                                   ),
                                 ),
                             ],
@@ -1138,20 +1349,30 @@ class _AddEggScreenState extends State<AddEggScreen> {
                             children: [
                               AppConstants.suburbField(
                                 controller: suburbController,
-                                decoration: suburbError != null
-                                    ? AppConstants.textFieldDecoration.copyWith(
-                                        border: OutlineInputBorder(
-                                          borderSide: BorderSide(color: Design.errorRed),
-                                        ),
-                                      )
-                                    : AppConstants.textFieldDecoration,
+                                decoration:
+                                    suburbError != null
+                                        ? AppConstants.textFieldDecoration
+                                            .copyWith(
+                                              border: OutlineInputBorder(
+                                                borderSide: BorderSide(
+                                                  color: Design.errorRed,
+                                                ),
+                                              ),
+                                            )
+                                        : AppConstants.textFieldDecoration,
                               ),
                               if (suburbError != null)
                                 Padding(
-                                  padding: const EdgeInsets.only(top: 4, left: 12),
+                                  padding: const EdgeInsets.only(
+                                    top: 4,
+                                    left: 12,
+                                  ),
                                   child: Text(
                                     suburbError!,
-                                    style: TextStyle(color: Design.errorRed, fontSize: 12),
+                                    style: TextStyle(
+                                      color: Design.errorRed,
+                                      fontSize: 12,
+                                    ),
                                   ),
                                 ),
                             ],
@@ -1163,16 +1384,29 @@ class _AddEggScreenState extends State<AddEggScreen> {
                               GestureDetector(
                                 onTap: pickLocation,
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
-                                  decoration: AppConstants.textFieldBoxDecoration.copyWith(
-                                    border: locationError != null ? Border.all(color: Design.errorRed) : null,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 15,
+                                    vertical: 15,
                                   ),
+                                  decoration: AppConstants
+                                      .textFieldBoxDecoration
+                                      .copyWith(
+                                        border:
+                                            locationError != null
+                                                ? Border.all(
+                                                  color: Design.errorRed,
+                                                )
+                                                : null,
+                                      ),
                                   child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       Flexible(
                                         child: Text(
-                                          location.isEmpty ? "Pick location" : location,
+                                          location.isEmpty
+                                              ? "Pick location"
+                                              : location,
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                           style: const TextStyle(
@@ -1182,17 +1416,26 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                           ),
                                         ),
                                       ),
-                                      const Icon(Icons.location_on, color: Colors.grey),
+                                      const Icon(
+                                        Icons.location_on,
+                                        color: Colors.grey,
+                                      ),
                                     ],
                                   ),
                                 ),
                               ),
                               if (locationError != null)
                                 Padding(
-                                  padding: const EdgeInsets.only(top: 4, left: 12),
+                                  padding: const EdgeInsets.only(
+                                    top: 4,
+                                    left: 12,
+                                  ),
                                   child: Text(
                                     locationError!,
-                                    style: TextStyle(color: Design.errorRed, fontSize: 12),
+                                    style: TextStyle(
+                                      color: Design.errorRed,
+                                      fontSize: 12,
+                                    ),
                                   ),
                                 ),
                             ],
@@ -1205,7 +1448,10 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                 decoration: BoxDecoration(
                                   color: Design.white,
                                   borderRadius: BorderRadius.circular(5),
-                                  border: amenitiesError != null ? Border.all(color: Design.errorRed) : null,
+                                  border:
+                                      amenitiesError != null
+                                          ? Border.all(color: Design.errorRed)
+                                          : null,
                                   boxShadow: [
                                     BoxShadow(
                                       color: Colors.grey.withOpacity(0.3),
@@ -1222,30 +1468,48 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                       key: _amenityFieldKey,
                                       onTap: () {
                                         setState(() {
-                                          showAmenityDropdown = !showAmenityDropdown;
+                                          showAmenityDropdown =
+                                              !showAmenityDropdown;
                                         });
                                         validateAmenities();
                                       },
                                       child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 15,
+                                          vertical: 15,
+                                        ),
                                         decoration: BoxDecoration(
                                           color: Design.white,
-                                          borderRadius: BorderRadius.circular(5),
+                                          borderRadius: BorderRadius.circular(
+                                            5,
+                                          ),
                                         ),
                                         child: Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
                                           children: [
                                             Text(
                                               arrOfAmenities.isEmpty
                                                   ? "Select Amenities"
                                                   : arrOfAmenities
-                                                      .map((id) => allAmenities
-                                                          .firstWhere((amenity) => amenity['id'].toString() == id)['name'])
+                                                      .map(
+                                                        (id) =>
+                                                            allAmenities.firstWhere(
+                                                              (amenity) =>
+                                                                  amenity['id']
+                                                                      .toString() ==
+                                                                  id,
+                                                            )['name'],
+                                                      )
                                                       .join(", "),
-                                              style: const TextStyle(fontSize: 15),
+                                              style: const TextStyle(
+                                                fontSize: 15,
+                                              ),
                                             ),
                                             Icon(
-                                              showAmenityDropdown ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+                                              showAmenityDropdown
+                                                  ? Icons.arrow_drop_up
+                                                  : Icons.arrow_drop_down,
                                               color: Colors.grey,
                                             ),
                                           ],
@@ -1254,7 +1518,9 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                     ),
                                     if (showAmenityDropdown)
                                       Container(
-                                        constraints: BoxConstraints(maxHeight: 32 * 6 + 48),
+                                        constraints: BoxConstraints(
+                                          maxHeight: 32 * 6 + 48,
+                                        ),
                                         decoration: BoxDecoration(
                                           color: Design.white,
                                           borderRadius: const BorderRadius.only(
@@ -1270,39 +1536,74 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                                 shrinkWrap: true,
                                                 itemCount: allAmenities.length,
                                                 itemBuilder: (context, index) {
-                                                  final amenity = allAmenities[index];
+                                                  final amenity =
+                                                      allAmenities[index];
                                                   final isSelected =
-                                                      arrOfAmenities.contains(amenity['id'].toString());
+                                                      arrOfAmenities.contains(
+                                                        amenity['id']
+                                                            .toString(),
+                                                      );
                                                   return ListTile(
                                                     dense: true,
                                                     contentPadding:
-                                                        const EdgeInsets.symmetric(horizontal: 15, vertical: 1),
-                                                    visualDensity: VisualDensity.compact,
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 15,
+                                                          vertical: 1,
+                                                        ),
+                                                    visualDensity:
+                                                        VisualDensity.compact,
                                                     title: Text(
                                                       amenity['name'],
                                                       style: TextStyle(
                                                         fontSize: 14,
-                                                        color: arrOfAmenities.contains(amenity['id'].toString())
-                                                            ? Design.primaryColorOrange
-                                                            : Colors.black,
-                                                        fontWeight: arrOfAmenities.contains(amenity['id'].toString())
-                                                            ? FontWeight.w500
-                                                            : FontWeight.normal,
+                                                        color:
+                                                            arrOfAmenities.contains(
+                                                                  amenity['id']
+                                                                      .toString(),
+                                                                )
+                                                                ? Design
+                                                                    .primaryColorOrange
+                                                                : Colors.black,
+                                                        fontWeight:
+                                                            arrOfAmenities.contains(
+                                                                  amenity['id']
+                                                                      .toString(),
+                                                                )
+                                                                ? FontWeight
+                                                                    .w500
+                                                                : FontWeight
+                                                                    .normal,
                                                       ),
                                                     ),
-                                                    trailing: arrOfAmenities.contains(amenity['id'].toString())
-                                                        ? Icon(
-                                                            Icons.check,
-                                                            color: Design.primaryColorOrange,
-                                                            size: 18,
-                                                          )
-                                                        : null,
+                                                    trailing:
+                                                        arrOfAmenities.contains(
+                                                              amenity['id']
+                                                                  .toString(),
+                                                            )
+                                                            ? Icon(
+                                                              Icons.check,
+                                                              color:
+                                                                  Design
+                                                                      .primaryColorOrange,
+                                                              size: 18,
+                                                            )
+                                                            : null,
                                                     onTap: () {
                                                       setState(() {
-                                                        if (arrOfAmenities.contains(amenity['id'].toString())) {
-                                                          arrOfAmenities.remove(amenity['id'].toString());
+                                                        if (arrOfAmenities
+                                                            .contains(
+                                                              amenity['id']
+                                                                  .toString(),
+                                                            )) {
+                                                          arrOfAmenities.remove(
+                                                            amenity['id']
+                                                                .toString(),
+                                                          );
                                                         } else {
-                                                          arrOfAmenities.add(amenity['id'].toString());
+                                                          arrOfAmenities.add(
+                                                            amenity['id']
+                                                                .toString(),
+                                                          );
                                                         }
                                                       });
                                                       validateAmenities();
@@ -1312,26 +1613,42 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                               ),
                                             ),
                                             Padding(
-                                              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 15,
+                                                    vertical: 8,
+                                                  ),
                                               child: SizedBox(
                                                 width: double.infinity,
                                                 child: ElevatedButton(
                                                   onPressed: () {
                                                     setState(() {
-                                                      showAmenityDropdown = false;
+                                                      showAmenityDropdown =
+                                                          false;
                                                     });
                                                     validateAmenities();
                                                   },
                                                   style: ElevatedButton.styleFrom(
-                                                    backgroundColor: Design.primaryColorOrange,
+                                                    backgroundColor:
+                                                        Design
+                                                            .primaryColorOrange,
                                                     shape: RoundedRectangleBorder(
-                                                      borderRadius: BorderRadius.circular(5),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            5,
+                                                          ),
                                                     ),
-                                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          vertical: 12,
+                                                        ),
                                                   ),
                                                   child: const Text(
                                                     "Done",
-                                                    style: TextStyle(color: Colors.white, fontSize: 14),
+                                                    style: TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 14,
+                                                    ),
                                                   ),
                                                 ),
                                               ),
@@ -1344,10 +1661,16 @@ class _AddEggScreenState extends State<AddEggScreen> {
                               ),
                               if (amenitiesError != null)
                                 Padding(
-                                  padding: const EdgeInsets.only(top: 4, left: 12),
+                                  padding: const EdgeInsets.only(
+                                    top: 4,
+                                    left: 12,
+                                  ),
                                   child: Text(
                                     amenitiesError!,
-                                    style: TextStyle(color: Design.errorRed, fontSize: 12),
+                                    style: TextStyle(
+                                      color: Design.errorRed,
+                                      fontSize: 12,
+                                    ),
                                   ),
                                 ),
                             ],
@@ -1373,31 +1696,48 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                   key: _dietaryFieldKey,
                                   onTap: () {
                                     setState(() {
-                                      showDietaryDropdown = !showDietaryDropdown;
+                                      showDietaryDropdown =
+                                          !showDietaryDropdown;
                                     });
                                   },
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 15,
+                                      vertical: 15,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: Design.white,
                                       borderRadius: BorderRadius.circular(5),
                                     ),
                                     child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
                                       children: [
                                         Text(
                                           arrOfDietaryTags.isEmpty
                                               ? "Select Dietary Tags"
                                               : arrOfDietaryTags
-                                                  .map((id) => allDietaryTags.firstWhere(
-                                                        (diet) => diet['id'].toString() == id,
-                                                        orElse: () => {'name': 'Unknown'},
-                                                      )['name'])
+                                                  .map(
+                                                    (id) =>
+                                                        allDietaryTags.firstWhere(
+                                                          (diet) =>
+                                                              diet['id']
+                                                                  .toString() ==
+                                                              id,
+                                                          orElse:
+                                                              () => {
+                                                                'name':
+                                                                    'Unknown',
+                                                              },
+                                                        )['name'],
+                                                  )
                                                   .join(", "),
                                           style: const TextStyle(fontSize: 15),
                                         ),
                                         Icon(
-                                          showDietaryDropdown ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+                                          showDietaryDropdown
+                                              ? Icons.arrow_drop_up
+                                              : Icons.arrow_drop_down,
                                           color: Colors.grey,
                                         ),
                                       ],
@@ -1406,7 +1746,9 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                 ),
                                 if (showDietaryDropdown)
                                   Container(
-                                    constraints: const BoxConstraints(maxHeight: 32 * 6 + 48),
+                                    constraints: const BoxConstraints(
+                                      maxHeight: 32 * 6 + 48,
+                                    ),
                                     decoration: const BoxDecoration(
                                       color: Design.white,
                                       borderRadius: BorderRadius.only(
@@ -1422,35 +1764,59 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                             shrinkWrap: true,
                                             itemCount: allDietaryTags.length,
                                             itemBuilder: (context, index) {
-                                              final dietTag = allDietaryTags[index];
-                                              final tagId = dietTag['id'].toString();
-                                              final isSelected = arrOfDietaryTags.contains(tagId);
+                                              final dietTag =
+                                                  allDietaryTags[index];
+                                              final tagId =
+                                                  dietTag['id'].toString();
+                                              final isSelected =
+                                                  arrOfDietaryTags.contains(
+                                                    tagId,
+                                                  );
                                               return ListTile(
                                                 dense: true,
                                                 contentPadding:
-                                                    const EdgeInsets.symmetric(horizontal: 15, vertical: 1),
-                                                visualDensity: VisualDensity.compact,
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 15,
+                                                      vertical: 1,
+                                                    ),
+                                                visualDensity:
+                                                    VisualDensity.compact,
                                                 title: Text(
                                                   dietTag['name'],
                                                   style: TextStyle(
                                                     fontSize: 14,
-                                                    color: isSelected ? Design.primaryColorOrange : Colors.black,
-                                                    fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
+                                                    color:
+                                                        isSelected
+                                                            ? Design
+                                                                .primaryColorOrange
+                                                            : Colors.black,
+                                                    fontWeight:
+                                                        isSelected
+                                                            ? FontWeight.w500
+                                                            : FontWeight.normal,
                                                   ),
                                                 ),
-                                                trailing: isSelected
-                                                    ? Icon(
-                                                        Icons.check,
-                                                        color: Design.primaryColorOrange,
-                                                        size: 18,
-                                                      )
-                                                    : null,
+                                                trailing:
+                                                    isSelected
+                                                        ? Icon(
+                                                          Icons.check,
+                                                          color:
+                                                              Design
+                                                                  .primaryColorOrange,
+                                                          size: 18,
+                                                        )
+                                                        : null,
                                                 onTap: () {
                                                   setState(() {
-                                                    if (arrOfDietaryTags.contains(tagId)) {
-                                                      arrOfDietaryTags.remove(tagId);
+                                                    if (arrOfDietaryTags
+                                                        .contains(tagId)) {
+                                                      arrOfDietaryTags.remove(
+                                                        tagId,
+                                                      );
                                                     } else {
-                                                      arrOfDietaryTags.add(tagId);
+                                                      arrOfDietaryTags.add(
+                                                        tagId,
+                                                      );
                                                     }
                                                   });
                                                 },
@@ -1459,7 +1825,10 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                           ),
                                         ),
                                         Padding(
-                                          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 15,
+                                            vertical: 8,
+                                          ),
                                           child: SizedBox(
                                             width: double.infinity,
                                             child: ElevatedButton(
@@ -1469,15 +1838,23 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                                 });
                                               },
                                               style: ElevatedButton.styleFrom(
-                                                backgroundColor: Design.primaryColorOrange,
+                                                backgroundColor:
+                                                    Design.primaryColorOrange,
                                                 shape: RoundedRectangleBorder(
-                                                  borderRadius: BorderRadius.circular(5),
+                                                  borderRadius:
+                                                      BorderRadius.circular(5),
                                                 ),
-                                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      vertical: 12,
+                                                    ),
                                               ),
                                               child: const Text(
                                                 "Done",
-                                                style: TextStyle(color: Colors.white, fontSize: 14),
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 14,
+                                                ),
                                               ),
                                             ),
                                           ),
@@ -1494,20 +1871,30 @@ class _AddEggScreenState extends State<AddEggScreen> {
                             children: [
                               AppConstants.noticeField(
                                 controller: noticeController,
-                                decoration: noticeError != null
-                                    ? AppConstants.textFieldDecoration.copyWith(
-                                        border: OutlineInputBorder(
-                                          borderSide: BorderSide(color: Design.errorRed),
-                                        ),
-                                      )
-                                    : AppConstants.textFieldDecoration,
+                                decoration:
+                                    noticeError != null
+                                        ? AppConstants.textFieldDecoration
+                                            .copyWith(
+                                              border: OutlineInputBorder(
+                                                borderSide: BorderSide(
+                                                  color: Design.errorRed,
+                                                ),
+                                              ),
+                                            )
+                                        : AppConstants.textFieldDecoration,
                               ),
                               if (noticeError != null)
                                 Padding(
-                                  padding: const EdgeInsets.only(top: 4, left: 12),
+                                  padding: const EdgeInsets.only(
+                                    top: 4,
+                                    left: 12,
+                                  ),
                                   child: Text(
                                     noticeError!,
-                                    style: TextStyle(color: Design.errorRed, fontSize: 12),
+                                    style: TextStyle(
+                                      color: Design.errorRed,
+                                      fontSize: 12,
+                                    ),
                                   ),
                                 ),
                             ],
@@ -1517,9 +1904,15 @@ class _AddEggScreenState extends State<AddEggScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Container(
-                                decoration: AppConstants.textFieldBoxDecoration.copyWith(
-                                  border: descriptionError != null ? Border.all(color: Design.errorRed) : null,
-                                ),
+                                decoration: AppConstants.textFieldBoxDecoration
+                                    .copyWith(
+                                      border:
+                                          descriptionError != null
+                                              ? Border.all(
+                                                color: Design.errorRed,
+                                              )
+                                              : null,
+                                    ),
                                 child: TextField(
                                   controller: descriptionController,
                                   maxLines: 5,
@@ -1528,22 +1921,32 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                     fontSize: 14.0,
                                     fontFamily: 'YourFontFamily',
                                   ),
-                                  decoration: AppConstants.textFieldDecoration.copyWith(
-                                    hintText: "Description",
-                                    border: descriptionError != null
-                                        ? OutlineInputBorder(
-                                            borderSide: BorderSide(color: Design.errorRed),
-                                          )
-                                        : null,
-                                  ),
+                                  decoration: AppConstants.textFieldDecoration
+                                      .copyWith(
+                                        hintText: "Description",
+                                        border:
+                                            descriptionError != null
+                                                ? OutlineInputBorder(
+                                                  borderSide: BorderSide(
+                                                    color: Design.errorRed,
+                                                  ),
+                                                )
+                                                : null,
+                                      ),
                                 ),
                               ),
                               if (descriptionError != null)
                                 Padding(
-                                  padding: const EdgeInsets.only(top: 4, left: 12),
+                                  padding: const EdgeInsets.only(
+                                    top: 4,
+                                    left: 12,
+                                  ),
                                   child: Text(
                                     descriptionError!,
-                                    style: TextStyle(color: Design.errorRed, fontSize: 12),
+                                    style: TextStyle(
+                                      color: Design.errorRed,
+                                      fontSize: 12,
+                                    ),
                                   ),
                                 ),
                             ],
@@ -1568,7 +1971,12 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                       decoration: BoxDecoration(
                                         color: Design.white,
                                         borderRadius: BorderRadius.circular(5),
-                                        border: photosError != null ? Border.all(color: Design.errorRed) : null,
+                                        border:
+                                            photosError != null
+                                                ? Border.all(
+                                                  color: Design.errorRed,
+                                                )
+                                                : null,
                                         boxShadow: [
                                           BoxShadow(
                                             color: Colors.grey.shade300,
@@ -1597,10 +2005,13 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                           return Container(
                                             width: 90,
                                             height: 90,
-                                            margin: const EdgeInsets.only(right: 10),
+                                            margin: const EdgeInsets.only(
+                                              right: 10,
+                                            ),
                                             decoration: BoxDecoration(
                                               color: Design.white,
-                                              borderRadius: BorderRadius.circular(5),
+                                              borderRadius:
+                                                  BorderRadius.circular(5),
                                               boxShadow: [
                                                 BoxShadow(
                                                   color: Colors.grey.shade300,
@@ -1612,7 +2023,8 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                             child: Stack(
                                               children: [
                                                 ClipRRect(
-                                                  borderRadius: BorderRadius.circular(5),
+                                                  borderRadius:
+                                                      BorderRadius.circular(5),
                                                   child: Image.file(
                                                     File(photo.path),
                                                     fit: BoxFit.cover,
@@ -1624,14 +2036,19 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                                   top: 2,
                                                   right: 2,
                                                   child: InkWell(
-                                                    onTap: () => removePhoto(index),
+                                                    onTap:
+                                                        () =>
+                                                            removePhoto(index),
                                                     child: Container(
                                                       width: 24,
                                                       height: 24,
-                                                      decoration: const BoxDecoration(
-                                                        shape: BoxShape.circle,
-                                                        color: Colors.black54,
-                                                      ),
+                                                      decoration:
+                                                          const BoxDecoration(
+                                                            shape:
+                                                                BoxShape.circle,
+                                                            color:
+                                                                Colors.black54,
+                                                          ),
                                                       child: const Icon(
                                                         Icons.close,
                                                         color: Colors.white,
@@ -1651,10 +2068,16 @@ class _AddEggScreenState extends State<AddEggScreen> {
                               ),
                               if (photosError != null)
                                 Padding(
-                                  padding: const EdgeInsets.only(top: 4, left: 12),
+                                  padding: const EdgeInsets.only(
+                                    top: 4,
+                                    left: 12,
+                                  ),
                                   child: Text(
                                     photosError!,
-                                    style: TextStyle(color: Design.errorRed, fontSize: 12),
+                                    style: TextStyle(
+                                      color: Design.errorRed,
+                                      fontSize: 12,
+                                    ),
                                   ),
                                 ),
                             ],
@@ -1666,11 +2089,16 @@ class _AddEggScreenState extends State<AddEggScreen> {
                               onPressed: updateBtn,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Design.primaryColorOrange,
-                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
                               ),
                               child: const Text(
                                 "Save Venue",
-                                style: TextStyle(fontSize: 16, color: Colors.white),
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
                           ),
@@ -1777,7 +2205,10 @@ class _AddEggScreenState extends State<AddEggScreen> {
                           onPressed: onDonePressed,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Design.primaryColorOrange,
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 12,
+                            ),
                           ),
                           child: const Text("Done"),
                         ),
@@ -1798,7 +2229,9 @@ class _AddEggScreenState extends State<AddEggScreen> {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(8),
-                      boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 8)],
+                      boxShadow: const [
+                        BoxShadow(color: Colors.black26, blurRadius: 8),
+                      ],
                     ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -1818,7 +2251,10 @@ class _AddEggScreenState extends State<AddEggScreen> {
                           padding: EdgeInsets.symmetric(horizontal: 16),
                           child: Text(
                             "Users that subscribe their venues to Flock can manage them here in the app.",
-                            style: TextStyle(fontSize: Design.font14, color: Design.black),
+                            style: TextStyle(
+                              fontSize: Design.font14,
+                              color: Design.black,
+                            ),
                             textAlign: TextAlign.left,
                           ),
                         ),
@@ -1827,16 +2263,25 @@ class _AddEggScreenState extends State<AddEggScreen> {
                           padding: EdgeInsets.symmetric(horizontal: 16),
                           child: Text(
                             "For more information visit here",
-                            style: TextStyle(fontSize: Design.font14, color: Design.black),
+                            style: TextStyle(
+                              fontSize: Design.font14,
+                              color: Design.black,
+                            ),
                           ),
                         ),
                         GestureDetector(
-                          onTap: () => launchUrl(Uri.parse('https://getflock.io/business/')),
+                          onTap:
+                              () => launchUrl(
+                                Uri.parse('https://getflock.io/business/'),
+                              ),
                           child: const Padding(
                             padding: EdgeInsets.symmetric(horizontal: 16),
                             child: Text(
                               "https://getflock.io/business/",
-                              style: TextStyle(fontSize: Design.font14, color: Design.blue),
+                              style: TextStyle(
+                                fontSize: Design.font14,
+                                color: Design.blue,
+                              ),
                             ),
                           ),
                         ),
@@ -1848,7 +2293,10 @@ class _AddEggScreenState extends State<AddEggScreen> {
                             });
                           },
                           child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 10,
+                              horizontal: 20,
+                            ),
                             decoration: BoxDecoration(
                               color: Design.white,
                               borderRadius: BorderRadius.circular(5),
@@ -1877,7 +2325,8 @@ class _AddEggScreenState extends State<AddEggScreen> {
 
 class LocationPickerScreen extends StatefulWidget {
   final LatLng initialPosition;
-  const LocationPickerScreen({Key? key, required this.initialPosition}) : super(key: key);
+  const LocationPickerScreen({Key? key, required this.initialPosition})
+    : super(key: key);
 
   @override
   State<LocationPickerScreen> createState() => _LocationPickerScreenState();
@@ -1890,7 +2339,8 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
   @override
   void initState() {
     super.initState();
-    if (widget.initialPosition.latitude != 0.0 && widget.initialPosition.longitude != 0.0) {
+    if (widget.initialPosition.latitude != 0.0 &&
+        widget.initialPosition.longitude != 0.0) {
       pickedPosition = widget.initialPosition;
     }
   }
@@ -1913,7 +2363,8 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                 return;
               }
               Navigator.pop(context, {
-                'address': "Selected Location (${pickedPosition.latitude}, ${pickedPosition.longitude})",
+                'address':
+                    "Selected Location (${pickedPosition.latitude}, ${pickedPosition.longitude})",
                 'lat': pickedPosition.latitude,
                 'lng': pickedPosition.longitude,
               });

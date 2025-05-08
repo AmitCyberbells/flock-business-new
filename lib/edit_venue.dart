@@ -167,7 +167,7 @@ class _EditVenueScreenState extends State<EditVenueScreen> {
       final token = await _getToken();
       final response = await http.get(
         Uri.parse(
-          "http://165.232.152.77/api/vendor/dietary-tags",
+          "https://api.getflock.io/api/vendor/dietary-tags",
         ), // Replace with your actual endpoint URL
         headers: {
           HttpHeaders.authorizationHeader: 'Bearer $token',
@@ -191,7 +191,7 @@ class _EditVenueScreenState extends State<EditVenueScreen> {
   Future<void> _fetchTags() async {
     try {
       final token = await _getToken();
-      const tagsUrl = 'http://165.232.152.77/api/vendor/tags';
+      const tagsUrl = 'https://api.getflock.io/api/vendor/tags';
       final response = await http.get(
         Uri.parse(tagsUrl),
         headers: {
@@ -215,7 +215,7 @@ class _EditVenueScreenState extends State<EditVenueScreen> {
   Future<void> _fetchAmenities() async {
     try {
       final token = await _getToken();
-      const amenitiesUrl = 'http://165.232.152.77/api/vendor/amenities';
+      const amenitiesUrl = 'https://api.getflock.io/api/vendor/amenities';
       final response = await http.get(
         Uri.parse(amenitiesUrl),
         headers: {

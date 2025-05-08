@@ -15,7 +15,7 @@ class ProfileProvider with ChangeNotifier {
 
     try {
       final response = await http.get(
-        Uri.parse('http://165.232.152.77/api/vendor/profile/$userId'),
+        Uri.parse('https://api.getflock.io/api/vendor/profile/$userId'),
         headers: {'Content-Type': 'application/json'},
       );
       if (response.statusCode == 200) {

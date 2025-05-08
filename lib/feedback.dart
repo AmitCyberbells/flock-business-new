@@ -27,9 +27,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Report Screen Demo',
       debugShowCheckedModeBanner: false,
-theme: ThemeData(
-  primaryColor: const Color.fromRGBO(255, 130, 16, 1),
-),      home: const ReportScreen(),
+      theme: ThemeData(primaryColor: const Color.fromRGBO(255, 130, 16, 1)),
+      home: const ReportScreen(),
     );
   }
 }
@@ -82,7 +81,7 @@ class _ReportScreenState extends State<ReportScreen> {
       return;
     }
 
-    final url = Uri.parse('http://165.232.152.77/api/vendor/venues');
+    final url = Uri.parse('https://api.getflock.io/api/vendor/venues');
     try {
       final response = await http.get(
         url,
@@ -134,7 +133,7 @@ class _ReportScreenState extends State<ReportScreen> {
       return;
     }
 
-    final url = Uri.parse('http://165.232.152.77/api/vendor/report-types');
+    final url = Uri.parse('https://api.getflock.io/api/vendor/report-types');
     try {
       final response = await http.get(
         url,
@@ -211,7 +210,7 @@ class _ReportScreenState extends State<ReportScreen> {
       return;
     }
 
-    final url = Uri.parse('http://165.232.152.77/api/vendor/feedbacks');
+    final url = Uri.parse('https://api.getflock.io/api/vendor/feedbacks');
     try {
       final request = http.MultipartRequest('POST', url);
       request.headers['Authorization'] = 'Bearer $token';

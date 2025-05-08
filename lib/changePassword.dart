@@ -50,7 +50,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     }
 
     final String urlString =
-        "http://165.232.152.77/api/vendor/profile/change-password";
+        "https://api.getflock.io/api/vendor/profile/change-password";
     final payload = {
       "old_password": currentPassword,
       "password": newPassword,
@@ -87,7 +87,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
           );
         }
       } else {
-        Fluttertoast.showToast(msg: "Error: ${response.statusCode}");
+        // Fluttertoast.showToast(msg: "Error: ${response.statusCode}");
       }
     } catch (error) {
       Fluttertoast.showToast(msg: "An error occurred. Please try again.");

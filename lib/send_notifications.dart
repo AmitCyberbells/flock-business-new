@@ -57,7 +57,7 @@ class _SendNotificationScreenState extends State<SendNotificationScreen> {
     }
 
     try {
-      final url = Uri.parse('http://165.232.152.77/api/vendor/venues');
+      final url = Uri.parse('https://api.getflock.io/api/vendor/venues');
       final response = await http.get(
         url,
         headers: {
@@ -135,7 +135,7 @@ class _SendNotificationScreenState extends State<SendNotificationScreen> {
 
     try {
       final url = Uri.parse(
-        'http://165.232.152.77/api/vendor/notifications/send',
+        'https://api.getflock.io/api/vendor/notifications/send',
       );
       var request = http.MultipartRequest('POST', url);
 
