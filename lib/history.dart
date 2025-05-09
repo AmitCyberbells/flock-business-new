@@ -156,15 +156,25 @@ final formattedTime = timestamp != null
     : 'Unknown time';
 
     // Points sign & colour
-    final featherPoints = item['feather_points'] as int? ?? 0;
-    final venuePoints = item['venue_points'] as int? ?? 0;
+   // Points sign & colour
+final featherPoints = item['feather_points'] as int? ?? 0;
+final venuePoints = item['venue_points'] as int? ?? 0;
 
-    final bool isCheckIn = item['title'] == 'Check-In';
-    final featherPointsText =
-        isCheckIn ? '- $featherPoints fts' : '+ $featherPoints fts';
-    final venuePointsText =
-        isCheckIn ? '- $venuePoints pts' : '+ $venuePoints pts';
-    final pointsColor = isCheckIn ? Colors.red.shade700 : Colors.green.shade700;
+final bool isCheckIn = item['title'] == 'Check-In';
+final bool isOfferRedeemed = item['title'] == 'Offer Refunded';
+
+// Determine points text based on transaction type
+final featherPointsText = isCheckIn
+    ? '- $featherPoints fts'
+    : (isOfferRedeemed ? '- $featherPoints fts' : '+ $featherPoints fts');
+final venuePointsText = isCheckIn
+    ? '- $venuePoints pts'
+    : (isOfferRedeemed ? '- $venuePoints pts' : '+ $venuePoints pts');
+
+// Set points color based on transaction type
+final pointsColor = isCheckIn || isOfferRedeemed
+    ? Colors.red.shade700
+    : Colors.green.shade700;
 
     final IconData transactionIcon =
         isCheckIn ? Icons.login_rounded : Icons.redeem_rounded;

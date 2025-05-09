@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flock/HomeScreen.dart';
-import 'package:flock/constants.dart';
+import 'package:flock/login_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -53,13 +53,11 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
         if (responseData['status'] == 'success') {
-          // Store user data and token only after successful OTP verification
           SharedPreferences prefs = await SharedPreferences.getInstance();
           await prefs.setString('firstName', widget.firstName);
           await prefs.setString('lastName', widget.lastName);
           await prefs.setString('email', widget.email);
 
-          // Handle token storage
           String? newToken;
           if (responseData['data'] != null && responseData['data'] is Map) {
             newToken =
@@ -73,11 +71,10 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
             debugPrint("No token returned from OTP verification API");
           }
 
-          // Navigate to HomeScreen and remove previous routes
           if (mounted) {
             Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(builder: (context) => TabDashboard()),
+              MaterialPageRoute(builder: (context) => LoginScreen()),
               (route) => false,
             );
           }
@@ -98,38 +95,55 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   void _showError(String message) {
     showDialog(
       context: context,
-      builder:
-          (_) => AlertDialog(
-            title: const Text('Error'),
-            content: Text(message),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('OK'),
-              ),
-            ],
+      builder: (_) => AlertDialog(
+        title: const Text('Error'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
           ),
+        ],
+      ),
     );
+  }
+
+  Future<void> _navigateToLogin() async {
+    // Clear SharedPreferences data first
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.remove('access_token');
+    await prefs.remove('firstName');
+    await prefs.remove('lastName');
+    await prefs.remove('email');
+    await prefs.remove('isLoggedIn'); // Clear login state
+    debugPrint("Cleared SharedPreferences on back navigation");
+
+    // Navigate to LoginScreen and remove all previous routes
+    if (mounted) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => LoginScreen()),
+        (route) => false,
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        // Clear any stored data if user navigates back
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.remove('access_token');
-        await prefs.remove('firstName');
-        await prefs.remove('lastName');
-        await prefs.remove('email');
-        debugPrint("Cleared SharedPreferences on back navigation");
-        return true;
+        await _navigateToLogin();
+        return false;
       },
       child: Scaffold(
         backgroundColor: Colors.white,
-        appBar: AppConstants.customAppBar(
-          context: context,
-          title: 'OTP Verification',
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          title: const Text('OTP Verification'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: _navigateToLogin,
+          ),
         ),
         body: Padding(
           padding: const EdgeInsets.all(20),

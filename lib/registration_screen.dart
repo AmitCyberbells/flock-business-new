@@ -2,14 +2,12 @@ import 'dart:convert';
 import 'package:flock/TermsAndConditionsPage.dart';
 import 'package:flock/location.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_html/flutter_html.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/gestures.dart';
 import 'otp_verification_screen.dart';
-import 'constants.dart'; // Adjust the import path as needed.
+import 'constants.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -22,7 +20,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool isChecked = false;
   bool _obscureText = true;
 
-  // Controllers for registration fields
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _dobController = TextEditingController();
@@ -31,7 +28,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  // Error messages for inline validation
   String? _firstNameError;
   String? _lastNameError;
   String? _dobError;
@@ -72,7 +68,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _emailError = null;
       _phoneError = null;
       _passwordError = null;
-      _termsError = null; // Reset terms error
+      _termsError = null;
     });
 
     final firstName = _firstNameController.text.trim();
@@ -99,7 +95,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _passwordError = 'Password is required';
       isValid = false;
     }
-    // Add terms checkbox validation
     if (!isChecked) {
       _termsError = 'Please accept terms and conditions to proceed';
       isValid = false;
@@ -141,64 +136,42 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
         if (responseData['status'] == 'success') {
-          // Do NOT store access_token or user data yet
           debugPrint("Signup successful, navigating to OTP verification");
 
-          // Show dialog and navigate to OTP screen
           await showDialog(
             context: context,
-            builder:
-                (_) => AlertDialog(
-                  title: const Text('Success'),
-                  content: const Text('OTP sent successfully.'),
-                  actions: [
-                    TextButton(
-                      onPressed: () {
-                        debugPrint("Dialog OK button pressed");
-                        Navigator.of(context).pop();
-                      },
-                      child: const Text('OK'),
-                    ),
-                  ],
+            builder: (_) => AlertDialog(
+              title: const Text('Success'),
+              content: const Text('OTP sent successfully.'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    debugPrint("Dialog OK button pressed");
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('OK'),
                 ),
+              ],
+            ),
           );
 
-          // Navigate to OTP verification with user data
+          // Navigate to OTP verification with replacement to clear stack
           if (mounted) {
-            Navigator.push(
+            Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder:
-                    (context) => OtpVerificationScreen(
-                      email: email,
-                      firstName: firstName,
-                      lastName: lastName,
-                    ),
+                builder: (context) => OtpVerificationScreen(
+                  email: email,
+                  firstName: firstName,
+                  lastName: lastName,
+                ),
               ),
-            ).then((result) {
-              // Handle case where user navigates back without verifying
-              if (result == null && mounted) {
-                debugPrint("Returned from OTP screen without verification");
-                _showError(
-                  'OTP verification incomplete. Please register again.',
-                );
-                // Optionally clear controllers
-                _firstNameController.clear();
-                _lastNameController.clear();
-                _emailController.clear();
-                _phoneController.clear();
-                _passwordController.clear();
-                _dobController.clear();
-                _locationController.clear();
-              }
-            });
+            );
           }
         } else {
           _showError(responseData['message'] ?? 'Registration failed.');
         }
       } else {
-        // _showError('Registration failed with status: ${response.statusCode}.');
-
         _showError(
           'Registration failed. Please try again later or contact support if issue persists.',
         );
@@ -212,17 +185,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void _showError(String message) {
     showDialog(
       context: context,
-      builder:
-          (_) => AlertDialog(
-            title: const Text('Error'),
-            content: Text(message),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('OK'),
-              ),
-            ],
+      builder: (_) => AlertDialog(
+        title: const Text('Error'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
           ),
+        ],
+      ),
     );
   }
 
@@ -256,41 +228,82 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
     }
   }
-
   Widget _buildTextField({
-    required TextEditingController controller,
-    required String hintText,
-    String? errorText,
-    bool obscureText = false,
-    IconButton? suffixIcon,
-    VoidCallback? onTap,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 5.0,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: TextField(
-        controller: controller,
-        obscureText: obscureText,
-        readOnly: onTap != null,
-        onTap: onTap,
-        style: const TextStyle(color: Colors.black, fontSize: 14.0),
-        decoration: AppConstants.textFieldDecoration.copyWith(
-          hintText: hintText,
-          errorText: errorText,
-          suffixIcon: suffixIcon,
+  required TextEditingController controller,
+  required String hintText,
+  String? errorText,
+  bool obscureText = false,
+  Widget? suffixIcon,
+  VoidCallback? onTap,
+  bool readOnly = false,
+  TextInputType keyboardType = TextInputType.text, // ✅ add this
+}) {
+  return Container(
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(10),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.1),
+          blurRadius: 5.0,
+          offset: const Offset(0, 3),
         ),
+      ],
+    ),
+    child: TextField(
+      controller: controller,
+      obscureText: obscureText,
+      readOnly: readOnly,
+      onTap: onTap,
+      keyboardType: keyboardType, // ✅ apply it here
+      style: const TextStyle(color: Colors.black, fontSize: 14.0),
+      decoration: AppConstants.textFieldDecoration.copyWith(
+        hintText: hintText,
+        errorText: errorText,
+        suffixIcon: suffixIcon,
       ),
-    );
-  }
+    ),
+  );
+}
+ Widget _buildTextField1({
+  required TextEditingController controller,
+  required String hintText,
+  String? errorText,
+  bool obscureText = false,
+  Widget? suffixIcon,
+  VoidCallback? onTap,
+  bool readOnly = false,
+  TextInputType keyboardType = TextInputType.number, // ✅ add this
+}) {
+  return Container(
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(10),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.1),
+          blurRadius: 5.0,
+          offset: const Offset(0, 3),
+        ),
+      ],
+    ),
+    child: TextField(
+      controller: controller,
+      obscureText: obscureText,
+      readOnly: readOnly,
+      onTap: onTap,
+      keyboardType: keyboardType, // ✅ apply it here
+      style: const TextStyle(color: Colors.black, fontSize: 14.0),
+      decoration: AppConstants.textFieldDecoration.copyWith(
+        hintText: hintText,
+        errorText: errorText,
+        suffixIcon: suffixIcon,
+      ),
+    ),
+  );
+}
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -299,7 +312,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        toolbarHeight: 28, // Set desired height (default is 56)
+        toolbarHeight: 28,
         leading: Padding(
           padding: const EdgeInsets.only(left: 10.0),
           child: IconButton(
@@ -315,7 +328,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
         leadingWidth: 80,
       ),
-
       body: Stack(
         children: [
           Positioned.fill(
@@ -362,42 +374,51 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 25),
                   _buildTextField(
                     controller: _emailController,
-                    hintText: 'Enter email address',
+                    hintText: 'Enter Email Address',
                     errorText: _emailError,
                   ),
                   const SizedBox(height: 25),
-                  _buildTextField(
+                  _buildTextField1(
                     controller: _phoneController,
                     hintText: 'Enter phone number (optional)',
                     errorText: _phoneError,
                   ),
                   const SizedBox(height: 25),
-                  _buildTextField(
-                    controller: _dobController,
-                    hintText: 'Date of Birth (optional)',
-                    errorText: _dobError,
-                    onTap: () async {
-                      final DateTime today = DateTime.now();
-                      final DateTime eighteenYearsAgo = DateTime(
-                        today.year - 18,
-                        today.month,
-                        today.day,
-                      );
+              _buildTextField(
+  controller: _dobController,
+  hintText: 'Date of Birth (optional)',
+  errorText: _dobError,
+  readOnly: true,
+  suffixIcon: IconButton(
+    icon: Icon(Icons.calendar_today, color: Colors.grey),
+    onPressed: () async {
+      final DateTime today = DateTime.now();
+      final DateTime eighteenYearsAgo = DateTime(
+        today.year - 18,
+        today.month,
+        today.day,
+      );
 
-                      DateTime? pickedDate = await showDatePicker(
-                        context: context,
-                        initialDate: DateTime(2000),
-                        firstDate: DateTime(1900),
-                        lastDate: eighteenYearsAgo,
-                      );
+      DateTime? pickedDate = await showDatePicker(
+        context: context,
+        initialDate: DateTime(2000),
+        firstDate: DateTime(1900),
+        lastDate: eighteenYearsAgo,
+      );
 
-                      if (pickedDate != null) {
-                        String formattedDate =
-                            "${pickedDate.day}-${pickedDate.month}-${pickedDate.year}";
-                        _dobController.text = formattedDate;
-                      }
-                    },
-                  ),
+      if (pickedDate != null) {
+        String formattedDate =
+            "${pickedDate.day}-${pickedDate.month}-${pickedDate.year}";
+        _dobController.text = formattedDate;
+      }
+    },
+  ),
+  onTap: () async {
+    // Optional: you can trigger the same date picker here too,
+    // or leave it empty since the icon already handles it.
+  },
+),
+
                   const SizedBox(height: 25),
                   _buildTextField(
                     controller: _locationController,
@@ -411,8 +432,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       );
                       if (selectedLocation != null) {
                         setState(() {
-                          _locationController.text =
-                              selectedLocation.toString();
+                          _locationController.text = selectedLocation['address'] ?? '';
+
                         });
                       }
                     },
@@ -444,10 +465,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         children: [
                           Container(
                             decoration: BoxDecoration(
-                              border:
-                                  _termsError != null
-                                      ? Border.all(color: Colors.red, width: 1)
-                                      : null,
+                              border: _termsError != null
+                                  ? Border.all(color: Colors.red, width: 1)
+                                  : null,
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: SizedBox(
@@ -467,8 +487,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 onChanged: (bool? value) {
                                   setState(() {
                                     isChecked = value!;
-                                    _termsError =
-                                        null; // Clear error when checkbox is toggled
+                                    _termsError = null;
                                   });
                                 },
                               ),
@@ -478,45 +497,42 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           Expanded(
                             child: Text.rich(
                               TextSpan(
-                                text: 'I am 18 years of age and agree to the ',
+                                text:
+                                    'I confirm that I am of legal age in my jurisdiction and agree to the ',
                                 style: const TextStyle(color: Colors.black87),
                                 children: [
                                   TextSpan(
-                                    text: 'Terms and Conditions',
+                                    text: 'Terms of Service',
                                     style: const TextStyle(
                                       color: Color.fromRGBO(255, 130, 16, 1),
                                     ),
-                                    recognizer:
-                                        TapGestureRecognizer()
-                                          ..onTap = () {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder:
-                                                    (context) =>
-                                                        const TermsAndConditionsPage(),
-                                              ),
-                                            );
-                                          },
+                                    recognizer: TapGestureRecognizer()
+                                      ..onTap = () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                const TermsAndConditionsPage(),
+                                          ),
+                                        );
+                                      },
                                   ),
                                   const TextSpan(text: ' as set out by the '),
                                   TextSpan(
-                                    text: 'User Agreement.',
+                                    text: 'and Privacy Policy.',
                                     style: const TextStyle(
                                       color: Color.fromRGBO(255, 130, 16, 1),
                                     ),
-                                    recognizer:
-                                        TapGestureRecognizer()
-                                          ..onTap = () {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder:
-                                                    (context) =>
-                                                        const TermsAndConditionsPage(),
-                                              ),
-                                            );
-                                          },
+                                    recognizer: TapGestureRecognizer()
+                                      ..onTap = () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                const TermsAndConditionsPage(),
+                                          ),
+                                        );
+                                      },
                                   ),
                                 ],
                               ),

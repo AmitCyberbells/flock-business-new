@@ -125,11 +125,9 @@ class _OffersScreenState extends State<OffersScreen> {
       body: isLoading
           ? Stack(
               children: [
-                // Semi-transparent dark overlay
                 Container(
-                  color: Colors.black.withOpacity(0.14), // Dark overlay
+                  color: Colors.black.withOpacity(0.14),
                 ),
-                // Loader
                 Container(
                   color: Colors.white10,
                   child: Center(
@@ -171,9 +169,10 @@ class _OffersScreenState extends State<OffersScreen> {
                           final String venueName = offer['venue']?['name']?.toString() ?? 'No Venue';
                           final String imageUrl = (offer['images'] is List &&
                                   offer['images'].isNotEmpty &&
-                                  offer['images'][0]['image'] != null)
-                              ? offer['images'][0]['image']
+                                 offer['images'][0]['medium_image'] != null)
+                              ? offer['images'][0]['medium_image']
                               : '';
+                          bool isExpired = offer['expire_at'] != null;
 
                           return Container(
                             decoration: BoxDecoration(
@@ -187,229 +186,252 @@ class _OffersScreenState extends State<OffersScreen> {
                                 ),
                               ],
                             ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            child: Stack(
                               children: [
-                                // Offer Image
-                                ClipRRect(
-                                  borderRadius: const BorderRadius.vertical(
-                                    top: Radius.circular(12),
-                                  ),
-                                  child: imageUrl.isNotEmpty
-                                      ? Image.network(
-                                          imageUrl,
-                                          height: 100,
-                                          width: double.infinity,
-                                          fit: BoxFit.cover,
-                                          loadingBuilder: (context, child, loadingProgress) {
-                                            if (loadingProgress == null) {
-                                              // Image is fully loaded
-                                              return child;
-                                            }
-                                            return Container(
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // Offer Image
+                                    ClipRRect(
+                                      borderRadius: const BorderRadius.vertical(
+                                        top: Radius.circular(12),
+                                      ),
+                                      child: imageUrl.isNotEmpty
+                                          ? Image.network(
+                                              imageUrl,
+                                              height: 100,
+                                              width: double.infinity,
+                                              fit: BoxFit.cover,
+                                              loadingBuilder: (context, child, loadingProgress) {
+                                                if (loadingProgress == null) {
+                                                  return child;
+                                                }
+                                                return Container(
+                                                  height: 100,
+                                                  width: double.infinity,
+                                                  color: Colors.grey.shade200,
+                                                  child: Center(
+                                                    child: Image.asset(
+                                                      'assets/Bird_Full_Eye_Blinking.gif',
+                                                      width: 50,
+                                                      height: 50,
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                              errorBuilder: (context, error, stackTrace) {
+                                                return Container(
+                                                  height: 100,
+                                                  color: Colors.grey.shade200,
+                                                  child: const Icon(
+                                                    Icons.broken_image,
+                                                    size: 40,
+                                                  ),
+                                                );
+                                              },
+                                            )
+                                          : Container(
                                               height: 100,
                                               width: double.infinity,
                                               color: Colors.grey.shade200,
-                                              child: Center(
-                                                child: Image.asset(
-                                                  'assets/Bird_Full_Eye_Blinking.gif',
-                                                  width: 50, // Smaller size for individual loader
-                                                  height: 50,
+                                              child: const FittedBox(
+                                                fit: BoxFit.contain,
+                                                child: Icon(
+                                                  Icons.image_not_supported,
+                                                  size: 30,
                                                 ),
                                               ),
-                                            );
-                                          },
-                                          errorBuilder: (context, error, stackTrace) {
-                                            return Container(
-                                              height: 100,
-                                              color: Colors.grey.shade200,
-                                              child: const Icon(
-                                                Icons.broken_image,
-                                                size: 40,
-                                              ),
-                                            );
-                                          },
-                                        )
-                                      : Container(
-                                          height: 100,
-                                          width: double.infinity,
-                                          color: Colors.grey.shade200,
-                                          child: const FittedBox(
-                                            fit: BoxFit.contain,
-                                            child: Icon(
-                                              Icons.image_not_supported,
-                                              size: 30,
+                                            ),
+                                    ),
+                                    // Offer details
+                                    Padding(
+                                      padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            discount,
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
                                             ),
                                           ),
-                                        ),
-                                ),
-                                // Offer details
-                                Padding(
-                                  padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        discount,
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Container(
-                                        width: double.infinity,
-                                        child: Text(
-                                          desc,
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.grey.shade600,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Row(
-                                        children: [
-                                          Image.asset(
-                                            'assets/orange_hotel.png',
-                                            width: 14,
-                                            height: 14,
-                                            color: Colors.grey,
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Expanded(
+                                          const SizedBox(height: 4),
+                                          Container(
+                                            width: double.infinity,
                                             child: Text(
-                                              venueName,
+                                              desc,
+                                              maxLines: 2,
                                               overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(fontSize: 12),
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.grey.shade600,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Row(
+                                            children: [
+                                              Image.asset(
+                                                'assets/orange_hotel.png',
+                                                width: 14,
+                                                height: 14,
+                                                color: Colors.grey,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Expanded(
+                                                child: Text(
+                                                  venueName,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: const TextStyle(fontSize: 12),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    // Spacer to push buttons to the bottom
+                                    const Spacer(),
+                                    // Bottom button row
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                        children: [
+                                          // Delete button
+                                          Container(
+                                            decoration: const BoxDecoration(),
+                                            child: SizedBox(
+                                              height: 30,
+                                              width: 66,
+                                              child: cardWrapper(
+                                                borderRadius: 5,
+                                                elevation: 2,
+                                                color: Colors.red,
+                                                child: InkWell(
+                                                  onTap: () {
+                                                    showDialog(
+                                                      context: context,
+                                                      builder: (BuildContext context) {
+                                                        return AlertDialog(
+                                                          title: const Text('Confirm Deletion'),
+                                                          content: const Text(
+                                                              'Are you sure you want to delete this offer?'),
+                                                          actions: [
+                                                            TextButton(
+                                                              onPressed: () {
+                                                                Navigator.of(context).pop();
+                                                              },
+                                                              child: const Text(
+                                                                'CANCEL',
+                                                                style: TextStyle(color: Colors.grey),
+                                                              ),
+                                                            ),
+                                                            TextButton(
+                                                              onPressed: () {
+                                                                Navigator.of(context).pop();
+                                                                removeOffer(offerId);
+                                                              },
+                                                              child: const Text(
+                                                                'OK',
+                                                                style: TextStyle(
+                                                                  color: Color.fromRGBO(255, 130, 16, 1.0),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        );
+                                                      },
+                                                    );
+                                                  },
+                                                  child: const Padding(
+                                                    padding: EdgeInsets.symmetric(horizontal: 4),
+                                                    child: Row(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        Icon(
+                                                          Icons.delete,
+                                                          size: 14,
+                                                          color: Colors.white,
+                                                        ),
+                                                        SizedBox(width: 4),
+                                                        Text(
+                                                          'Delete',
+                                                          style: TextStyle(
+                                                            fontSize: 11,
+                                                            color: Colors.white,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          // See Details button
+                                          ElevatedButton(
+                                            onPressed: () {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) => OfferDetails(allDetail: offer),
+                                                ),
+                                              );
+                                            },
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: const Color.fromRGBO(255, 130, 16, 1),
+                                              minimumSize: const Size(60, 30),
+                                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(5),
+                                              ),
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                Image.asset(
+                                                  'assets/view.png',
+                                                  height: 14,
+                                                  width: 12,
+                                                  color: Colors.white,
+                                                ),
+                                                const SizedBox(width: 4),
+                                                const Text(
+                                                  'Details',
+                                                  style: TextStyle(
+                                                    fontSize: 11,
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ),
                                         ],
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                  ],
                                 ),
-                                // Bottom button row
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                    children: [
-                                      // Delete button
-                                      Container(
-                                        decoration: const BoxDecoration(),
-                                        child: SizedBox(
-                                          height: 30,
-                                          width: 66,
-                                          child: cardWrapper(
-                                            borderRadius: 5,
-                                            elevation: 2,
-                                            color: Colors.red,
-                                            child: InkWell(
-                                              onTap: () {
-                                                showDialog(
-                                                  context: context,
-                                                  builder: (BuildContext context) {
-                                                    return AlertDialog(
-                                                      title: const Text('Confirm Deletion'),
-                                                      content: const Text(
-                                                          'Are you sure you want to delete this offer?'),
-                                                      actions: [
-                                                        TextButton(
-                                                          onPressed: () {
-                                                            Navigator.of(context).pop();
-                                                          },
-                                                          child: const Text(
-                                                            'CANCEL',
-                                                            style: TextStyle(color: Colors.grey),
-                                                          ),
-                                                        ),
-                                                        TextButton(
-                                                          onPressed: () {
-                                                            Navigator.of(context).pop();
-                                                            removeOffer(offerId);
-                                                          },
-                                                          child: const Text(
-                                                            'OK',
-                                                            style: TextStyle(
-                                                              color: Color.fromRGBO(255, 130, 16, 1.0),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    );
-                                                  },
-                                                );
-                                              },
-                                              child: const Padding(
-                                                padding: EdgeInsets.symmetric(horizontal: 4),
-                                                child: Row(
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  children: [
-                                                    Icon(
-                                                      Icons.delete,
-                                                      size: 14,
-                                                      color: Colors.white,
-                                                    ),
-                                                    SizedBox(width: 4),
-                                                    Text(
-                                                      'Delete',
-                                                      style: TextStyle(
-                                                        fontSize: 11,
-                                                        color: Colors.white,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ),
-                                          ),
+                                // Expired text in top left corner
+                                if (isExpired)
+                                  Positioned(
+                                    top: 8,
+                                    left: 8,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      color: Colors.red.withOpacity(0.8),
+                                      child: const Text(
+                                        'Expired',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
                                         ),
                                       ),
-                                      // See Details button
-                                      ElevatedButton(
-                                        onPressed: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) => OfferDetails(allDetail: offer),
-                                            ),
-                                          );
-                                        },
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color.fromRGBO(255, 130, 16, 1),
-                                          minimumSize: const Size(60, 30),
-                                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(5),
-                                          ),
-                                        ),
-                                        child: Row(
-                                          children: [
-                                            Image.asset(
-                                              'assets/view.png',
-                                              height: 14,
-                                              width: 12,
-                                              color: Colors.white,
-                                            ),
-                                            const SizedBox(width: 4),
-                                            const Text(
-                                              'Details',
-                                              style: TextStyle(
-                                                fontSize: 11,
-                                                color: Colors.white,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
+                                    ),
                                   ),
-                                ),
                               ],
                             ),
                           );
@@ -420,7 +442,7 @@ class _OffersScreenState extends State<OffersScreen> {
   }
 }
 
-// Placeholder for cardWrapper (replace with your actual implementation)
+// Placeholder for cardWrapper
 Widget cardWrapper({
   required double borderRadius,
   required double elevation,

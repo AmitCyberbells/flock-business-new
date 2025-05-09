@@ -218,7 +218,7 @@ class _LoginScreenState extends State<LoginScreen> {
           fontFamily: 'YourFontFamily',
         ),
         decoration: AppConstants.textFieldDecoration.copyWith(
-          hintText: "Enter email address",
+          hintText: "Enter Email Address",
           errorText: _emailError,
         ),
       ),

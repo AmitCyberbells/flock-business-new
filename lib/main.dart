@@ -120,11 +120,17 @@ class MyApp extends StatelessWidget {
       title: 'Flock Login',
       builder: (context, child) {
         final mediaQuery = MediaQuery.of(context);
-        return MediaQuery(
-          data: mediaQuery.copyWith(
-            textScaleFactor: 1.0,
-          ), // Prevent font scaling
-          child: child!,
+        return GestureDetector(
+          onTap: () {
+            // Dismiss keyboard when tapping outside
+            FocusScope.of(context).unfocus();
+          },
+          child: MediaQuery(
+            data: mediaQuery.copyWith(
+              textScaleFactor: 1.0,
+            ), // Prevent font scaling
+            child: child!,
+          ),
         );
       },
       theme: ThemeData(

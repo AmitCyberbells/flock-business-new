@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 import 'dart:io';
 import 'package:flock/constants.dart';
@@ -27,6 +26,9 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
   final _redemptionLimitController = TextEditingController();
   final _scrollController = ScrollController();
   bool _venueValidationError = false;
+  bool _imageValidationError = false;
+  bool _redeemTypeValidationError = false;
+  bool _showValidationMessages = false;
 
   /* ---------------- page state ---------------- */
   List<Map<String, dynamic>> _venues = [
@@ -41,10 +43,9 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
 
   bool _isVenuesLoading = false;
   bool _isSubmitting = false;
-  String _errorMessage = '';
 
   /* ───────────────────────── lifecycle ───────────────────────── */
-  @override
+ 
   void initState() {
     super.initState();
     _selectedVenue = _venues.first;
@@ -73,7 +74,6 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
   Future<void> _fetchVenues() async {
     setState(() {
       _isVenuesLoading = true;
-      _errorMessage = '';
     });
 
     final token = await _getToken();
@@ -101,21 +101,22 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
             ...v,
           ];
           _selectedVenue = _venues.first;
-        } else {
-          _errorMessage = json['message'] ?? 'Failed to load venues.';
         }
-      } else {
-        _errorMessage = 'Error Unable to fetch venues.';
       }
     } catch (e) {
-      _errorMessage = 'Network error';
+      // Handle error silently
     }
     if (mounted) setState(() => _isVenuesLoading = false);
   }
 
   Future<void> _pickImage() async {
     final img = await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (img != null) setState(() => _pickedImage = img);
+    if (img != null) {
+      setState(() {
+        _pickedImage = img;
+        _imageValidationError = false;
+      });
+    }
   }
 
   void _onFocusChange() {
@@ -139,7 +140,17 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
   /* ───────────────────────── submit ───────────────────────── */
 
   Future<void> _submitOffer() async {
-    if (!_formKey.currentState!.validate()) {
+    setState(() {
+      _venueValidationError = _selectedVenue == null || _selectedVenue!['id'] == null;
+      _imageValidationError = _pickedImage == null;
+      _redeemTypeValidationError = !_useVenuePoints && !_useAppPoints;
+      _showValidationMessages = true;
+    });
+
+    if (!_formKey.currentState!.validate() ||
+        _venueValidationError ||
+        _imageValidationError ||
+        _redeemTypeValidationError) {
       _scrollToError();
       return;
     }
@@ -155,58 +166,6 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
     if (limitRaw.isNotEmpty) {
       redemptionLimit = int.tryParse(limitRaw) ?? -2;
       if (redemptionLimit < -1) {
-        _errorMessage =
-            'Please enter a valid redemption limit (-1 for unlimited).';
-        _scrollToError();
-        return;
-      }
-    }
-
-    /* venue selection */
-    if (_selectedVenue == null || _selectedVenue!['id'] == null) {
-      setState(() {
-        _venueValidationError = true;
-        _errorMessage = '';
-      });
-      _scrollToError();
-      return;
-    } else {
-      setState(() {
-        _venueValidationError = false;
-      });
-    }
-
-    /* at least one redeem type */
-    if (!_useVenuePoints && !_useAppPoints) {
-      _errorMessage =
-          'Select at least one redeem type (Venue Points or Feathers).';
-      _scrollToError();
-      return;
-    }
-
-    /* per-type validation */
-    if (_useVenuePoints) {
-      if (venuePts.isEmpty) {
-        _errorMessage = 'Please enter Venue Points.';
-        _scrollToError();
-        return;
-      }
-      final v = int.tryParse(venuePts);
-      if (v == null || v < 5) {
-        _errorMessage = 'Venue Points must be ≥ 5.';
-        _scrollToError();
-        return;
-      }
-    }
-    if (_useAppPoints) {
-      if (appPts.isEmpty) {
-        _errorMessage = 'Please enter Feathers.';
-        _scrollToError();
-        return;
-      }
-      final a = int.tryParse(appPts);
-      if (a == null || a < 5) {
-        _errorMessage = 'Feathers must be ≥ 5.';
         _scrollToError();
         return;
       }
@@ -216,10 +175,7 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
     if (!_useVenuePoints) venuePts = '0';
     if (!_useAppPoints) appPts = '0';
 
-    setState(() {
-      _isSubmitting = true;
-      _errorMessage = '';
-    });
+    setState(() => _isSubmitting = true);
 
     final token = await _getToken();
     if (token == null || token.isEmpty) {
@@ -258,18 +214,10 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
         if (data['status'] == 'success' ||
             (data['message'] ?? '').toString().toLowerCase().contains('success')) {
           if (mounted) _showSuccessDialog();
-        } else {
-          _errorMessage = data['message'] ?? 'Failed to add offer.';
-          _scrollToError();
         }
-      } else {
-        _errorMessage =
-            'Error ${res.statusCode}: ${data['message'] ?? 'Unable to add offer.'}';
-        _scrollToError();
       }
     } catch (e) {
-      _errorMessage = 'Network error: $e';
-      _scrollToError();
+      // Handle error silently
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -302,13 +250,12 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
     }
   }
 
-  /* ───────────────────────── UI widgets ───────────────────────── */
 
   @override
   Widget build(BuildContext context) => Scaffold(
         backgroundColor: Colors.white,
         appBar: AppConstants.customAppBar(context: context, title: 'Add New Offer'),
-        resizeToAvoidBottomInset: false, // Prevent body resizing
+        resizeToAvoidBottomInset: false,
         body: Padding(
           padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
           child: SingleChildScrollView(
@@ -325,20 +272,44 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
                     controller: _nameController,
                     hintText: 'Title of Offer',
                     textInputAction: TextInputAction.next,
-                    // onTap: () => _scrollToBottom(),
                     validator: (v) =>
-                        v == null || v.isEmpty ? 'Please enter the title' : null,
+                        v == null || v.isEmpty ? '' : null,
                   ),
+                  if (_showValidationMessages &&
+                      _nameController.text.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 6, left: 8),
+                      child: Text(
+                        'Please Enter Title',
+                        style: TextStyle(color: Colors.red, fontSize: 12),
+                      ),
+                    ),
                   const SizedBox(height: 16),
                   const Text('Venue', style: TextStyle(fontSize: 16)),
                   const SizedBox(height: 8),
                   _buildVenueDropdown(),
+                  if (_venueValidationError)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 6, left: 8),
+                      child: Text(
+                        'Please select venue',
+                        style: TextStyle(color: Colors.red, fontSize: 12),
+                      ),
+                    ),
                   const SizedBox(height: 16),
                   const Text(
                     'Redemption Requirements',
                     style: TextStyle(fontSize: 16),
                   ),
                   _buildRedeemTypeRow(),
+                  if (_redeemTypeValidationError)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 6, left: 8),
+                      child: Text(
+                        'Select at least one redeem type',
+                        style: TextStyle(color: Colors.red, fontSize: 12),
+                      ),
+                    ),
                   if (_useVenuePoints || _useAppPoints) ...[
                     _buildPointsInputs(),
                     const SizedBox(height: 16),
@@ -346,12 +317,39 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
                   const Text('Description', style: TextStyle(fontSize: 16)),
                   const SizedBox(height: 8),
                   _buildDescriptionField(),
+                  if (_showValidationMessages &&
+                      _descriptionController.text.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 6, left: 8),
+                      child: Text(
+                        'Please enter the description',
+                        style: TextStyle(color: Colors.red, fontSize: 12),
+                      ),
+                    ),
                   const SizedBox(height: 16),
                   _buildRedemptionLimit(),
+                  if (_showValidationMessages &&
+                      _redemptionLimitController.text.isNotEmpty &&
+                      (int.tryParse(_redemptionLimitController.text) == null ||
+                          int.parse(_redemptionLimitController.text) < -1))
+                    const Padding(
+                      padding: EdgeInsets.only(top: 6, left: 8),
+                      child: Text(
+                        'Invalid redemption limit',
+                        style: TextStyle(color: Colors.red, fontSize: 12),
+                      ),
+                    ),
                   const SizedBox(height: 16),
                   _buildImagePicker(),
+                  if (_imageValidationError)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 6, left: 8),
+                      child: Text(
+                        'Please upload an image',
+                        style: TextStyle(color: Colors.red, fontSize: 12),
+                      ),
+                    ),
                   const SizedBox(height: 16),
-                  // Moved Save Offer button into Column
                   SizedBox(
                     height: 48,
                     width: double.infinity,
@@ -380,17 +378,7 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
                             ),
                     ),
                   ),
-                  const SizedBox(height: 16), // Extra padding at bottom
-                  if (_errorMessage.isNotEmpty)
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: Text(
-                          _errorMessage,
-                          style: const TextStyle(color: Colors.red),
-                        ),
-                      ),
-                    ),
+                  const SizedBox(height: 16),
                 ],
               ),
             ),
@@ -471,14 +459,6 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
                     ),
             ),
           ),
-          if (_venueValidationError)
-            const Padding(
-              padding: EdgeInsets.only(top: 6, left: 8),
-              child: Text(
-                'Please select a valid venue.',
-                style: TextStyle(color: Colors.red, fontSize: 12),
-              ),
-            ),
         ],
       );
 
@@ -489,7 +469,6 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
       spacing: 24,
       runSpacing: -15,
       children: [
-        /* Venue Points */
         Transform.translate(
           offset: const Offset(-8, 0),
           child: Row(
@@ -502,16 +481,17 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
                   vertical: -2,
                 ),
                 value: _useVenuePoints,
-                onChanged: (v) {
-                  setState(() => _useVenuePoints = v ?? false);
-                  // _scrollToBottom();
+                onChanged: (value) {
+                  setState(() {
+                    _useVenuePoints = value ?? false;
+                    _redeemTypeValidationError = !_useVenuePoints && !_useAppPoints;
+                  });
                 },
               ),
               Text('Venue Points', style: TextStyle(color: _label(true))),
             ],
           ),
         ),
-        /* Feathers */
         Transform.translate(
           offset: const Offset(12, 0),
           child: Row(
@@ -524,9 +504,11 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
                   vertical: -2,
                 ),
                 value: _useAppPoints,
-                onChanged: (v) {
-                  setState(() => _useAppPoints = v ?? false);
-                  // _scrollToBottom();
+                onChanged: (value) {
+                  setState(() {
+                    _useAppPoints = value ?? false;
+                    _redeemTypeValidationError = !_useVenuePoints && !_useAppPoints;
+                  });
                 },
               ),
               Text('Feathers', style: TextStyle(color: _label(true))),
@@ -542,37 +524,73 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
         children: [
           if (_useVenuePoints)
             Expanded(
-              child: TextFormField(
-                controller: _venuePointsController,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: _inputDecoration('Venue Points (min 5)'),
-                // onTap: () => _scrollToBottom(),
-                validator: (v) {
-                  if (!_useVenuePoints) return null;
-                  if (v == null || v.isEmpty) return 'Venue Points';
-                  final p = int.tryParse(v);
-                  if (p == null || p < 5) return 'Min 5';
-                  return null;
-                },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextFormField(
+                    controller: _venuePointsController,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    decoration: _inputDecoration('Venue Points (min 5)'),
+                    validator: (v) {
+                      if (!_useVenuePoints) return null;
+                      if (v == null || v.isEmpty) return 'Enter Venue Points';
+                      final p = int.tryParse(v);
+                      if (p == null || p < 5) return 'Min 5';
+                      return null;
+                    },
+                  ),
+                  if (_showValidationMessages &&
+                      _useVenuePoints &&
+                      (_venuePointsController.text.isEmpty ||
+                          (int.tryParse(_venuePointsController.text) != null &&
+                              int.parse(_venuePointsController.text) < 5)))
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6, left: 8),
+                      child: Text(
+                        _venuePointsController.text.isEmpty
+                            ? 'Please enter Venue Points'
+                            : 'Minimum 5 points',
+                        style: const TextStyle(color: Colors.red, fontSize: 12),
+                      ),
+                    ),
+                ],
               ),
             ),
           if (_useVenuePoints && _useAppPoints) const SizedBox(width: 16),
           if (_useAppPoints)
             Expanded(
-              child: TextFormField(
-                controller: _appPointsController,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: _inputDecoration('Feathers (min 5)'),
-                // onTap: () => _scrollToBottom(),
-                validator: (v) {
-                  if (!_useAppPoints) return null;
-                  if (v == null || v.isEmpty) return 'Feathers';
-                  final p = int.tryParse(v);
-                  if (p == null || p < 5) return 'Min 5';
-                  return null;
-                },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextFormField(
+                    controller: _appPointsController,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    decoration: _inputDecoration('Feathers (min 5)'),
+                    validator: (v) {
+                      if (!_useAppPoints) return null;
+                      if (v == null || v.isEmpty) return 'Enter Feathers';
+                      final p = int.tryParse(v);
+                      if (p == null || p < 5) return 'Min 5';
+                      return null;
+                    },
+                  ),
+                  if (_showValidationMessages &&
+                      _useAppPoints &&
+                      (_appPointsController.text.isEmpty ||
+                          (int.tryParse(_appPointsController.text) != null &&
+                              int.parse(_appPointsController.text) < 5)))
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6, left: 8),
+                      child: Text(
+                        _appPointsController.text.isEmpty
+                            ? 'Please enter Feathers'
+                            : 'Minimum 5 points',
+                        style: const TextStyle(color: Colors.red, fontSize: 12),
+                      ),
+                    ),
+                ],
               ),
             ),
         ],
@@ -585,22 +603,29 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
       );
 
-  Widget _buildDescriptionField() => Container(
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey.shade400),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: TextFormField(
-          controller: _descriptionController,
-          maxLines: 4,
-          decoration: const InputDecoration(
-            hintText: 'Offer description',
-            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            border: InputBorder.none,
+  Widget _buildDescriptionField() => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade400),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: TextFormField(
+              controller: _descriptionController,
+              maxLines: 4,
+              decoration: const InputDecoration(
+                hintText: 'Offer description',
+                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                border: InputBorder.none,
+              ),
+              textInputAction: TextInputAction.done,
+              onFieldSubmitted: (_) => FocusScope.of(context).unfocus(),
+              validator: (v) =>
+                  v == null || v.isEmpty ? 'Enter description' : null,
+            ),
           ),
-          // onTap: () => _scrollToBottom(),
-          validator: (v) => v == null || v.isEmpty ? 'Enter description' : null,
-        ),
+        ],
       );
 
   Widget _buildRedemptionLimit() => Column(
@@ -625,7 +650,6 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
             controller: _redemptionLimitController,
             hintText: 'Redemption Limit',
             textInputAction: TextInputAction.next,
-            // onTap: () => _scrollToBottom(),
             validator: (v) {
               if (v != null && v.isNotEmpty) {
                 final p = int.tryParse(v);
@@ -649,7 +673,10 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
                   decoration: BoxDecoration(
                     color: Colors.grey.shade100,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.grey.shade400),
+                    border: Border.all(
+                        color: _imageValidationError
+                            ? Colors.red
+                            : Colors.grey.shade400),
                   ),
                   child: IconButton(
                     icon: const Icon(Icons.camera_alt, size: 50),

@@ -49,66 +49,86 @@ class CustomScaffold extends StatelessWidget {
           floatingActionButtonLocation: _CustomFABLocation(),
           floatingActionButton: GestureDetector(
             onTap: () {
-              showModalBottomSheet(
-                context: context,
-                backgroundColor: Colors.transparent,
-                builder: (BuildContext context) {
-                  return Padding(
-                    padding: EdgeInsets.symmetric(
-                      vertical: screenHeight * 0.15,
-                      horizontal: screenWidth * 0.04,
+       showModalBottomSheet(
+  context: context,
+  backgroundColor: Colors.transparent,
+  isScrollControlled: true,
+  builder: (BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => Navigator.of(context).pop(),
+      child: Stack(
+        children: [
+          Positioned(
+            bottom: MediaQuery.of(context).size.height * 0.14, // Adjust position just above bottom bar
+            left: screenWidth * 0.04,
+            right: screenWidth * 0.04,
+            child: GestureDetector(
+              onTap: () {}, // Prevent tap-through to dismiss
+              child: Container(
+                padding: EdgeInsets.all(screenWidth * 0.02),
+                decoration: BoxDecoration(
+                  // color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
                     ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: _buildActionButton(
-                                context: context,
-                                icon: Icons.apartment,
-                                label: "Add Venue",
-                                iconColor: const Color(0xFF2A4CE1),
-                                textColor: const Color(0xFF2A4CE1),
-                                onTap: () async {
-                                  Navigator.pop(context);
-                                  await Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder:
-                                          (context) => addVenue.AddEggScreen(),
-                                    ),
-                                  );
-                                },
-                              ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: _buildActionButton(
+                        context: context,
+                        icon: Icons.apartment,
+                        label: "Add Venue",
+                        iconColor: const Color(0xFF2A4CE1),
+                        textColor: const Color(0xFF2A4CE1),
+                        onTap: () async {
+                          Navigator.pop(context);
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => addVenue.AddEggScreen(),
                             ),
-                            SizedBox(width: screenWidth * 0.03),
-                            Expanded(
-                              child: _buildActionButton(
-                                context: context,
-                                icon: Icons.percent,
-                                label: "Add Offer",
-                                iconColor: const Color(0xFF2A4CE1),
-                                textColor: const Color(0xFF2A4CE1),
-                                onTap: () {
-                                  Navigator.pop(context);
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => AddOfferScreen(),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                          );
+                        },
+                      ),
                     ),
-                  );
-                },
-              );
+                    SizedBox(width: screenWidth * 0.03),
+                    Expanded(
+                      child: _buildActionButton(
+                        context: context,
+                        icon: Icons.percent,
+                        label: "Add Offer",
+                        iconColor: const Color(0xFF2A4CE1),
+                        textColor: const Color(0xFF2A4CE1),
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => AddOfferScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  },
+);
+
             },
             child: Center(
               child: Image(

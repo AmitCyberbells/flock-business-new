@@ -200,7 +200,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       controller: _emailController,
                       style: const TextStyle(fontSize: 14),
                       decoration: AppConstants.textFieldDecoration.copyWith(
-                        hintText: "Enter email address", // Define hintText here
+                        hintText: "Enter Email Address", // Define hintText here
                       ),
                     ),
                   ),

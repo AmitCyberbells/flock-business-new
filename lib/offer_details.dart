@@ -209,14 +209,15 @@ class _OfferDetailsState extends State<OfferDetails> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                expireAt != null
-                    ? (data['message'] ?? 'Offer ended successfully!')
-                    : (data['message'] ?? 'Offer reactivated successfully!'),
+                expireAt != null?
+                    'Offer Ended Successfully!'
+                    : 'Offer Reactivated Successfully!',
               ),
               backgroundColor: Colors.green,
             ),
           );
-        } else {
+        } 
+        else {
           setState(() {
             errorMessage = data['message'] ?? 'Failed to toggle offer status.';
           });
@@ -707,20 +708,23 @@ class _OfferDetailsState extends State<OfferDetails> {
                       ),
                     ),
                     const SizedBox(width: 16),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: showToggleOfferDialog,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              isExpired
-                                  ? Colors.green
-                                  : const Color.fromRGBO(255, 130, 16, 1),
-                        ),
-                        child: Text(
-                          isExpired ? 'Bring Offer Back' : 'End Offer',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                      child: Expanded(
+                        child: ElevatedButton(
+                          onPressed: showToggleOfferDialog,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                isExpired
+                                    ? Colors.green
+                                    : const Color.fromRGBO(255, 130, 16, 1),
+                          ),
+                          child: Text(
+                            isExpired ? 'Bring Offer Back' : 'End Offer',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),

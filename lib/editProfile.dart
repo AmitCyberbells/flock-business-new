@@ -438,7 +438,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                 fontFamily: 'YourFontFamily',
                               ),
                               decoration: InputDecoration(
-                                hintText: 'Enter email address',
+                                hintText: 'Enter Email Address',
                                 hintStyle: TextStyle(
                                   color: Colors.grey,
                                   fontSize: 14.0,

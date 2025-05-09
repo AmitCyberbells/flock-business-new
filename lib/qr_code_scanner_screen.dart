@@ -342,57 +342,66 @@ class _QRScanScreenState extends State<QRScanScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF2A4CE1),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed:
-              _isLoading
-                  ? null
-                  : () {
-                    print('AppBar back button pressed');
-                    Navigator.pop(context);
-                  },
-        ),
-        title: const Text(
-          'Scan QR Code',
-          style: TextStyle(color: Colors.white),
-        ),
-        centerTitle: true,
+  @override
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: AppBar(
+      backgroundColor: const Color(0xFF2A4CE1),
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back, color: Colors.white),
+        onPressed: _isLoading
+            ? null
+            : () {
+                print('AppBar back button pressed');
+                Navigator.pop(context);
+              },
       ),
-      body: Stack(
-        children: [
-          Container(
+      title: const Text(
+        'Scan QR Code',
+        style: TextStyle(color: Colors.white),
+      ),
+      centerTitle: true,
+    ),
+    backgroundColor: const Color(0xFF2A4CE1), // Match Scaffold background to blue
+    body: Stack(
+      children: [
+        SizedBox.expand(
+          child: Container(
             color: const Color(0xFF2A4CE1),
             child: SingleChildScrollView(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 16.0,
-                      vertical: 20,
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: MediaQuery.of(context).size.height -
+                      AppBar().preferredSize.height -
+                      MediaQuery.of(context).padding.top,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.max,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 20,
+                      ),
+                      child: Text(
+                        'Please place the QR code within the frame or enter the coupon code below.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.white, fontSize: 16),
+                      ),
                     ),
-                    child: Text(
-                      'Please place the QR code within the frame or enter the coupon code below.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.white, fontSize: 16),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Container(
-                    width: 280,
-                    height: 300,
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(5),
-                          child:
-                              _isPermissionGranted
-                                  ? MobileScanner(
+                    const SizedBox(height: 20),
+                    Container(
+                      width: 280,
+                      height: 300,
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(5),
+                            child: _isPermissionGranted
+                                ? MobileScanner(
                                     controller: _scannerController,
                                     onDetect: (capture) {
                                       if (!_isScanned) {
@@ -405,7 +414,7 @@ class _QRScanScreenState extends State<QRScanScreen> {
                                       }
                                     },
                                   )
-                                  : Stack(
+                                : Stack(
                                     children: [
                                       Container(
                                         color: Colors.black.withOpacity(0.14),
@@ -422,90 +431,75 @@ class _QRScanScreenState extends State<QRScanScreen> {
                                       ),
                                     ],
                                   ),
-                        ),
-                        Container(
-                          width: 280,
-                          height: 300,
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                          Container(
+                            width: 280,
+                            height: 300,
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.white, width: 2),
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                          ),
+                          Positioned(
+                            top: -35,
+                            left: 250 / 2 - 30,
+                            child: Container(
+                              width: 60,
+                              height: 60,
+                              padding: const EdgeInsets.all(1.0),
+                              child: Image.asset(
+                                'assets/bird.png',
+                                fit: BoxFit.contain,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    const Text(
+                      'Scan QR Code',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'OR ',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 48),
+                      child: TextField(
+                        controller: _couponController,
+                        style: const TextStyle(color: Colors.black),
+                        decoration: InputDecoration(
+                          hintText: 'Enter Coupon Code',
+                          hintStyle: const TextStyle(color: Colors.grey),
+                          filled: true,
+                          fillColor: Colors.white,
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: const BorderSide(color: Colors.black),
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: const BorderSide(color: Colors.black),
                             borderRadius: BorderRadius.circular(5),
                           ),
                         ),
-                        Positioned(
-                          top: -35,
-                          left: 250 / 2 - 30,
-                          child: Container(
-                            width: 60,
-                            height: 60,
-                            padding: const EdgeInsets.all(1.0),
-                            child: Image.asset(
-                              'assets/bird.png',
-                              fit: BoxFit.contain,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  const Text(
-                    'Scan QR Code',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      // fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-
-                  const Text(
-                    'OR ',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-
-                  //          const Text(
-                  //   'Enter Coupon Code',
-                  //   style: TextStyle(
-                  //     color: Colors.white,
-                  //     fontSize: 18,
-                  //     fontWeight: FontWeight.bold,
-                  //   ),
-                  // ),
-                  //    const SizedBox(height: 20),
-                  Container(
-                    // color: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 48),
-                    child: TextField(
-                      controller: _couponController,
-                      style: const TextStyle(color: Colors.black),
-                      decoration: InputDecoration(
-                        hintText: 'Enter Coupon Code',
-                        hintStyle: const TextStyle(color: Colors.grey),
-                        filled: true,
-                        fillColor: Colors.white,
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Colors.black),
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Colors.black),
-                          borderRadius: BorderRadius.circular(5),
-                        ),
                       ),
                     ),
-                  ),
-
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed:
-                        _isLoading
-                            ? null
-                            : () {
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: _isLoading
+                          ? null
+                          : () {
                               final couponCode = _couponController.text.trim();
                               if (couponCode.isEmpty) {
                                 Fluttertoast.showToast(
@@ -515,39 +509,40 @@ class _QRScanScreenState extends State<QRScanScreen> {
                               }
                               _verifyCouponCode(couponCode, context);
                             },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromRGBO(255, 130, 16, 1),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 30,
-                        vertical: 15,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color.fromRGBO(255, 130, 16, 1),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 30,
+                          vertical: 15,
+                        ),
                       ),
+                      child: const Text('Submit', style: TextStyle(fontSize: 16)),
                     ),
-                    child: const Text('Submit', style: TextStyle(fontSize: 16)),
-                  ),
-                  const SizedBox(height: 100),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
-          if (_isLoading)
-            Stack(
-              children: [
-                Container(color: Colors.black.withOpacity(0.14)),
-                Container(
-                  color: Colors.white10,
-                  child: Center(
-                    child: Image.asset(
-                      'assets/Bird_Full_Eye_Blinking.gif',
-                      width: 100,
-                      height: 100,
-                    ),
+        ),
+        if (_isLoading)
+          Stack(
+            children: [
+              Container(color: Colors.black.withOpacity(0.14)),
+              Container(
+                color: Colors.white10,
+                child: Center(
+                  child: Image.asset(
+                    'assets/Bird_Full_Eye_Blinking.gif',
+                    width: 100,
+                    height: 100,
                   ),
                 ),
-              ],
-            ),
-        ],
-      ),
-    );
-  }
+              ),
+            ],
+          ),
+      ],
+    ),
+  );
+}
 }

@@ -4,8 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'addStaffMember.dart';
-import 'package:intl/intl.dart'; // Add this import
-// <-- New screen for editing
+import 'package:intl/intl.dart';
 
 class StaffManagementScreen extends StatefulWidget {
   const StaffManagementScreen({Key? key}) : super(key: key);
@@ -34,7 +33,7 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
       return DateFormat('yyyy-MM-dd HH:mm:ss').format(dateTime);
     } catch (e) {
       debugPrint('Error parsing date: $e');
-      return dateTimeStr; // Return original string if parsing fails
+      return dateTimeStr;
     }
   }
 
@@ -68,15 +67,22 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
           final List<dynamic> rawList = data['data'];
           final List<Map<String, String>> loadedStaff =
               rawList.map<Map<String, String>>((item) {
-                return {
-                  "id": item["id"]?.toString() ?? '',
-                  "firstName": item["first_name"] ?? '',
-                  "lastName": item["last_name"] ?? '',
-                  "email": item["email"] ?? '',
-                  "phone": item["contact"] ?? '',
-                  "createdAt": item["created_at"] ?? '',
-                };
-              }).toList();
+            return {
+              "id": item["id"]?.toString() ?? '',
+              "firstName": item["first_name"] ?? '',
+              "lastName": item["last_name"] ?? '',
+              "email": item["email"] ?? '',
+              "phone": item["contact"] ?? '',
+              "createdAt": item["created_at"] ?? '',
+            };
+          }).toList();
+
+          // Sort staff members by createdAt in descending order (latest first)
+          loadedStaff.sort((a, b) {
+            final aDate = DateTime.tryParse(a["createdAt"] ?? '') ?? DateTime(0);
+            final bDate = DateTime.tryParse(b["createdAt"] ?? '') ?? DateTime(0);
+            return bDate.compareTo(aDate); // Descending order
+          });
 
           setState(() {
             staffMembers = loadedStaff;
@@ -94,7 +100,6 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
     }
   }
 
-  /// Navigate to AddMemberScreen and refresh on success
   Future<void> addMember() async {
     final result = await Navigator.push(
       context,
@@ -105,7 +110,6 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
     }
   }
 
-  /// Navigate to EditStaffMemberScreen, passing in the staff ID, then refresh on success
   Future<void> editMember(String memberId) async {
     final result = await Navigator.push(
       context,
@@ -118,7 +122,6 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
     }
   }
 
-  /// Delete a member
   Future<void> deleteMember(int index) async {
     final memberId = staffMembers[index]["id"];
     if (memberId == null || memberId.isEmpty) {
@@ -160,9 +163,9 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
       }
     } catch (e) {
       debugPrint("Exception while deleting staff member: $e");
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Error deleting member: $e")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error deleting member: $e")),
+      );
     }
   }
 
@@ -188,7 +191,6 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Top bar
                           Padding(
                             padding: const EdgeInsets.symmetric(vertical: 8.0),
                             child: Row(
@@ -200,7 +202,6 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                                     height: 40,
                                     width: 34,
                                     fit: BoxFit.contain,
-                                    // color: const Color.fromRGBO(255, 130, 16, 1.0), // Orange tint
                                   ),
                                 ),
                                 const Expanded(
@@ -219,14 +220,11 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                               ],
                             ),
                           ),
-
                           const SizedBox(height: 16),
                           InkWell(
                             onTap: addMember,
                             child: Padding(
-                              padding: const EdgeInsets.only(
-                                right: 10.0,
-                              ), // <-- Adjust the value as needed
+                              padding: const EdgeInsets.only(right: 10.0),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: const [
@@ -246,151 +244,130 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                               ),
                             ),
                           ),
-
                           const SizedBox(height: 16),
-
-                          // Loading indicator
                           if (_isLoading)
                             Stack(
                               children: [
-                                // Semi-transparent dark overlay
                                 Container(
-                                  color: Colors.black.withOpacity(
-                                    0.14,
-                                  ), // Dark overlay
+                                  color: Colors.black.withOpacity(0.14),
                                 ),
-
-                                // Your original container with white tint and loader
                                 Container(
                                   color: Colors.white10,
                                   child: Center(
                                     child: Image.asset(
                                       'assets/Bird_Full_Eye_Blinking.gif',
-                                      width: 100, // Adjust size as needed
+                                      width: 100,
                                       height: 100,
                                     ),
                                   ),
                                 ),
                               ],
                             ),
-
-                          // Staff list or empty state
                           staffMembers.isEmpty && !_isLoading
                               ? const Padding(
-                                padding: EdgeInsets.only(top: 16.0),
-                                child: Text(
-                                  "No Member Found...",
-                                  style: TextStyle(
-                                    color: Colors.grey,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              )
-                              : ListView.builder(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                itemCount: staffMembers.length,
-                                itemBuilder: (context, index) {
-                                  final member = staffMembers[index];
-                                  return Card(
-                                    color: Colors.white,
-                                    elevation: 2,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
+                                  padding: EdgeInsets.only(top: 16.0),
+                                  child: Text(
+                                    "No Member Found...",
+                                    style: TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: 16,
                                     ),
-                                    child: ListTile(
-                                      title: Text(
-                                        '${member["firstName"]} ${member["lastName"]}',
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 16,
-                                        ),
+                                  ),
+                                )
+                              : ListView.builder(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  itemCount: staffMembers.length,
+                                  itemBuilder: (context, index) {
+                                    final member = staffMembers[index];
+                                    return Card(
+                                      color: Colors.white,
+                                      elevation: 2,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
                                       ),
-                                      subtitle: Text(
-                                        formatDateTime(member["createdAt"]),
-                                        style: TextStyle(
-                                          color: Colors.grey.shade600,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                      trailing: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          // Edit
-                                          IconButton(
-                                            icon: Image.asset(
-                                              'assets/edit.png', // Path to your custom image
-                                              width:
-                                                  20, // Match the size of the previous icon
-                                              height: 20,
-                                              color:
-                                                  Colors
-                                                      .black, // Optional: tint the image like the original
-                                            ),
-                                            onPressed: () {
-                                              final id = member["id"] ?? "";
-                                              if (id.isNotEmpty) {
-                                                editMember(id);
-                                              }
-                                            },
+                                      child: ListTile(
+                                        title: Text(
+                                          '${member["firstName"]} ${member["lastName"]}',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w500,
+                                            fontSize: 16,
                                           ),
-                                          // Delete
-                                          IconButton(
-                                            icon: Image.asset(
-                                              'assets/closebtn.png', // Path to your custom image
-                                              width:
-                                                  20, // Match the size of the previous icon
-                                              height: 20,
-                                              // color: const Color.fromRGBO(255, 130, 16, 1), // Optional: tint the image like the original
+                                        ),
+                                        subtitle: Text(
+                                          formatDateTime(member["createdAt"]),
+                                          style: TextStyle(
+                                            color: Colors.grey.shade600,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                        trailing: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            IconButton(
+                                              icon: Image.asset(
+                                                'assets/edit.png',
+                                                width: 20,
+                                                height: 20,
+                                                color: Colors.black,
+                                              ),
+                                              onPressed: () {
+                                                final id = member["id"] ?? "";
+                                                if (id.isNotEmpty) {
+                                                  editMember(id);
+                                                }
+                                              },
                                             ),
-                                            onPressed: () {
-                                              showDialog(
-                                                context: context,
-                                                builder: (
-                                                  BuildContext context,
-                                                ) {
-                                                  return AlertDialog(
-                                                    title: const Text(
-                                                      'Confirm Delete',
-                                                    ),
-                                                    content: const Text(
-                                                      'Are you sure you want to delete this member?',
-                                                    ),
-                                                    actions: [
-                                                      TextButton(
-                                                        onPressed: () {
-                                                          Navigator.of(
-                                                            context,
-                                                          ).pop(); // Close the dialog
-                                                        },
-                                                        child: const Text(
-                                                          'CANCEL',
-                                                          style: TextStyle(
-                                                            color: Colors.grey,
+                                            IconButton(
+                                              icon: Image.asset(
+                                                'assets/closebtn.png',
+                                                width: 20,
+                                                height: 20,
+                                              ),
+                                              onPressed: () {
+                                                showDialog(
+                                                  context: context,
+                                                  builder:
+                                                      (BuildContext context) {
+                                                    return AlertDialog(
+                                                      title: const Text(
+                                                          'Confirm Delete'),
+                                                      content: const Text(
+                                                          'Are you sure you want to delete this member?'),
+                                                      actions: [
+                                                        TextButton(
+                                                          onPressed: () {
+                                                            Navigator.of(context)
+                                                                .pop();
+                                                          },
+                                                          child: const Text(
+                                                            'CANCEL',
+                                                            style: TextStyle(
+                                                              color: Colors.grey,
+                                                            ),
                                                           ),
                                                         ),
-                                                      ),
-                                                      TextButton(
-                                                        onPressed: () {
-                                                          deleteMember(index);
-                                                          Navigator.of(
-                                                            context,
-                                                          ).pop(); // Close the dialog after deletion
-                                                        },
-                                                        child: const Text('OK'),
-                                                      ),
-                                                    ],
-                                                  );
-                                                },
-                                              );
-                                            },
-                                          ),
-                                        ],
+                                                        TextButton(
+                                                          onPressed: () {
+                                                            deleteMember(index);
+                                                            Navigator.of(context)
+                                                                .pop();
+                                                          },
+                                                          child:
+                                                              const Text('OK'),
+                                                        ),
+                                                      ],
+                                                    );
+                                                  },
+                                                );
+                                              },
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                    ),
-                                  );
-                                },
-                              ),
+                                    );
+                                  },
+                                ),
                         ],
                       ),
                     ),

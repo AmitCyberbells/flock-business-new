@@ -111,7 +111,8 @@ class AppConstants {
 
      onPressed: () {
  
- Navigator.pushNamed(context, '/dashboard');},
+ Navigator.pushNamed(context, '/dashboard');
+ },
         ),
       ),
       title: Text(
@@ -133,7 +134,7 @@ class AppConstants {
 
   // Reusable InputDecoration for TextFields
   static final InputDecoration textFieldDecoration = InputDecoration(
-    hintText: 'Enter email address',
+    hintText: 'Enter Email Address',
     hintStyle: TextStyle(
       color: Colors.grey.withOpacity(
         1.0,
@@ -166,7 +167,7 @@ class AppConstants {
 
   // Disabled Reusable InputDecoration for TextFields
   static final InputDecoration textFieldDecorationDisabled = InputDecoration(
-    hintText: 'Enter email address',
+    hintText: 'Enter Email Address',
     hintStyle: TextStyle(
       color: Colors.grey,
       fontSize: 14.0,
@@ -264,7 +265,7 @@ class AppConstants {
           fontFamily: 'YourFontFamily',
         ),
         decoration: textFieldDecoration.copyWith(
-          hintText: 'Enter email address',
+          hintText: 'Enter Email Address',
         ),
       ),
     );
@@ -286,7 +287,7 @@ class AppConstants {
           fontFamily: 'YourFontFamily',
         ),
         decoration: textFieldDecorationDisabled.copyWith(
-          hintText: 'Enter email address',
+          hintText: 'Enter Email Address',
         ),
       ),
     );
