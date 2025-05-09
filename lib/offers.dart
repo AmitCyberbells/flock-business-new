@@ -169,7 +169,7 @@ class _OffersScreenState extends State<OffersScreen> {
                           final String venueName = offer['venue']?['name']?.toString() ?? 'No Venue';
                           final String imageUrl = (offer['images'] is List &&
                                   offer['images'].isNotEmpty &&
-                                 offer['images'][0]['medium_image'] != null)
+                                  offer['images'][0]['medium_image'] != null)
                               ? offer['images'][0]['medium_image']
                               : '';
                           bool isExpired = offer['expire_at'] != null;
@@ -244,7 +244,9 @@ class _OffersScreenState extends State<OffersScreen> {
                                             ),
                                     ),
                                     // Offer details
-                                    Padding(
+                                    Padding
+
+(
                                       padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -373,40 +375,53 @@ class _OffersScreenState extends State<OffersScreen> {
                                             ),
                                           ),
                                           // See Details button
-                                          ElevatedButton(
-                                            onPressed: () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) => OfferDetails(allDetail: offer),
-                                                ),
-                                              );
-                                            },
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: const Color.fromRGBO(255, 130, 16, 1),
-                                              minimumSize: const Size(60, 30),
-                                              padding: const EdgeInsets.symmetric(horizontal: 8),
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(5),
-                                              ),
-                                            ),
-                                            child: Row(
-                                              children: [
-                                                Image.asset(
-                                                  'assets/view.png',
-                                                  height: 14,
-                                                  width: 12,
-                                                  color: Colors.white,
-                                                ),
-                                                const SizedBox(width: 4),
-                                                const Text(
-                                                  'Details',
-                                                  style: TextStyle(
-                                                    fontSize: 11,
-                                                    color: Colors.white,
+                                          Container(
+                                            height: 30,
+                                            width: 66,
+                                            child: cardWrapper(
+                                              borderRadius: 5,
+                                              elevation: 2,
+                                              color: const Color.fromRGBO(255, 130, 16, 1),
+                                              child: InkWell(
+                                                onTap: () {
+                                                  print('Details button tapped for offer ID: $offerId');
+                                                  try {
+                                                    Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (context) => OfferDetails(allDetail: offer),
+                                                      ),
+                                                    );
+                                                  } catch (e) {
+                                                    print('Navigation error: $e');
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(content: Text('Failed to navigate to details: $e')),
+                                                    );
+                                                  }
+                                                },
+                                                child: Padding(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                                                  child: Row(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    children: [
+                                                      Image.asset(
+                                                        'assets/view.png',
+                                                        height: 14,
+                                                        width: 12,
+                                                        color: Colors.white,
+                                                      ),
+                                                      const SizedBox(width: 4),
+                                                      const Text(
+                                                        'Details',
+                                                        style: TextStyle(
+                                                          fontSize: 11,
+                                                          color: Colors.white,
+                                                        ),
+                                                      ),
+                                                    ],
                                                   ),
                                                 ),
-                                              ],
+                                              ),
                                             ),
                                           ),
                                         ],

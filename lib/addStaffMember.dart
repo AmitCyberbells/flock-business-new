@@ -32,11 +32,11 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
 
   // Validation error messages
   String? _firstNameError;
+  String? _lastNameError;
   String? _emailError;
+  String? _phoneError;
   String? _passwordError;
   String? _venuesError;
-String? _lastNameError;
-String? _phoneError;
 
   @override
   void initState() {
@@ -79,7 +79,7 @@ String? _phoneError;
         });
       }
     } catch (e) {
-      _showError('Error fetching venues: $e');
+      _showError('Error saving member');
     }
 
     try {
@@ -102,7 +102,7 @@ String? _phoneError;
         });
       }
     } catch (e) {
-      _showError('Error fetching permissions: $e');
+      _showError('Error fetching permissions');
     }
   }
 
@@ -122,11 +122,11 @@ String? _phoneError;
     // Reset error messages
     setState(() {
       _firstNameError = null;
+      _lastNameError = null;
       _emailError = null;
+      _phoneError = null;
       _passwordError = null;
       _venuesError = null;
-      _phoneError = null;
-      _lastNameError = null;
     });
 
     // Validate required fields
@@ -137,33 +137,30 @@ String? _phoneError;
       });
       hasError = true;
     }
-    // if (_lastNameController.text.isEmpty) {
-    //   setState(() {
-    //     _firstNameError = 'Last name is required';
-    //   });
-    //   hasError = true;
-    // }
-
-   
+    if (_lastNameController.text.isEmpty) {
+      setState(() {
+        _lastNameError = 'Last name is required';
+      });
+      hasError = true;
+    }
+    if (_phoneController.text.isEmpty) {
+      setState(() {
+        _phoneError = 'Phone number is required';
+      });
+      hasError = true;
+    }
     if (_emailController.text.isEmpty) {
       setState(() {
         _emailError = 'Email is required';
       });
       hasError = true;
+    } else if (!RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+        .hasMatch(_emailController.text)) {
+      setState(() {
+        _emailError = 'Incorrect email format';
+      });
+      hasError = true;
     }
-    if (_lastNameController.text.isEmpty) {
-  setState(() {
-    _lastNameError = 'Last name is required'; // New
-  });
-  hasError = true;
-}
-
-if (_phoneController.text.isEmpty) {
-  setState(() {
-    _phoneError = 'Phone number is required'; // New
-  });
-  hasError = true;
-}
     if (_passwordController.text.isEmpty && widget.existingMember == null) {
       setState(() {
         _passwordError = 'Password is required';
@@ -255,11 +252,11 @@ if (_phoneController.text.isEmpty) {
         final errorMessage = response.data['message'] ?? 'Unknown error';
         final errors =
             response.data['errors']?.toString() ?? 'No details provided';
-        _showError('Failed to save member: $errorMessage\nDetails: $errors');
+        _showError('Failed to save member, Please Check fields');
       }
     } catch (e) {
       setState(() => _isLoading = false);
-      _showError('Error saving member: $e');
+      _showError('Error saving member');
     }
   }
 
@@ -341,27 +338,27 @@ if (_phoneController.text.isEmpty) {
                       ),
                     ),
                     const SizedBox(width: 10),
-                Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          AppConstants.lastNameField(
-            controller: _lastNameController,
-          ),
-          if (_lastNameError != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 4, left: 12),
-              child: Text(
-                _lastNameError!,
-                style: const TextStyle(
-                  color: Colors.red,
-                  fontSize: 12,
-                ),
-              ),
-            ),
-        ],
-      ),
-    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          AppConstants.lastNameField(
+                            controller: _lastNameController,
+                          ),
+                          if (_lastNameError != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4, left: 12),
+                              child: Text(
+                                _lastNameError!,
+                                style: const TextStyle(
+                                  color: Colors.red,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 15),
@@ -383,25 +380,29 @@ if (_phoneController.text.isEmpty) {
                   ],
                 ),
                 const SizedBox(height: 15),
-                AppConstants.phoneField(controller: _phoneController),
-                   if (_phoneError != null)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 4, left: 12),
-                              child: Text(
-                                _phoneError!,
-                                style: const TextStyle(
-                                  color: Colors.red,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AppConstants.phoneField(controller: _phoneController),
+                    if (_phoneError != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4, left: 12),
+                        child: Text(
+                          _phoneError!,
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
                 const SizedBox(height: 15),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     AppConstants.passwordField(
                       controller: _passwordController,
-                      
                       obscureText: _obscurePassword,
                       toggleObscure: () {
                         setState(() {

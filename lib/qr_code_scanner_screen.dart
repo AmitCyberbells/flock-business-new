@@ -314,7 +314,7 @@ class _QRScanScreenState extends State<QRScanScreen> {
               ),
         );
       } catch (e, stackTrace) {
-        print('Error during API call or dialog: $e\n$stackTrace');
+        print('Error during API call or dialog');
         setState(() => _isLoading = false);
         showDialog(
           context: screenContext,
@@ -323,7 +323,7 @@ class _QRScanScreenState extends State<QRScanScreen> {
               (dialogContext) => AlertDialog(
                 title: const Text('Error'),
                 content: Text(
-                  'An error occurred: $e',
+                  'An error occurred:',
                   style: TextStyle(color: Colors.red), // Display error in red
                 ),
                 actions: [
@@ -341,9 +341,9 @@ class _QRScanScreenState extends State<QRScanScreen> {
     }
   }
 
+
   @override
-  @override
-Widget build(BuildContext context) {
+  Widget build(BuildContext context) {
   return Scaffold(
     appBar: AppBar(
       backgroundColor: const Color(0xFF2A4CE1),
@@ -361,8 +361,9 @@ Widget build(BuildContext context) {
         style: TextStyle(color: Colors.white),
       ),
       centerTitle: true,
+      toolbarHeight: 55, // Reduced app bar height
     ),
-    backgroundColor: const Color(0xFF2A4CE1), // Match Scaffold background to blue
+    backgroundColor: const Color(0xFF2A4CE1),
     body: Stack(
       children: [
         SizedBox.expand(
@@ -378,23 +379,21 @@ Widget build(BuildContext context) {
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.max,
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.start, // Changed to start
                   children: [
                     const Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 16.0,
-                        vertical: 20,
-                      ),
+                      padding: EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 8.0), // Reduced vertical padding
                       child: Text(
                         'Please place the QR code within the frame or enter the coupon code below.',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: Colors.white, fontSize: 16),
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    // Rest of your code remains the same...
+                    const SizedBox(height: 35), // Reduced from 20
                     Container(
                       width: 280,
-                      height: 300,
+                      height: 320,
                       child: Stack(
                         clipBehavior: Clip.none,
                         children: [
@@ -434,15 +433,15 @@ Widget build(BuildContext context) {
                           ),
                           Container(
                             width: 280,
-                            height: 300,
+                            height: 320,
                             decoration: BoxDecoration(
                               border: Border.all(color: Colors.white, width: 2),
                               borderRadius: BorderRadius.circular(5),
                             ),
                           ),
                           Positioned(
-                            top: -35,
-                            left: 250 / 2 - 30,
+                            top: -30,
+                            left: 250 / 2 - 17,
                             child: Container(
                               width: 60,
                               height: 60,
@@ -456,7 +455,7 @@ Widget build(BuildContext context) {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 5),
+                    const SizedBox(height: 4), // Reduced from 5
                     const Text(
                       'Scan QR Code',
                       style: TextStyle(
@@ -464,16 +463,16 @@ Widget build(BuildContext context) {
                         fontSize: 18,
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 18), // Reduced from 10
                     const Text(
-                      'OR ',
+                      '----- OR ----- ',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 23), // Reduced from 10
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 48),
                       child: TextField(
@@ -495,7 +494,7 @@ Widget build(BuildContext context) {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16), // Reduced from 20
                     ElevatedButton(
                       onPressed: _isLoading
                           ? null
