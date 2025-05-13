@@ -17,12 +17,154 @@ import 'package:flutter/material.dart';
 import 'login_screen.dart';
 import 'checkIns.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
+
+// Define light and dark themes
+class AppThemes {
+  static final lightTheme = ThemeData(
+    brightness: Brightness.light,
+    primaryColor: const Color.fromRGBO(255, 130, 16, 1),
+    scaffoldBackgroundColor: Colors.white,
+    appBarTheme: AppBarTheme(
+      backgroundColor: Colors.white,
+      foregroundColor: Colors.black87,
+      elevation: 0,
+      iconTheme: IconThemeData(color: Colors.black87),
+    ),
+    textSelectionTheme: TextSelectionThemeData(
+      cursorColor: Colors.black,
+      selectionColor: AppColors.primary.withOpacity(0.2),
+      selectionHandleColor: AppColors.primary,
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
+    ),
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(foregroundColor: AppColors.primary),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        foregroundColor: AppColors.primary,
+        side: BorderSide(color: AppColors.primary),
+      ),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      labelStyle: TextStyle(color: Colors.black54),
+      floatingLabelStyle: TextStyle(
+        color: Colors.black54,
+        fontWeight: FontWeight.w600,
+      ),
+      border: OutlineInputBorder(
+        borderSide: BorderSide(color: Colors.black54),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderSide: BorderSide(color: Colors.black54, width: 2.0),
+      ),
+    ),
+    textTheme: TextTheme(
+      bodyLarge: TextStyle(color: Colors.black87),
+      bodyMedium: TextStyle(color: Colors.black87),
+      titleLarge: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
+      titleMedium: TextStyle(color: Colors.black87),
+    ),
+    iconTheme: IconThemeData(color: Colors.black87),
+    colorScheme: ColorScheme.light(
+      primary: AppColors.primary,
+      secondary: AppColors.primary.withOpacity(0.7),
+      background: Colors.white,
+      surface: Colors.white,
+      onPrimary: Colors.white,
+      onSecondary: Colors.black87,
+      onBackground: Colors.black87,
+      onSurface: Colors.black87,
+    ),
+    snackBarTheme: SnackBarThemeData(
+      backgroundColor: AppColors.primary,
+      contentTextStyle: TextStyle(color: Colors.white),
+      actionTextColor: Colors.white,
+    ),
+  );
+
+  static final darkTheme = ThemeData(
+    brightness: Brightness.dark,
+    primaryColor: const Color.fromRGBO(255, 130, 16, 1),
+    scaffoldBackgroundColor: Colors.grey[850],
+    appBarTheme: AppBarTheme(
+      backgroundColor: Colors.grey[850],
+      foregroundColor: Colors.white,
+      elevation: 0,
+      iconTheme: IconThemeData(color: Colors.white),
+    ),
+    textSelectionTheme: TextSelectionThemeData(
+      cursorColor: Colors.white,
+      selectionColor: AppColors.primary.withOpacity(0.3),
+      selectionHandleColor: AppColors.primary,
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
+    ),
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(foregroundColor: AppColors.primary),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        foregroundColor: AppColors.primary,
+        side: BorderSide(color: AppColors.primary),
+      ),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      labelStyle: TextStyle(color: Colors.white70),
+      floatingLabelStyle: TextStyle(
+        color: Colors.white70,
+        fontWeight: FontWeight.w600,
+      ),
+      border: OutlineInputBorder(
+        borderSide: BorderSide(color: Colors.white70),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderSide: BorderSide(color: Colors.white70, width: 2.0),
+      ),
+    ),
+    textTheme: TextTheme(
+      bodyLarge: TextStyle(color: Colors.white70),
+      bodyMedium: TextStyle(color: Colors.white70),
+      titleLarge: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+      titleMedium: TextStyle(color: Colors.white),
+    ),
+    iconTheme: IconThemeData(color: Colors.white),
+    colorScheme: ColorScheme.dark(
+      primary: AppColors.primary,
+      secondary: AppColors.primary.withOpacity(0.7),
+      background: Colors.grey[850]!,
+      surface: Colors.grey[800]!,
+      onPrimary: Colors.white,
+      onSecondary: Colors.white,
+      onBackground: Colors.white,
+      onSurface: Colors.white,
+    ),
+    snackBarTheme: SnackBarThemeData(
+      backgroundColor: AppColors.primary,
+      contentTextStyle: TextStyle(color: Colors.white),
+      actionTextColor: Colors.white,
+    ),
+  );
+}
 
 // Notification model to store notification data
 class NotificationModel {
@@ -133,45 +275,9 @@ class MyApp extends StatelessWidget {
           ),
         );
       },
-      theme: ThemeData(
-        primaryColor: const Color.fromRGBO(255, 130, 16, 1),
-        textSelectionTheme: TextSelectionThemeData(
-          cursorColor: Colors.black,
-          selectionColor: AppColors.primary.withOpacity(0.2),
-          selectionHandleColor: AppColors.primary,
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        ),
-        textButtonTheme: TextButtonThemeData(
-          style: TextButton.styleFrom(foregroundColor: AppColors.primary),
-        ),
-        outlinedButtonTheme: OutlinedButtonThemeData(
-          style: OutlinedButton.styleFrom(
-            foregroundColor: AppColors.primary,
-            side: BorderSide(color: AppColors.primary),
-          ),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          labelStyle: const TextStyle(color: Colors.black54),
-          floatingLabelStyle: TextStyle(
-            color: Colors.black54,
-            fontWeight: FontWeight.w600,
-          ),
-          border: OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.black54),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.black54, width: 2.0),
-          ),
-        ),
-      ),
+      theme: AppThemes.lightTheme,
+      darkTheme: AppThemes.darkTheme,
+      themeMode: ThemeMode.system, // Automatically switch based on device
       home: const LoadingScreen(),
       routes: {
         '/forgot-password': (context) => ForgotPasswordScreen(),
@@ -282,23 +388,24 @@ class _LoadingScreenState extends State<LoadingScreen> {
           _unreadNotifications = _notifications.where((n) => !n.isRead).length;
         });
 
-        // Show SnackBar with a valid ScaffoldMessenger
+        // Show SnackBar with theme-based colors
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
                 '${message.notification?.title ?? message.data['title'] ?? 'Notification'}: '
                 '${message.notification?.body ?? message.data['body'] ?? 'Tap to view'}',
+                style: Theme.of(context).snackBarTheme.contentTextStyle,
               ),
-              backgroundColor: AppColors.primary,
+              backgroundColor: Theme.of(context).snackBarTheme.backgroundColor,
               duration: const Duration(seconds: 5),
               action:
                   message.data['screen'] != null
                       ? SnackBarAction(
-                        label: 'View',
-                        textColor: Colors.white,
-                        onPressed: () => _handleMessageNavigation(message),
-                      )
+                          label: 'View',
+                          textColor: Theme.of(context).snackBarTheme.actionTextColor,
+                          onPressed: () => _handleMessageNavigation(message),
+                        )
                       : null,
             ),
           );

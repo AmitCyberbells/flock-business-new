@@ -42,7 +42,7 @@ class CustomScaffold extends StatelessWidget {
     return Stack(
       children: [
         // Background layer
-        Container(decoration: BoxDecoration(color: Colors.white)),
+       Container(decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor)),
         Scaffold(
           backgroundColor: Colors.transparent,
           body: SafeArea(top: true, bottom: true, child: body),
@@ -68,11 +68,11 @@ class CustomScaffold extends StatelessWidget {
               child: Container(
                 padding: EdgeInsets.all(screenWidth * 0.02),
                 decoration: BoxDecoration(
-                  // color: Colors.white,
+                  color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(10),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),

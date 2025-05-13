@@ -430,139 +430,119 @@ class _TabDashboardState extends State<TabDashboard>
 
   /// Custom dropdown design for selecting venue.
   Widget customVenueDropdown() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 8.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        // White box shadow for differentiation.
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.4),
-            spreadRadius: 1,
-            blurRadius: 5,
-            offset: const Offset(0, 2),
-          ),
-        ],
+    return 
+   Container(
+  margin: const EdgeInsets.symmetric(horizontal: 8.0),
+  decoration: BoxDecoration(
+    color: Theme.of(context).colorScheme.surface,
+    borderRadius: BorderRadius.circular(10),
+    boxShadow: [
+      BoxShadow(
+        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
+        spreadRadius: 1,
+        blurRadius: 5,
+        offset: const Offset(0, 2),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          GestureDetector(
-            onTap: () {
-              setState(() {
-                showVenueDropdown = !showVenueDropdown;
-              });
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-              decoration: BoxDecoration(
-                color: Design.lightPurple,
-                borderRadius: BorderRadius.circular(5),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    selectedVenue == null
-                        ? "Select Venue"
-                        : selectedVenue!['name'] ?? "Select Venue",
-                    style: const TextStyle(fontSize: 15),
-                  ),
-                  Icon(
-                    showVenueDropdown
-                        ? Icons.arrow_drop_up
-                        : Icons.arrow_drop_down,
-                    color: Colors.grey,
-                  ),
-                ],
-              ),
-            ),
+    ],
+  ),
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      GestureDetector(
+        onTap: () {
+          setState(() {
+            showVenueDropdown = !showVenueDropdown;
+          });
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceContainer,
+            borderRadius: BorderRadius.circular(5),
           ),
-          if (showVenueDropdown)
-            Container(
-              constraints: BoxConstraints(maxHeight: 35.0 * 5),
-              decoration: BoxDecoration(
-                color: Design.lightPurple,
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(5),
-                  bottomRight: Radius.circular(5),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                selectedVenue == null
+                    ? "Select Venue"
+                    : selectedVenue!['name'] ?? "Select Venue",
+                style: TextStyle(
+                  fontSize: 15,
+                  color: Theme.of(context).textTheme.bodyLarge!.color,
                 ),
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Flexible(
-                    child: Scrollbar(
-                      thumbVisibility: true, // always show scrollbar
-                      child: ListView.builder(
-                        padding: EdgeInsets.zero,
-                        shrinkWrap: true,
-                        itemCount: venueList.length,
-                        itemBuilder: (context, index) {
-                          final venue = venueList[index];
-                          final isSelected =
-                              selectedVenue != null &&
-                              selectedVenue!['id'].toString() ==
-                                  venue['id'].toString();
-                          return InkWell(
-                            onTap: () {
-                              setState(() {
-                                selectedVenue = venue;
-                                showVenueDropdown = false;
-                              });
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 6,
-                              ),
-                              color:
-                                  isSelected
-                                      ? Design.primaryColorOrange.withOpacity(
-                                        0.1,
-                                      )
-                                      : Colors.transparent,
-                              child: Text(
-                                venue['name'] ?? '',
-                                style: const TextStyle(fontSize: 15),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                  // Padding(
-                  //   padding: const EdgeInsets.all(6.0),
-                  //   child: SizedBox(
-                  //     width: double.infinity,
-                  //     child: ElevatedButton(
-                  //       onPressed: () {
-                  //         setState(() {
-                  //           showVenueDropdown = false;
-                  //         });
-                  //       },
-                  //       style: ElevatedButton.styleFrom(
-                  //         backgroundColor: Design.primaryColorOrange,
-                  //         shape: RoundedRectangleBorder(
-                  //           borderRadius: BorderRadius.circular(5),
-                  //         ),
-                  //         padding: const EdgeInsets.symmetric(vertical: 8),
-                  //       ),
-                  //       child: const Text(
-                  //         "Done",
-                  //         style: TextStyle(color: Colors.white),
-                  //       ),
-                  //     ),
-                  //   ),
-                  // ),
-                ],
+              Icon(
+                showVenueDropdown
+                    ? Icons.arrow_drop_up
+                    : Icons.arrow_drop_down,
+                color: Theme.of(context).iconTheme.color,
               ),
-            ),
-        ],
+            ],
+          ),
+        ),
       ),
-    );
+      if (showVenueDropdown)
+        Container(
+          constraints: BoxConstraints(maxHeight: 35.0 * 5),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceContainer,
+            borderRadius: const BorderRadius.only(
+              bottomLeft: Radius.circular(5),
+              bottomRight: Radius.circular(5),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Scrollbar(
+                  thumbVisibility: true,
+                  child: ListView.builder(
+                    padding: EdgeInsets.zero,
+                    shrinkWrap: true,
+                    itemCount: venueList.length,
+                    itemBuilder: (context, index) {
+                      final venue = venueList[index];
+                      final isSelected =
+                          selectedVenue != null &&
+                          selectedVenue!['id'].toString() ==
+                              venue['id'].toString();
+                      return InkWell(
+                        onTap: () {
+                          setState(() {
+                            selectedVenue = venue;
+                            showVenueDropdown = false;
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 6,
+                          ),
+                          color:
+                              isSelected
+                                  ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+                                  : Colors.transparent,
+                          child: Text(
+                            venue['name'] ?? '',
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: Theme.of(context).textTheme.bodyLarge!.color,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+    ],
+  ),
+);
   }
 
   /// Updated venue list with QR Codes method (includes the custom dropdown)
@@ -583,7 +563,7 @@ class _TabDashboardState extends State<TabDashboard>
           child: Text(
             'You don’t have any venues yet, please add a venue by clicking on the "Bird Image" at the bottom.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+            style: TextStyle(fontSize: 16, color: Theme.of(context).textTheme.bodyMedium!.color,),
           ),
         ),
       );
@@ -596,18 +576,19 @@ class _TabDashboardState extends State<TabDashboard>
           Padding(
             padding: const EdgeInsets.all(10),
             child: Center(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.transparent,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: QrImageView(
-                  data: selectedVenue!['id'].toString(),
-                  version: QrVersions.auto,
-                  size: 150.0,
-                  backgroundColor: Colors.transparent,
-                ),
-              ),
+              child:Container(
+  decoration: BoxDecoration(
+    color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Theme.of(context).colorScheme.surface,
+    borderRadius: BorderRadius.circular(10),
+  ),
+  child: QrImageView(
+    data: selectedVenue!['id'].toString(),
+    version: QrVersions.auto,
+    size: 150.0,
+    backgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.white : Theme.of(context).colorScheme.surface,
+    padding: const EdgeInsets.all(8.0), // Optional: Add padding for better appearance
+  ),
+)
             ),
           ),
       ],
@@ -623,7 +604,7 @@ class _TabDashboardState extends State<TabDashboard>
         children: [
           SafeArea(
             child: Container(
-              color: Colors.white,
+              color: Theme.of(context).scaffoldBackgroundColor,
               padding: EdgeInsets.symmetric(horizontal: deviceWidth * 0.023),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -640,21 +621,21 @@ class _TabDashboardState extends State<TabDashboard>
                       children: [
                         Row(
                           children: [
-                            const Text(
-                              'Hello, ',
-                              style: TextStyle(
-                                fontSize: 18,
-                                color: Colors.black,
-                              ),
-                            ),
-                            Text(
-                              '$firstName $lastName',
-                              style: const TextStyle(
-                                fontSize: 18,
-                                color: Colors.black,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
+                           Text(
+  'Hello, ',
+  style: TextStyle(
+    fontSize: 18,
+    color: Theme.of(context).textTheme.bodyLarge!.color,
+  ),
+),
+Text(
+  '$firstName $lastName',
+  style: TextStyle(
+    fontSize: 18,
+    color: Theme.of(context).textTheme.bodyLarge!.color,
+    fontWeight: FontWeight.w600,
+  ),
+),
                           ],
                         ),
                         IconButton(
@@ -704,11 +685,11 @@ class _TabDashboardState extends State<TabDashboard>
                                           0.0025,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: Colors.white,
+                                     color: Theme.of(context).colorScheme.surface,
                                       borderRadius: BorderRadius.circular(10),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: Colors.grey.withOpacity(0.4),
+                                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
                                           spreadRadius: 1,
                                           blurRadius: 5,
                                           offset: const Offset(0, 2),
@@ -734,12 +715,7 @@ class _TabDashboardState extends State<TabDashboard>
                                                     item['img'],
                                                     width: deviceWidth * 0.06,
                                                     height: deviceWidth * 0.06,
-                                                    color: const Color.fromRGBO(
-                                                      255,
-                                                      130,
-                                                      16,
-                                                      1,
-                                                    ),
+                                                  color: Theme.of(context).colorScheme.primary
                                                   ),
                                                   const SizedBox(width: 6),
                                                   Expanded(
@@ -748,7 +724,7 @@ class _TabDashboardState extends State<TabDashboard>
                                                       style: TextStyle(
                                                         fontSize:
                                                             deviceWidth * 0.040,
-                                                        color: Colors.black,
+                                                       color: Theme.of(context).textTheme.titleMedium!.color,
                                                         fontWeight:
                                                             FontWeight.w600,
                                                       ),
@@ -774,7 +750,7 @@ class _TabDashboardState extends State<TabDashboard>
                                                   style: TextStyle(
                                                     fontSize:
                                                         deviceWidth * 0.03,
-                                                    color: Colors.grey,
+                                                  color: Theme.of(context).textTheme.bodyMedium!.color,
                                                   ),
                                                   maxLines: 2,
                                                   overflow:
@@ -795,12 +771,7 @@ class _TabDashboardState extends State<TabDashboard>
                                                   style: TextStyle(
                                                     fontSize:
                                                         deviceWidth * 0.08,
-                                                    color: const Color.fromRGBO(
-                                                      255,
-                                                      130,
-                                                      16,
-                                                      1,
-                                                    ),
+                                                   color: Theme.of(context).colorScheme.primary,
                                                     fontWeight: FontWeight.w800,
                                                   ),
                                                 ),
@@ -843,25 +814,22 @@ class _TabDashboardState extends State<TabDashboard>
           ),
           if (loader)
             Stack(
-              children: [
-                // Semi-transparent dark overlay
-                Container(
-                  color: Colors.black.withOpacity(0.14), // Dark overlay
-                ),
-
-                // Your original container with white tint and loader
-                Container(
-                  color: Colors.white10,
-                  child: Center(
-                    child: Image.asset(
-                      'assets/Bird_Full_Eye_Blinking.gif',
-                      width: 100, // Adjust size as needed
-                      height: 100,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+  children: [
+    Container(
+      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
+    ),
+    Container(
+      color: Theme.of(context).colorScheme.surface.withOpacity(0.1),
+      child: Center(
+        child: Image.asset(
+          'assets/Bird_Full_Eye_Blinking.gif',
+          width: 100,
+          height: 100,
+        ),
+      ),
+    ),
+  ],
+)
         ],
       ),
     );
