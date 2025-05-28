@@ -32,6 +32,8 @@ class CustomScaffold extends StatelessWidget {
     required this.body,
     required this.currentIndex,
   }) : super(key: key);
+  
+  BuildContext get context => context;
 
   @override
   Widget build(BuildContext context) {
@@ -150,7 +152,7 @@ class CustomScaffold extends StatelessWidget {
     required String label,
     required Color iconColor,
     required Color textColor,
-    Color backgroundColor = Colors.white,
+    Color? backgroundColor,
     Color? borderColor,
     required VoidCallback onTap,
   }) {
@@ -164,7 +166,7 @@ class CustomScaffold extends StatelessWidget {
           horizontal: screenWidth * 0.04,
         ),
         decoration: BoxDecoration(
-          color: backgroundColor,
+          color: backgroundColor ?? Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(5),
           boxShadow: [
             BoxShadow(
@@ -242,7 +244,10 @@ class CustomBottomBar extends StatelessWidget {
     required Color color,
   }) {
     final bool isActive = (currentIndex == index);
-    final Color activeColor = const Color.fromRGBO(255, 130, 16, 1);
+final Brightness brightness = Theme.of(context).brightness;
+final Color activeColor = brightness == Brightness.dark
+    ? const Color.fromRGBO(255, 255, 255, 1) // White in dark mode
+    : Colors.black; // Black in light mode
     final Color inactiveColor = color;
     final screenWidth = MediaQuery.of(context).size.width;
 
@@ -290,13 +295,13 @@ class CustomBottomBar extends StatelessWidget {
             top: 0,
             left: 0,
             right: 0,
-
-            child: Image.asset(
-              'assets/bottom_nav.png',
-              fit: BoxFit.cover,
-              height: screenHeight * 0.16,
-              colorBlendMode: BlendMode.lighten,
-            ),
+child: Image.asset(
+  Theme.of(context).colorScheme.brightness == Brightness.dark
+      ? 'assets/bottom_nav_dark.png'
+      : 'assets/bottom_nav.png',
+  fit: BoxFit.cover,
+  height: screenHeight * 0.16,
+),
           ),
           Padding(
             padding: EdgeInsets.only(
@@ -307,19 +312,24 @@ class CustomBottomBar extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
-                _buildNavItem(
-                  context,
-                  icon: Icons.grid_view_rounded,
-                  label: "Dashboard",
-                  index: 0,
-                  color: Colors.black,
-                ),
+         _buildNavItem(
+  context,
+  icon: Icons.grid_view_rounded,
+  label: "Dashboard",
+  index: 0,
+  color: Theme.of(context).brightness == Brightness.dark
+      ? const Color.fromRGBO(255, 130, 16, 1) // Orange in dark mode
+      : Colors.black, // Black in light mode
+),
+
                 _buildNavItem(
                   context,
                   icon: Icons.apartment,
                   label: "Venues",
                   index: 1,
-                  color: Colors.black,
+                   color: Theme.of(context).brightness == Brightness.dark
+      ? const Color.fromRGBO(255, 130, 16, 1) // Orange in dark mode
+      : Colors.black, // Black in light mode
                 ),
 
                 SizedBox(width: screenWidth * 0.2),
@@ -328,7 +338,9 @@ class CustomBottomBar extends StatelessWidget {
                   icon: Icons.login_outlined,
                   label: "Check In",
                   index: 3,
-                  color: Colors.black,
+                   color: Theme.of(context).brightness == Brightness.dark
+      ? const Color.fromRGBO(255, 130, 16, 1) // Orange in dark mode
+      : Colors.black, // Black in light mode
                 ),
                 _buildNavItem(
                   context,
@@ -336,7 +348,9 @@ class CustomBottomBar extends StatelessWidget {
                   label: "My Profile",
                   index: 4,
 
-                  color: Colors.black,
+                   color: Theme.of(context).brightness == Brightness.dark
+      ? const Color.fromRGBO(255, 130, 16, 1) // Orange in dark mode
+      : Colors.black, // Black in light mode
                 ),
               ],
             ),

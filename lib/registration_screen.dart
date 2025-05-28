@@ -331,7 +331,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: Image.asset('assets/login_back.jpg', fit: BoxFit.cover),
+            child: Image.asset( Theme.of(context).brightness == Brightness.dark
+                  ? 'assets/Background.jpg'
+                  : 'assets/login_back.jpg', fit: BoxFit.cover),
           ),
           SafeArea(
             child: SingleChildScrollView(
@@ -347,10 +349,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   const SizedBox(height: 30),
                   const Text('Register', style: TextStyle(fontSize: 24)),
-                  const Text(
-                    'Create your account',
-                    style: TextStyle(fontSize: 16, color: Colors.black54),
-                  ),
+                Text(
+  'Create your account',
+  style: TextStyle(
+    fontSize: 16,
+    color: Theme.of(context).brightness == Brightness.dark
+        ? Colors.white
+        : Colors.black54,
+  ),
+),
+
                   const SizedBox(height: 20),
                   Row(
                     children: [
@@ -496,46 +504,56 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text.rich(
-                              TextSpan(
-                                text:
-                                    'I confirm that I am of legal age in my jurisdiction and agree to the ',
-                                style: const TextStyle(color: Colors.black87),
-                                children: [
-                                  TextSpan(
-                                    text: 'Terms of Service',
-                                    style: const TextStyle(
-                                      color: Color.fromRGBO(255, 130, 16, 1),
-                                    ),
-                                    recognizer: TapGestureRecognizer()
-                                      ..onTap = () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                const TermsAndConditionsPage(),
-                                          ),
-                                        );
-                                      },
-                                  ),
-                                  const TextSpan(text: ' as set out by the '),
-                                  TextSpan(
-                                    text: 'and Privacy Policy.',
-                                    style: const TextStyle(
-                                      color: Color.fromRGBO(255, 130, 16, 1),
-                                    ),
-                                    recognizer: TapGestureRecognizer()
-                                      ..onTap = () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                const TermsAndConditionsPage(),
-                                          ),
-                                        );
-                                      },
-                                  ),
-                                ],
-                              ),
+                             TextSpan(
+  text:
+      'I confirm that I am of legal age in my jurisdiction and agree to the ',
+  style: TextStyle(
+    color: Theme.of(context).brightness == Brightness.dark
+        ? Colors.white
+        : Colors.black87,
+  ),
+  children: [
+    TextSpan(
+      text: 'Terms of Service',
+      style: const TextStyle(
+        color: Color.fromRGBO(255, 130, 16, 1),
+      ),
+      recognizer: TapGestureRecognizer()
+        ..onTap = () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const TermsAndConditionsPage(),
+            ),
+          );
+        },
+    ),
+    TextSpan(
+      text: ' as set out by the ',
+      style: TextStyle(
+        color: Theme.of(context).brightness == Brightness.dark
+            ? Colors.white
+            : Colors.black87,
+      ),
+    ),
+    TextSpan(
+      text: 'and Privacy Policy.',
+      style: const TextStyle(
+        color: Color.fromRGBO(255, 130, 16, 1),
+      ),
+      recognizer: TapGestureRecognizer()
+        ..onTap = () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const TermsAndConditionsPage(),
+            ),
+          );
+        },
+    ),
+  ],
+),
+
                             ),
                           ),
                         ],

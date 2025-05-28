@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flock/app_colors.dart';
 
 /* ───────────────────────────── SCREEN ───────────────────────────── */
 
@@ -45,7 +46,8 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
   bool _isSubmitting = false;
 
   /* ───────────────────────── lifecycle ───────────────────────── */
- 
+
+  @override
   void initState() {
     super.initState();
     _selectedVenue = _venues.first;
@@ -226,15 +228,27 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
   void _showSuccessDialog() => showDialog(
         context: context,
         builder: (_) => AlertDialog(
-          title: const Text('Success'),
-          content: const Text('Offer added successfully!'),
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          title: Text(
+            'Success',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          content: Text(
+            'Offer added successfully!',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
                 Navigator.pop(context);
               },
-              child: const Text('OK'),
+              child: Text(
+                'OK',
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+              ),
             ),
           ],
         ),
@@ -250,10 +264,9 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) => Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppConstants.customAppBar(context: context, title: 'Add New Offer'),
         resizeToAvoidBottomInset: false,
         body: Padding(
@@ -266,64 +279,82 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Title of Offer', style: TextStyle(fontSize: 16)),
+                  Text(
+                    'Title of Offer',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: 16),
+                  ),
                   const SizedBox(height: 8),
                   AppConstants.customTextField(
                     controller: _nameController,
                     hintText: 'Title of Offer',
                     textInputAction: TextInputAction.next,
-                    validator: (v) =>
-                        v == null || v.isEmpty ? '' : null,
+                    validator: (v) => v == null || v.isEmpty ? '' : null,
                   ),
-                  if (_showValidationMessages &&
-                      _nameController.text.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 6, left: 8),
+                  if (_showValidationMessages && _nameController.text.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6, left: 8),
                       child: Text(
                         'Please Enter Title',
-                        style: TextStyle(color: Colors.red, fontSize: 12),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Colors.red,
+                              fontSize: 12,
+                            ),
                       ),
                     ),
                   const SizedBox(height: 16),
-                  const Text('Venue', style: TextStyle(fontSize: 16)),
+                  Text(
+                    'Venue',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: 16),
+                  ),
                   const SizedBox(height: 8),
                   _buildVenueDropdown(),
                   if (_venueValidationError)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 6, left: 8),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6, left: 8),
                       child: Text(
                         'Please select venue',
-                        style: TextStyle(color: Colors.red, fontSize: 12),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Colors.red,
+                              fontSize: 12,
+                            ),
                       ),
                     ),
                   const SizedBox(height: 16),
-                  const Text(
+                  Text(
                     'Redemption Requirements',
-                    style: TextStyle(fontSize: 16),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: 16),
                   ),
                   _buildRedeemTypeRow(),
                   if (_redeemTypeValidationError)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 6, left: 8),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6, left: 8),
                       child: Text(
                         'Select at least one redeem type',
-                        style: TextStyle(color: Colors.red, fontSize: 12),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Colors.red,
+                              fontSize: 12,
+                            ),
                       ),
                     ),
                   if (_useVenuePoints || _useAppPoints) ...[
                     _buildPointsInputs(),
                     const SizedBox(height: 16),
                   ],
-                  const Text('Description', style: TextStyle(fontSize: 16)),
+                  Text(
+                    'Description',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: 16),
+                  ),
                   const SizedBox(height: 8),
                   _buildDescriptionField(),
-                  if (_showValidationMessages &&
-                      _descriptionController.text.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 6, left: 8),
+                  if (_showValidationMessages && _descriptionController.text.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6, left: 8),
                       child: Text(
                         'Please enter the description',
-                        style: TextStyle(color: Colors.red, fontSize: 12),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Colors.red,
+                              fontSize: 12,
+                            ),
                       ),
                     ),
                   const SizedBox(height: 16),
@@ -332,21 +363,27 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
                       _redemptionLimitController.text.isNotEmpty &&
                       (int.tryParse(_redemptionLimitController.text) == null ||
                           int.parse(_redemptionLimitController.text) < -1))
-                    const Padding(
-                      padding: EdgeInsets.only(top: 6, left: 8),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6, left: 8),
                       child: Text(
                         'Invalid redemption limit',
-                        style: TextStyle(color: Colors.red, fontSize: 12),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Colors.red,
+                              fontSize: 12,
+                            ),
                       ),
                     ),
                   const SizedBox(height: 16),
                   _buildImagePicker(),
                   if (_imageValidationError)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 6, left: 8),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6, left: 8),
                       child: Text(
                         'Please upload an image',
-                        style: TextStyle(color: Colors.red, fontSize: 12),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Colors.red,
+                              fontSize: 12,
+                            ),
                       ),
                     ),
                   const SizedBox(height: 16),
@@ -355,7 +392,7 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
                     width: double.infinity,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromRGBO(255, 130, 16, 1),
+                        backgroundColor: Theme.of(context).colorScheme.primary,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
@@ -363,7 +400,7 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
                       onPressed: _isSubmitting ? null : _submitOffer,
                       child: _isSubmitting
                           ? Container(
-                              color: Colors.white.withOpacity(0.19),
+                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.19),
                               child: Center(
                                 child: Image.asset(
                                   'assets/Bird_Full_Eye_Blinking.gif',
@@ -372,9 +409,12 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
                                 ),
                               ),
                             )
-                          : const Text(
+                          : Text(
                               'Save Offer',
-                              style: TextStyle(color: Colors.white, fontSize: 16),
+                              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                    color: Theme.of(context).colorScheme.onPrimary,
+                                    fontSize: 16,
+                                  ),
                             ),
                     ),
                   ),
@@ -393,14 +433,16 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
             onTap: () => _scrollToBottom(),
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: _venueValidationError ? Colors.red : Colors.grey.shade300,
+                  color: _venueValidationError
+                      ? Colors.red
+                      : Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.grey.withOpacity(0.1),
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
                     spreadRadius: 1,
                     blurRadius: 2,
                     offset: const Offset(0, 1),
@@ -415,15 +457,23 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
                       ),
                       child: Row(
                         children: [
-                          const SizedBox(
+                          SizedBox(
                             height: 20,
                             width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
                           ),
                           const SizedBox(width: 8),
-                          const Text(
+                          Text(
                             'Loading venues...',
-                            style: TextStyle(color: Colors.grey, fontSize: 14),
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                                  fontSize: 14,
+                                ),
                           ),
                         ],
                       ),
@@ -436,7 +486,7 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
                           isExpanded: true,
                           icon: Icon(
                             Icons.keyboard_arrow_down,
-                            color: Design.primaryColorOrange,
+                            color: Theme.of(context).colorScheme.primary,
                           ),
                           items: _venues
                               .map(
@@ -444,7 +494,9 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
                                   value: v,
                                   child: Text(
                                     v['name'] ?? 'Unnamed',
-                                    style: const TextStyle(fontSize: 14),
+                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                          fontSize: 14,
+                                        ),
                                   ),
                                 ),
                               )
@@ -463,7 +515,8 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
       );
 
   Widget _buildRedeemTypeRow() {
-    Color _label(bool enabled) => enabled ? Colors.black : Colors.grey.shade500;
+    Color _label(bool enabled) =>
+        enabled ? Theme.of(context).colorScheme.onSurface : Theme.of(context).colorScheme.onSurface.withOpacity(0.5);
 
     return Wrap(
       spacing: 24,
@@ -475,7 +528,7 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Checkbox(
-                activeColor: const Color.fromRGBO(255, 130, 16, 1),
+                activeColor: Theme.of(context).colorScheme.primary,
                 visualDensity: const VisualDensity(
                   horizontal: -2,
                   vertical: -2,
@@ -488,7 +541,12 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
                   });
                 },
               ),
-              Text('Venue Points', style: TextStyle(color: _label(true))),
+              Text(
+                'Venue Points',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: _label(true),
+                    ),
+              ),
             ],
           ),
         ),
@@ -498,7 +556,7 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Checkbox(
-                activeColor: const Color.fromRGBO(255, 130, 16, 1),
+                activeColor: Theme.of(context).colorScheme.primary,
                 visualDensity: const VisualDensity(
                   horizontal: -2,
                   vertical: -2,
@@ -511,7 +569,12 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
                   });
                 },
               ),
-              Text('Feathers', style: TextStyle(color: _label(true))),
+              Text(
+                'Feathers',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: _label(true),
+                    ),
+              ),
             ],
           ),
         ),
@@ -551,7 +614,10 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
                         _venuePointsController.text.isEmpty
                             ? 'Please enter Venue Points'
                             : 'Minimum 5 points',
-                        style: const TextStyle(color: Colors.red, fontSize: 12),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Colors.red,
+                              fontSize: 12,
+                            ),
                       ),
                     ),
                 ],
@@ -587,7 +653,10 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
                         _appPointsController.text.isEmpty
                             ? 'Please enter Feathers'
                             : 'Minimum 5 points',
-                        style: const TextStyle(color: Colors.red, fontSize: 12),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Colors.red,
+                              fontSize: 12,
+                            ),
                       ),
                     ),
                 ],
@@ -598,9 +667,29 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
 
   InputDecoration _inputDecoration(String hint) => InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(fontSize: 12),
+        hintStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
+              fontSize: 12,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+            ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(
+            color: Theme.of(context).colorScheme.primary,
+          ),
+        ),
       );
 
   Widget _buildDescriptionField() => Column(
@@ -608,21 +697,25 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
         children: [
           Container(
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade400),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+              ),
               borderRadius: BorderRadius.circular(10),
             ),
             child: TextFormField(
               controller: _descriptionController,
               maxLines: 4,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 hintText: 'Offer description',
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                hintStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                    ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                 border: InputBorder.none,
               ),
               textInputAction: TextInputAction.done,
               onFieldSubmitted: (_) => FocusScope.of(context).unfocus(),
-              validator: (v) =>
-                  v == null || v.isEmpty ? 'Enter description' : null,
+              validator: (v) => v == null || v.isEmpty ? 'Enter description' : null,
             ),
           ),
         ],
@@ -632,15 +725,21 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           RichText(
-            text: const TextSpan(
+            text: TextSpan(
               children: [
                 TextSpan(
                   text: 'Redemption Limit  ',
-                  style: TextStyle(fontSize: 16, color: Colors.black),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontSize: 16,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
                 ),
                 TextSpan(
                   text: '(Leave blank for unlimited)',
-                  style: TextStyle(fontSize: 14, color: Colors.black54),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        fontSize: 14,
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                      ),
                 ),
               ],
             ),
@@ -664,22 +763,30 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
   Widget _buildImagePicker() => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Upload Pictures', style: TextStyle(fontSize: 16)),
+          Text(
+            'Upload Pictures',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: 16),
+          ),
           const SizedBox(height: 8),
           _pickedImage == null
               ? Container(
                   width: 80,
                   height: 80,
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
+                    color: Theme.of(context).colorScheme.surface.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                        color: _imageValidationError
-                            ? Colors.red
-                            : Colors.grey.shade400),
+                      color: _imageValidationError
+                          ? Colors.red
+                          : Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+                    ),
                   ),
                   child: IconButton(
-                    icon: const Icon(Icons.camera_alt, size: 50),
+                    icon: Icon(
+                      Icons.camera_alt,
+                      size: 50,
+                      color: Theme.of(context).iconTheme.color,
+                    ),
                     onPressed: () {
                       _pickImage();
                       _scrollToBottom();

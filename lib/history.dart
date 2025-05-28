@@ -5,6 +5,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
+import 'package:flock/app_colors.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({Key? key}) : super(key: key);
@@ -76,18 +77,16 @@ class _HistoryScreenState extends State<HistoryScreen>
         final allTransactions = data['data'] ?? [];
 
         // Sort all transactions by date in descending order
-    // Sort all transactions by date in descending order
-allTransactions.sort((a, b) {
-  final dateAStr = a['datetime'];
-  final dateBStr = b['datetime'];
+        allTransactions.sort((a, b) {
+          final dateAStr = a['datetime'];
+          final dateBStr = b['datetime'];
 
-  if (dateAStr == null || dateBStr == null) return 0;
+          if (dateAStr == null || dateBStr == null) return 0;
 
-  final dateA = DateFormat('MMMM-dd-yyyy hh:mm a').parse(dateAStr);
-  final dateB = DateFormat('MMMM-dd-yyyy hh:mm a').parse(dateBStr);
-  return dateB.compareTo(dateA); // Descending order
-});
-
+          final dateA = DateFormat('MMMM-dd-yyyy hh:mm a').parse(dateAStr);
+          final dateB = DateFormat('MMMM-dd-yyyy hh:mm a').parse(dateBStr);
+          return dateB.compareTo(dateA); // Descending order
+        });
 
         // Extract unique venue names for filtering
         final Set<String> uniqueVenueNames = {};
@@ -106,9 +105,7 @@ allTransactions.sort((a, b) {
           if (transaction['title'] == 'Check-In') {
             checkIns.add(transaction);
           } else {
-            redemptions.add(
-              transaction,
-            ); // Includes Offer Redeemed and Offer Refunded
+            redemptions.add(transaction); // Includes Offer Redeemed and Offer Refunded
           }
         }
 
@@ -141,40 +138,39 @@ allTransactions.sort((a, b) {
   /// ----------  ITEM UI  ----------
   Widget _buildHistoryItem(Map<String, dynamic> item) {
     // Parse & format timestamp
-   final inputFormat = DateFormat('MMMM-dd-yyyy hh:mm a');
-DateTime? timestamp;
-try {
-  if (item['datetime'] != null) {
-    timestamp = inputFormat.parse(item['datetime']);
-  }
-} catch (e) {
-  timestamp = null;
-}
+    final inputFormat = DateFormat('MMMM-dd-yyyy hh:mm a');
+    DateTime? timestamp;
+    try {
+      if (item['datetime'] != null) {
+        timestamp = inputFormat.parse(item['datetime']);
+      }
+    } catch (e) {
+      timestamp = null;
+    }
 
-final formattedTime = timestamp != null
-    ? DateFormat('MMM dd, yyyy • hh:mm a').format(timestamp)
-    : 'Unknown time';
+    final formattedTime = timestamp != null
+        ? DateFormat('MMM dd, yyyy • hh:mm a').format(timestamp)
+        : 'Unknown time';
 
     // Points sign & colour
-   // Points sign & colour
-final featherPoints = item['feather_points'] as int? ?? 0;
-final venuePoints = item['venue_points'] as int? ?? 0;
+    final featherPoints = item['feather_points'] as int? ?? 0;
+    final venuePoints = item['venue_points'] as int? ?? 0;
 
-final bool isCheckIn = item['title'] == 'Check-In';
-final bool isOfferRedeemed = item['title'] == 'Offer Refunded';
+    final bool isCheckIn = item['title'] == 'Check-In';
+    final bool isOfferRedeemed = item['title'] == 'Offer Refunded';
 
-// Determine points text based on transaction type
-final featherPointsText = isCheckIn
-    ? '- $featherPoints fts'
-    : (isOfferRedeemed ? '- $featherPoints fts' : '+ $featherPoints fts');
-final venuePointsText = isCheckIn
-    ? '- $venuePoints pts'
-    : (isOfferRedeemed ? '- $venuePoints pts' : '+ $venuePoints pts');
+    // Determine points text based on transaction type
+    final featherPointsText = isCheckIn
+        ? '- $featherPoints fts'
+        : (isOfferRedeemed ? '- $featherPoints fts' : '+ $featherPoints fts');
+    final venuePointsText = isCheckIn
+        ? '- $venuePoints pts'
+        : (isOfferRedeemed ? '- $venuePoints pts' : '+ $venuePoints pts');
 
-// Set points color based on transaction type
-final pointsColor = isCheckIn || isOfferRedeemed
-    ? Colors.red.shade700
-    : Colors.green.shade700;
+    // Set points color based on transaction type
+    final pointsColor = isCheckIn || isOfferRedeemed
+        ? Colors.red.shade700
+        : Colors.green.shade700;
 
     final IconData transactionIcon =
         isCheckIn ? Icons.login_rounded : Icons.redeem_rounded;
@@ -183,11 +179,11 @@ final pointsColor = isCheckIn || isOfferRedeemed
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -201,15 +197,12 @@ final pointsColor = isCheckIn || isOfferRedeemed
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color:
-                  isCheckIn
-                      ? const Color.fromRGBO(255, 136, 16, 1)
-                      : const Color.fromRGBO(255, 136, 16, 1),
+              color: Theme.of(context).colorScheme.primary,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
               transactionIcon,
-              color: isCheckIn ? Colors.white : Colors.white,
+              color: Theme.of(context).colorScheme.onPrimary,
               size: 24,
             ),
           ),
@@ -222,10 +215,10 @@ final pointsColor = isCheckIn || isOfferRedeemed
               children: [
                 Text(
                   item['title'] ?? (isCheckIn ? 'Check-In' : 'Offer Redeemed'),
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
                 const SizedBox(height: 4),
 
@@ -236,10 +229,10 @@ final pointsColor = isCheckIn || isOfferRedeemed
                     padding: const EdgeInsets.only(bottom: 4),
                     child: Text(
                       item['offer_name'],
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.black87,
-                      ),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            fontSize: 14,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
                       overflow: TextOverflow.ellipsis,
                       maxLines: 1,
                     ),
@@ -248,19 +241,19 @@ final pointsColor = isCheckIn || isOfferRedeemed
                 // Venue name
                 Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.store_rounded,
                       size: 14,
-                      color: Color.fromRGBO(255, 130, 16, 1),
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
                         item['venue_name'] ?? '',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
                         overflow: TextOverflow.ellipsis,
                         maxLines: 1,
                       ),
@@ -272,18 +265,18 @@ final pointsColor = isCheckIn || isOfferRedeemed
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.access_time_rounded,
                       size: 14,
-                      color: Color.fromRGBO(255, 130, 16, 1),
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                     const SizedBox(width: 4),
                     Text(
                       formattedTime,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey.shade600,
-                      ),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            fontSize: 13,
+                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                          ),
                     ),
                   ],
                 ),
@@ -308,11 +301,11 @@ final pointsColor = isCheckIn || isOfferRedeemed
                             ),
                             child: Text(
                               featherPointsText,
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: pointsColor,
-                              ),
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: pointsColor,
+                                  ),
                             ),
                           ),
                         if (venuePoints > 0)
@@ -327,11 +320,11 @@ final pointsColor = isCheckIn || isOfferRedeemed
                             ),
                             child: Text(
                               venuePointsText,
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: pointsColor,
-                              ),
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: pointsColor,
+                                  ),
                             ),
                           ),
                       ],
@@ -372,18 +365,19 @@ final pointsColor = isCheckIn || isOfferRedeemed
                         height: 34,
                         width: 34,
                         fit: BoxFit.contain,
+                        // color: Theme.of(context).iconTheme.color,
                       ),
                     ),
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Center(
                       child: Text(
                         'Transaction History',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
                       ),
                     ),
                   ),
@@ -396,53 +390,67 @@ final pointsColor = isCheckIn || isOfferRedeemed
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
-                color: Colors.grey.shade100,
+                color: Theme.of(context).colorScheme.surface.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: TabBar(
                 controller: _tabController,
-                labelColor: Colors.white,
-                unselectedLabelColor: Colors.grey.shade700,
-                labelStyle: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
-                unselectedLabelStyle: const TextStyle(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 14,
-                ),
+                labelColor: Theme.of(context).colorScheme.onPrimary,
+                unselectedLabelColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                labelStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                unselectedLabelStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                    ),
                 indicator: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
-                  color: const Color.fromRGBO(255, 130, 16, 1),
+                  color: Theme.of(context).colorScheme.primary,
                 ),
                 dividerColor: Colors.transparent,
-                tabs: const [
+                tabs: [
                   Tab(
                     height: 56,
-                    iconMargin: EdgeInsets.only(bottom: 4),
+                    iconMargin: const EdgeInsets.only(bottom: 4),
                     child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 10),
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.login_rounded, size: 16),
-                          SizedBox(width: 8),
-                          Text('Check-ins'),
+                          Icon(
+                            Icons.login_rounded,
+                            size: 16,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Check-ins',
+                            style: Theme.of(context).textTheme.labelLarge,
+                          ),
                         ],
                       ),
                     ),
                   ),
                   Tab(
                     height: 56,
-                    iconMargin: EdgeInsets.only(bottom: 4),
+                    iconMargin: const EdgeInsets.only(bottom: 4),
                     child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 10),
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.redeem_rounded, size: 16),
-                          SizedBox(width: 8),
-                          Text('Redemptions'),
+                          Icon(
+                            Icons.redeem_rounded,
+                            size: 16,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Redemptions',
+                            style: Theme.of(context).textTheme.labelLarge,
+                          ),
                         ],
                       ),
                     ),
@@ -461,19 +469,29 @@ final pointsColor = isCheckIn || isOfferRedeemed
                       context: context,
                       builder: (BuildContext context) {
                         return AlertDialog(
-                          title: const Text('Select Venue'),
+                          backgroundColor: Theme.of(context).colorScheme.surface,
+                          title: Text(
+                            'Select Venue',
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
                           content: SizedBox(
                             width: double.maxFinite,
                             child: ListView(
                               shrinkWrap: true,
                               children: [
                                 ListTile(
-                                  title: const Text('All venues'),
+                                  title: Text(
+                                    'All venues',
+                                    style: Theme.of(context).textTheme.bodyMedium,
+                                  ),
                                   onTap: () => Navigator.pop(context, null),
                                 ),
                                 ...venueNames.map((String venue) {
                                   return ListTile(
-                                    title: Text(venue),
+                                    title: Text(
+                                      venue,
+                                      style: Theme.of(context).textTheme.bodyMedium,
+                                    ),
                                     onTap: () => Navigator.pop(context, venue),
                                   );
                                 }).toList(),
@@ -495,7 +513,9 @@ final pointsColor = isCheckIn || isOfferRedeemed
                       vertical: 12,
                     ),
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+                      ),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
@@ -503,15 +523,17 @@ final pointsColor = isCheckIn || isOfferRedeemed
                       children: [
                         Text(
                           selectedVenue ?? 'All Venues',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color:
-                                selectedVenue == null
-                                    ? Colors.grey
-                                    : Colors.black,
-                          ),
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                fontSize: 16,
+                                color: selectedVenue == null
+                                    ? Theme.of(context).colorScheme.onSurface.withOpacity(0.5)
+                                    : Theme.of(context).colorScheme.onSurface,
+                              ),
                         ),
-                        const Icon(Icons.keyboard_arrow_down),
+                        Icon(
+                          Icons.keyboard_arrow_down,
+                          color: Theme.of(context).iconTheme.color,
+                        ),
                       ],
                     ),
                   ),
@@ -520,47 +542,47 @@ final pointsColor = isCheckIn || isOfferRedeemed
 
             // ---------- LIST CONTENT ----------
             Expanded(
-              child:
-                  loader
-                      ? Center(
+              child: loader
+                  ? Container(
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.14),
+                      child: Center(
                         child: Image.asset(
                           'assets/Bird_Full_Eye_Blinking.gif',
                           width: 100,
                           height: 100,
                         ),
-                      )
-                      : TabBarView(
-                        controller: _tabController,
-                        children: [
-                          // Check-ins tab
-                          filteredCheckInData.isEmpty
-                              ? _buildEmptyState('No check-ins found')
-                              : ListView.builder(
+                      ),
+                    )
+                  : TabBarView(
+                      controller: _tabController,
+                      children: [
+                        // Check-ins tab
+                        filteredCheckInData.isEmpty
+                            ? _buildEmptyState('No check-ins found')
+                            : ListView.builder(
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 8,
                                 ),
                                 itemCount: filteredCheckInData.length,
-                                itemBuilder:
-                                    (context, index) => _buildHistoryItem(
-                                      filteredCheckInData[index],
-                                    ),
+                                itemBuilder: (context, index) => _buildHistoryItem(
+                                  filteredCheckInData[index],
+                                ),
                               ),
 
-                          // Offer Redemptions tab
-                          filteredOfferRedemptionData.isEmpty
-                              ? _buildEmptyState('No redemptions found')
-                              : ListView.builder(
+                        // Offer Redemptions tab
+                        filteredOfferRedemptionData.isEmpty
+                            ? _buildEmptyState('No redemptions found')
+                            : ListView.builder(
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 8,
                                 ),
                                 itemCount: filteredOfferRedemptionData.length,
-                                itemBuilder:
-                                    (context, index) => _buildHistoryItem(
-                                      filteredOfferRedemptionData[index],
-                                    ),
+                                itemBuilder: (context, index) => _buildHistoryItem(
+                                  filteredOfferRedemptionData[index],
+                                ),
                               ),
-                        ],
-                      ),
+                      ],
+                    ),
             ),
           ],
         ),
@@ -573,11 +595,18 @@ final pointsColor = isCheckIn || isOfferRedeemed
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.history_rounded, size: 64, color: Colors.grey.shade400),
+          Icon(
+            Icons.history_rounded,
+            size: 64,
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+          ),
           const SizedBox(height: 16),
           Text(
             message,
-            style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontSize: 16,
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                ),
           ),
           if (selectedVenue != null)
             Padding(
@@ -588,8 +617,16 @@ final pointsColor = isCheckIn || isOfferRedeemed
                     selectedVenue = null;
                   });
                 },
-                icon: const Icon(Icons.filter_alt_off),
-                label: const Text('Clear filter'),
+                icon: Icon(
+                  Icons.filter_alt_off,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                label: Text(
+                  'Clear filter',
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                ),
               ),
             ),
         ],

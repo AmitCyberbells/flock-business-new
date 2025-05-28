@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:flock/app_colors.dart';
 
 class OfferDetails extends StatefulWidget {
   final Map<String, dynamic> allDetail;
@@ -43,8 +44,7 @@ class _OfferDetailsState extends State<OfferDetails> {
     venueName = detail['venue']?['name'] ?? 'No Venue';
     offerName = detail['name'] ?? 'No Title';
     final images = detail['images'] as List<dynamic>?;
-    imageUrl =
-        (images != null && images.isNotEmpty) ? images[0]['image'] ?? '' : '';
+    imageUrl = (images != null && images.isNotEmpty) ? images[0]['image'] ?? '' : '';
     description = detail['description'] ?? '';
     redeemed_count = detail['people'] ?? 0;
     expireAt = detail['expire_at'];
@@ -55,7 +55,6 @@ class _OfferDetailsState extends State<OfferDetails> {
       facing: CameraFacing.back,
       torchEnabled: false,
     );
-    print('before fetch');
 
     fetchRedeemedPeople();
   }
@@ -84,8 +83,14 @@ class _OfferDetailsState extends State<OfferDetails> {
     if (token == null || token.isEmpty) {
       _setLoading(false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Authentication failed. Please login again.'),
+        SnackBar(
+          backgroundColor: Colors.red,
+          content: Text(
+            'Authentication failed. Please login again.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onError,
+                ),
+          ),
         ),
       );
       return;
@@ -97,32 +102,24 @@ class _OfferDetailsState extends State<OfferDetails> {
       );
       final request = http.MultipartRequest('GET', url);
       request.headers['Authorization'] = 'Bearer $token';
-      // request.fields['offer_id'] = offerId.toString();
 
       final streamed = await request.send();
       final response = await http.Response.fromStream(streamed);
-      final statusCode = response.statusCode;
-      print('data before print ' + statusCode.toString());
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print('data for offer: $data');
-
         if (data['status'] == 'success' && data['data'] != null) {
           setState(() {
-            // redeemedPeopleList = List.from(data['count']);
             redeemed_count = data['data']['count'];
           });
         } else {
           setState(() {
-            errorMessage =
-                data['message'] ?? 'Failed to fetch redeemed people.';
+            errorMessage = data['message'] ?? 'Failed to fetch redeemed people.';
           });
         }
       } else {
         setState(() {
-          errorMessage =
-              'Failed to fetch redeemed people. Code: ${response.statusCode}';
+          errorMessage = 'Failed to fetch redeemed people. Code: ${response.statusCode}';
         });
       }
     } catch (e) {
@@ -141,8 +138,14 @@ class _OfferDetailsState extends State<OfferDetails> {
     if (token == null || token.isEmpty) {
       _setLoading(false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Authentication failed. Please login again.'),
+        SnackBar(
+          backgroundColor: Colors.red,
+          content: Text(
+            'Authentication failed. Please login again.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onError,
+                ),
+          ),
         ),
       );
       return;
@@ -160,7 +163,15 @@ class _OfferDetailsState extends State<OfferDetails> {
       );
       if (response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Offer removed successfully!')),
+          SnackBar(
+            backgroundColor: Colors.green,
+            content: Text(
+              'Offer removed successfully!',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  ),
+            ),
+          ),
         );
         Navigator.pop(context, true);
       } else {
@@ -183,8 +194,14 @@ class _OfferDetailsState extends State<OfferDetails> {
     if (token == null || token.isEmpty) {
       _setLoading(false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Authentication failed. Please login again.'),
+        SnackBar(
+          backgroundColor: Colors.red,
+          content: Text(
+            'Authentication failed. Please login again.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onError,
+                ),
+          ),
         ),
       );
       return;
@@ -209,29 +226,47 @@ class _OfferDetailsState extends State<OfferDetails> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                expireAt != null?
-                    'Offer Ended Successfully!'
+                expireAt != null
+                    ? 'Offer Ended Successfully!'
                     : 'Offer Reactivated Successfully!',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                    ),
               ),
               backgroundColor: Colors.green,
+              duration: const Duration(seconds: 3),
             ),
           );
-        } 
-        else {
+        } else {
           setState(() {
             errorMessage = data['message'] ?? 'Failed to toggle offer status.';
           });
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
+            SnackBar(
+              content: Text(
+                errorMessage,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onError,
+                    ),
+              ),
+              backgroundColor: Colors.red,
+            ),
           );
         }
       } else {
         setState(() {
-          errorMessage =
-              'Failed to toggle offer status. Code: ${response.statusCode}';
+          errorMessage = 'Failed to toggle offer status. Code: ${response.statusCode}';
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(
+              errorMessage,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onError,
+                  ),
+            ),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } catch (e) {
@@ -239,7 +274,15 @@ class _OfferDetailsState extends State<OfferDetails> {
         errorMessage = 'Network error: $e';
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text(
+            errorMessage,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onError,
+                ),
+          ),
+          backgroundColor: Colors.red,
+        ),
       );
     } finally {
       _setLoading(false);
@@ -249,7 +292,15 @@ class _OfferDetailsState extends State<OfferDetails> {
   Future<void> scanQR() async {
     if (expireAt != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Cannot scan QR code: Offer is expired.')),
+        SnackBar(
+          backgroundColor: Colors.red,
+          content: Text(
+            'Cannot scan QR code: Offer is expired.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onError,
+                ),
+          ),
+        ),
       );
       return;
     }
@@ -261,60 +312,79 @@ class _OfferDetailsState extends State<OfferDetails> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder:
-              (context) => Scaffold(
-                backgroundColor: Colors.white,
-                appBar: AppBar(title: const Text('Scan QR Code')),
-                body: Stack(
-                  children: [
-                    MobileScanner(
-                      controller: _scannerController,
-                      onDetect: (capture) async {
-                        final barcodes = capture.barcodes;
-                        if (barcodes.isNotEmpty) {
-                          final qrCode = barcodes.first.rawValue ?? '';
-                          print('Scanned QR Code: $qrCode');
-                          await _scannerController.stop();
-                          if (!mounted) return;
-                          Navigator.pop(context);
-                          await _verifyQRCode(qrCode);
-                        }
-                      },
-                    ),
-                    Center(
-                      child: Container(
-                        width: 200,
-                        height: 200,
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.white, width: 2),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+          builder: (context) => Scaffold(
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            appBar: AppBar(
+              backgroundColor: Theme.of(context).colorScheme.surface,
+              title: Text(
+                'Scan QR Code',
+                style: Theme.of(context).textTheme.titleLarge,
               ),
+            ),
+            body: Stack(
+              children: [
+                MobileScanner(
+                  controller: _scannerController,
+                  onDetect: (capture) async {
+                    final barcodes = capture.barcodes;
+                    if (barcodes.isNotEmpty) {
+                      final qrCode = barcodes.first.rawValue ?? '';
+                      await _scannerController.stop();
+                      if (!mounted) return;
+                      Navigator.pop(context);
+                      await _verifyQRCode(qrCode);
+                    }
+                  },
+                ),
+                Center(
+                  child: Container(
+                    width: 200,
+                    height: 200,
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.onSurface,
+                        width: 2,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ).then((_) async {
         await _scannerController.stop();
       });
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error starting scanner: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: Colors.red,
+          content: Text(
+            'Error starting scanner: $e',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onError,
+                ),
+          ),
+        ),
+      );
     }
   }
 
   Future<void> _verifyQRCode(String qrCode) async {
-    print('Verifying QR Code: $qrCode');
     _setLoading(true);
-
     final token = await _getToken();
     if (token == null || token.isEmpty) {
       _setLoading(false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Authentication failed. Please login again.'),
+        SnackBar(
+          backgroundColor: Colors.red,
+          content: Text(
+            'Authentication failed. Please login again.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onError,
+                ),
+          ),
         ),
       );
       return;
@@ -323,8 +393,14 @@ class _OfferDetailsState extends State<OfferDetails> {
     if (expireAt != null) {
       _setLoading(false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Cannot verify QR code: Offer is expired.'),
+        SnackBar(
+          backgroundColor: Colors.red,
+          content: Text(
+            'Cannot verify QR code: Offer is expired.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onError,
+                ),
+          ),
         ),
       );
       return;
@@ -333,7 +409,15 @@ class _OfferDetailsState extends State<OfferDetails> {
     if (qrCode.isEmpty) {
       _setLoading(false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Invalid QR code: Empty data.')),
+        SnackBar(
+          backgroundColor: Colors.red,
+          content: Text(
+            'Invalid QR code: Empty data.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onError,
+                ),
+          ),
+        ),
       );
       return;
     }
@@ -341,13 +425,17 @@ class _OfferDetailsState extends State<OfferDetails> {
     Map<String, dynamic> decodedData;
     try {
       decodedData = jsonDecode(qrCode);
-      print('Decoded QR Data: $decodedData');
     } catch (e) {
       _setLoading(false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          // content: Text('Invalid QR code: Not a valid JSON format.'),
-          content: Text('Invalid QR code.'),
+        SnackBar(
+          backgroundColor: Colors.red,
+          content: Text(
+            'Invalid QR code.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onError,
+                ),
+          ),
         ),
       );
       return;
@@ -357,8 +445,15 @@ class _OfferDetailsState extends State<OfferDetails> {
     if (redeemId == null) {
       _setLoading(false);
       ScaffoldMessenger.of(context).showSnackBar(
-        // const SnackBar(content: Text('Invalid QR code: Missing redeem_id.')),
-        const SnackBar(content: Text('Invalid QR code')),
+        SnackBar(
+          backgroundColor: Colors.red,
+          content: Text(
+            'Invalid QR code.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onError,
+                ),
+          ),
+        ),
       );
       return;
     }
@@ -366,23 +461,26 @@ class _OfferDetailsState extends State<OfferDetails> {
     int? parsedRedeemId;
     try {
       parsedRedeemId = int.parse(redeemId.toString());
-      // print('Parsed Redeem ID: $parsedRedeemId');
     } catch (e) {
       _setLoading(false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          // content: Text('Invalid QR code: redeem_id must be a valid number.'),
-          content: Text('Invalid QR code'),
+        SnackBar(
+          backgroundColor: Colors.red,
+          content: Text(
+            'Invalid QR code.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onError,
+                ),
+          ),
         ),
       );
       return;
     }
-    print('before url');
+
     try {
       final url = Uri.parse(
         'https://api.getflock.io/api/vendor/redeemed-offers/$parsedRedeemId/verify?venue_id=$venueId',
       );
-      print('Sending verification request to: $url');
       final response = await http.post(
         url,
         headers: {
@@ -391,14 +489,17 @@ class _OfferDetailsState extends State<OfferDetails> {
         },
       );
 
-      print('API Response: ${response.statusCode} - ${response.body}');
-
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['status'] == 'success') {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(data['message'] ?? 'Offer verified successfully!'),
+              content: Text(
+                data['message'] ?? 'Offer verified successfully!',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                    ),
+              ),
               backgroundColor: Colors.green,
               duration: const Duration(seconds: 3),
             ),
@@ -407,7 +508,12 @@ class _OfferDetailsState extends State<OfferDetails> {
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(data['message'] ?? 'Verification failed.'),
+              content: Text(
+                data['message'] ?? 'Verification failed.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onError,
+                    ),
+              ),
               backgroundColor: Colors.red,
             ),
           );
@@ -417,16 +523,23 @@ class _OfferDetailsState extends State<OfferDetails> {
           SnackBar(
             content: Text(
               'Verification error: ${response.statusCode} - ${response.body}',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onError,
+                  ),
             ),
             backgroundColor: Colors.red,
           ),
         );
       }
     } catch (e) {
-      print('Network error: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Network error: $e'),
+          content: Text(
+            'Network error: $e',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onError,
+                ),
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -440,36 +553,50 @@ class _OfferDetailsState extends State<OfferDetails> {
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          title: const Text('Redeemed People List'),
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          title: Text(
+            'Redeemed People List',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
           content: SizedBox(
             width: double.maxFinite,
             height: 300,
-            child:
-                redeemedPeopleList.isEmpty
-                    ? const Center(child: Text('No data found.'))
-                    : ListView.builder(
-                      itemCount: redeemedPeopleList.length,
-                      itemBuilder: (context, index) {
-                        final person = redeemedPeopleList[index];
-                        final username = person['username'] ?? 'Unknown';
-                        final image = person['images'];
-                        return ListTile(
-                          leading: CircleAvatar(
-                            backgroundImage:
-                                image != null
-                                    ? NetworkImage(image)
-                                    : const AssetImage('assets/placeholder.png')
-                                        as ImageProvider,
-                          ),
-                          title: Text(username),
-                        );
-                      },
+            child: redeemedPeopleList.isEmpty
+                ? Center(
+                    child: Text(
+                      'No data found.',
+                      style: Theme.of(context).textTheme.bodyMedium,
                     ),
+                  )
+                : ListView.builder(
+                    itemCount: redeemedPeopleList.length,
+                    itemBuilder: (context, index) {
+                      final person = redeemedPeopleList[index];
+                      final username = person['username'] ?? 'Unknown';
+                      final image = person['images'];
+                      return ListTile(
+                        leading: CircleAvatar(
+                          backgroundImage: image != null
+                              ? NetworkImage(image)
+                              : const AssetImage('assets/placeholder.png') as ImageProvider,
+                        ),
+                        title: Text(
+                          username,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      );
+                    },
+                  ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Done'),
+              child: Text(
+                'Done',
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+              ),
             ),
           ],
         );
@@ -480,58 +607,82 @@ class _OfferDetailsState extends State<OfferDetails> {
   void showRemoveDialogFunc() {
     showDialog(
       context: context,
-      builder:
-          (ctx) => AlertDialog(
-            title: const Text('Delete Offer'),
-            content: const Text('Are you sure you want to remove this offer?'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text(
-                  'CANCEL',
-                  style: TextStyle(color: Colors.grey),
-                ),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  removeOffer();
-                },
-                child: const Text('OK'),
-              ),
-            ],
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        title: Text(
+          'Delete Offer',
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
+        content: Text(
+          'Are you sure you want to remove this offer?',
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'CANCEL',
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                  ),
+            ),
           ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              removeOffer();
+            },
+            child: Text(
+              'OK',
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   void showToggleOfferDialog() {
     showDialog(
       context: context,
-      builder:
-          (ctx) => AlertDialog(
-            title: Text(expireAt != null ? 'Reactivate Offer' : 'End Offer'),
-            content: Text(
-              expireAt != null
-                  ? 'Are you sure you want to bring this offer back?'
-                  : 'Are you sure you want to end this offer?',
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        title: Text(
+          expireAt != null ? 'Reactivate Offer' : 'End Offer',
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
+        content: Text(
+          expireAt != null
+              ? 'Are you sure you want to bring this offer back?'
+              : 'Are you sure you want to end this offer?',
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'CANCEL',
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                  ),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text(
-                  'CANCEL',
-                  style: TextStyle(color: Colors.grey.shade700),
-                ),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  toggleOfferStatus();
-                },
-                child: const Text('OK'),
-              ),
-            ],
           ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              toggleOfferStatus();
+            },
+            child: Text(
+              'OK',
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -542,17 +693,28 @@ class _OfferDetailsState extends State<OfferDetails> {
     return Stack(
       children: [
         Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           appBar: AppBar(
-            backgroundColor: Colors.white,
-            title: const Text('Offer Detail'),
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            title: Text(
+              'Offer Detail',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back),
+              icon: Icon(
+                Icons.arrow_back,
+                color: Theme.of(context).iconTheme.color,
+              ),
               onPressed: () => Navigator.pop(context),
             ),
             actions: [
               IconButton(
-                icon: const Icon(Icons.qr_code),
+                icon: Icon(
+                  Icons.qr_code,
+                  color: isExpired
+                      ? Theme.of(context).iconTheme.color?.withOpacity(0.5)
+                      : Theme.of(context).iconTheme.color,
+                ),
                 onPressed: isExpired ? null : scanQR,
                 tooltip: isExpired ? 'Offer Expired' : 'Scan QR Code',
               ),
@@ -569,16 +731,15 @@ class _OfferDetailsState extends State<OfferDetails> {
                     child: Stack(
                       children: [
                         ColorFiltered(
-                          colorFilter:
-                              isExpired
-                                  ? const ColorFilter.mode(
-                                    Colors.grey,
-                                    BlendMode.saturation,
-                                  )
-                                  : const ColorFilter.mode(
-                                    Colors.transparent,
-                                    BlendMode.dst,
-                                  ),
+                          colorFilter: isExpired
+                              ? const ColorFilter.mode(
+                                  Colors.grey,
+                                  BlendMode.saturation,
+                                )
+                              : const ColorFilter.mode(
+                                  Colors.transparent,
+                                  BlendMode.dst,
+                                ),
                           child: Image.network(
                             imageUrl,
                             height: 200,
@@ -587,8 +748,12 @@ class _OfferDetailsState extends State<OfferDetails> {
                             errorBuilder: (context, error, stackTrace) {
                               return Container(
                                 height: 200,
-                                color: Colors.grey[300],
-                                child: const Icon(Icons.broken_image, size: 50),
+                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
+                                child: Icon(
+                                  Icons.broken_image,
+                                  size: 50,
+                                  color: Theme.of(context).colorScheme.onSurface,
+                                ),
                               );
                             },
                           ),
@@ -603,16 +768,16 @@ class _OfferDetailsState extends State<OfferDetails> {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.7),
+                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                                 borderRadius: BorderRadius.circular(4),
                               ),
-                              child: const Text(
+                              child: Text(
                                 'Offer Expired',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
-                                ),
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: Theme.of(context).colorScheme.surface,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                    ),
                               ),
                             ),
                           ),
@@ -622,12 +787,16 @@ class _OfferDetailsState extends State<OfferDetails> {
                 const SizedBox(height: 16),
                 Text(
                   offerName,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
-                Text(description, textAlign: TextAlign.justify),
+                Text(
+                  description,
+                  textAlign: TextAlign.justify,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
                 const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -639,21 +808,25 @@ class _OfferDetailsState extends State<OfferDetails> {
                           children: [
                             Image.asset(
                               'assets/orange_hotel.png',
-                              color: Colors.grey,
+                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                               width: 16,
                               height: 16,
                             ),
                             const SizedBox(width: 6),
-                            const Text(
+                            Text(
                               'Offered by:',
-                              style: TextStyle(color: Colors.grey),
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                                  ),
                             ),
                           ],
                         ),
                         const SizedBox(height: 3),
                         Text(
                           venueName,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
                         ),
                       ],
                     ),
@@ -667,21 +840,26 @@ class _OfferDetailsState extends State<OfferDetails> {
                             children: [
                               Image.asset(
                                 'assets/people.png',
-                                color: Colors.grey,
+                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                                 width: 16,
                                 height: 16,
                               ),
                               const SizedBox(width: 6),
-                              const Text(
+                              Text(
                                 'Redeemed by:',
-                                style: TextStyle(color: Colors.grey),
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                      color:
+                                          Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                                    ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 3),
                           Text(
                             '$redeemed_count People',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
                           ),
                         ],
                       ),
@@ -697,13 +875,16 @@ class _OfferDetailsState extends State<OfferDetails> {
                         onPressed: showRemoveDialogFunc,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red,
-                        ),
-                        child: const Text(
-                          'Delete Offer',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
                           ),
+                        ),
+                        child: Text(
+                          'Delete Offer',
+                          style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                color: Theme.of(context).colorScheme.onError,
+                                fontWeight: FontWeight.bold,
+                              ),
                         ),
                       ),
                     ),
@@ -714,17 +895,17 @@ class _OfferDetailsState extends State<OfferDetails> {
                         child: ElevatedButton(
                           onPressed: showToggleOfferDialog,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                isExpired
-                                    ? Colors.green
-                                    : const Color.fromRGBO(255, 130, 16, 1),
+                            backgroundColor: isExpired ? Colors.green : AppColors.primary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                           ),
                           child: Text(
                             isExpired ? 'Bring Offer Back' : 'End Offer',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                  color: Theme.of(context).colorScheme.onPrimary,
+                                  fontWeight: FontWeight.bold,
+                                ),
                           ),
                         ),
                       ),
@@ -736,9 +917,9 @@ class _OfferDetailsState extends State<OfferDetails> {
                   Center(
                     child: Text(
                       errorMessage,
-                      style: const TextStyle(
-                        color: Color.fromRGBO(255, 130, 16, 1),
-                      ),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: AppColors.primary,
+                          ),
                     ),
                   ),
                 ],
@@ -749,9 +930,11 @@ class _OfferDetailsState extends State<OfferDetails> {
         if (isLoading)
           Stack(
             children: [
-              Container(color: Colors.black.withOpacity(0.14)),
               Container(
-                color: Colors.white10,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.14),
+              ),
+              Container(
+                color: Theme.of(context).colorScheme.surface.withOpacity(0.1),
                 child: Center(
                   child: Image.asset(
                     'assets/Bird_Full_Eye_Blinking.gif',

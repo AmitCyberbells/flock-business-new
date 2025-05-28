@@ -98,11 +98,11 @@ class _TabProfileState extends State<TabProfile> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.shade200,
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
             blurRadius: 4,
             spreadRadius: 2,
             offset: const Offset(0, 2),
@@ -116,12 +116,16 @@ class _TabProfileState extends State<TabProfile> {
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
         title: Text(
           title,
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: Theme.of(context).textTheme.bodyLarge!.color,
+          ),
         ),
-        trailing: const Icon(
+        trailing: Icon(
           Icons.arrow_forward_ios,
           size: 14,
-          color: Colors.grey,
+          color: Theme.of(context).iconTheme.color,
         ),
         onTap: onTap,
       ),
@@ -135,7 +139,7 @@ class _TabProfileState extends State<TabProfile> {
     return CustomScaffold(
       currentIndex: 4,
       body: Container(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         child: Stack(
           children: [
             SingleChildScrollView(
@@ -146,77 +150,92 @@ class _TabProfileState extends State<TabProfile> {
                     Container(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       alignment: Alignment.center,
-                      child: const Text(
+                      child: Text(
                         "My Profile",
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w600,
-                          color: Colors.black,
+                          color: Theme.of(context).textTheme.titleLarge!.color,
                         ),
                       ),
                     ),
                     const SizedBox(height: 10),
                     CircleAvatar(
                       radius: 60,
-                      backgroundColor: Colors.grey.shade200,
-                      child: profilePic.isEmpty
-                          ? Image.asset(
-                              'assets/profile.png',
-                              width: 120,
-                              height: 120,
-                              fit: BoxFit.cover,
-                            )
-                          : ClipOval(
-                              child: Image.network(
-                                profilePic,
+                      backgroundColor:
+                          Theme.of(context).colorScheme.surfaceContainer,
+                      child:
+                          profilePic.isEmpty
+                              ? Image.asset(
+                                'assets/profile.png',
                                 width: 120,
                                 height: 120,
                                 fit: BoxFit.cover,
-                                loadingBuilder: (context, child, loadingProgress) {
-                                  if (loadingProgress == null) {
-                                    // Image is fully loaded
-                                    return child;
-                                  }
-                                  return Container(
-                                    width: 120,
-                                    height: 120,
-                                    color: Colors.grey.shade200,
-                                    child: Center(
-                                      child: Image.asset(
-                                        'assets/Bird_Full_Eye_Blinking.gif',
-                                        width: 60, // Smaller size for profile loader
-                                        height: 60,
+                              )
+                              : ClipOval(
+                                child: Image.network(
+                                  profilePic,
+                                  width: 120,
+                                  height: 120,
+                                  fit: BoxFit.cover,
+                                  loadingBuilder: (
+                                    context,
+                                    child,
+                                    loadingProgress,
+                                  ) {
+                                    if (loadingProgress == null) {
+                                      // Image is fully loaded
+                                      return child;
+                                    }
+                                    return Container(
+                                      width: 120,
+                                      height: 120,
+                                      color:
+                                          Theme.of(
+                                            context,
+                                          ).colorScheme.surfaceContainer,
+                                      child: Center(
+                                        child: Image.asset(
+                                          'assets/Bird_Full_Eye_Blinking.gif',
+                                          width:
+                                              60, // Smaller size for profile loader
+                                          height: 60,
+                                        ),
                                       ),
-                                    ),
-                                  );
-                                },
-                                errorBuilder: (context, error, stackTrace) {
-                                  print("Error loading profile image: $error");
-                                  return Image.asset(
-                                    'assets/profile.png',
-                                    width: 120,
-                                    height: 120,
-                                    fit: BoxFit.cover,
-                                  );
-                                },
+                                    );
+                                  },
+                                  errorBuilder: (context, error, stackTrace) {
+                                    print(
+                                      "Error loading profile image",
+                                    );
+                                    return Image.asset(
+                                      'assets/profile.png',
+                                      width: 120,
+                                      height: 120,
+                                      fit: BoxFit.cover,
+                                    );
+                                  },
+                                ),
                               ),
-                            ),
                     ),
                     const SizedBox(height: 10),
                     Text(
                       (firstName.isEmpty && lastName.isEmpty)
                           ? 'User Name'
                           : "$firstName $lastName".trim(),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                        color: Theme.of(context).textTheme.titleLarge!.color,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       email.isEmpty ? 'Email not available' : email,
-                      style: const TextStyle(fontSize: 16, color: Colors.grey),
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Theme.of(context).textTheme.bodyMedium!.color,
+                      ),
                     ),
                     const SizedBox(height: 14),
                     Column(
@@ -234,38 +253,56 @@ class _TabProfileState extends State<TabProfile> {
                                 'profilePic': profilePic,
                               },
                             );
-                            if (updatedProfile != null && updatedProfile is Map<String, dynamic>) {
+                            if (updatedProfile != null &&
+                                updatedProfile is Map<String, dynamic>) {
                               detailFunc();
                             }
                           },
                         ),
                         _buildProfileOption(
                           title: "Staff Management",
-                          onTap: () => Navigator.pushNamed(context, '/staffManage'),
+                          onTap:
+                              () =>
+                                  Navigator.pushNamed(context, '/staffManage'),
                         ),
                         _buildProfileOption(
                           title: "Change Password",
-                          onTap: () => Navigator.pushNamed(context, '/changePassword'),
+                          onTap:
+                              () => Navigator.pushNamed(
+                                context,
+                                '/changePassword',
+                              ),
                         ),
                         _buildProfileOption(
                           title: " Transaction History",
-                          onTap: () => Navigator.pushNamed(context, '/HistoryScreen'),
+                          onTap:
+                              () => Navigator.pushNamed(
+                                context,
+                                '/HistoryScreen',
+                              ),
                         ),
                         _buildProfileOption(
                           title: "Open Hours",
-                          onTap: () => Navigator.pushNamed(context, '/openHours'),
+                          onTap:
+                              () => Navigator.pushNamed(context, '/openHours'),
                         ),
                         _buildProfileOption(
                           title: "How to ?",
-                          onTap: () => Navigator.pushNamed(context, '/tutorials'),
+                          onTap:
+                              () => Navigator.pushNamed(context, '/tutorials'),
                         ),
                         _buildProfileOption(
                           title: "Feedback",
-                          onTap: () => Navigator.pushNamed(context, '/feedback'),
+                          onTap:
+                              () => Navigator.pushNamed(context, '/feedback'),
                         ),
                         _buildProfileOption(
                           title: "Delete Account",
-                          onTap: () => Navigator.pushNamed(context, '/DeleteAccount'),
+                          onTap:
+                              () => Navigator.pushNamed(
+                                context,
+                                '/DeleteAccount',
+                              ),
                         ),
                       ],
                     ),
@@ -277,15 +314,22 @@ class _TabProfileState extends State<TabProfile> {
                       child: ElevatedButton(
                         onPressed: logoutButton,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color.fromRGBO(255, 130, 16, 1),
+                          backgroundColor: const Color.fromRGBO(
+                            255,
+                            130,
+                            16,
+                            1,
+                          ), // Keep constant
+                          foregroundColor:
+                              Theme.of(context).colorScheme.onPrimary,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
-                        child: const Text(
+                        child: Text(
                           "Log Out",
                           style: TextStyle(
-                            color: Colors.white,
+                            color: Theme.of(context).colorScheme.onPrimary,
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
@@ -297,11 +341,17 @@ class _TabProfileState extends State<TabProfile> {
               ),
             ),
             if (isLoading)
-              const Positioned(
+              Positioned(
                 top: 0,
                 left: 0,
                 right: 0,
-                child: LinearProgressIndicator(minHeight: 2),
+                child: LinearProgressIndicator(
+                  minHeight: 2,
+                  backgroundColor: Theme.of(context).colorScheme.surface,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    Theme.of(context).colorScheme.primary,
+                  ),
+                ),
               ),
           ],
         ),

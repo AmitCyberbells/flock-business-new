@@ -3,7 +3,7 @@ description: "A new Flutter project."
 
 publish_to: 'none' 
 
-version: 18.7.5+28
+version: 18.7.6+29
 
 
 environment:
@@ -103,10 +103,12 @@ flutter:
     - assets/camera.png
     - assets/date_time.png
     - assets/request.png
+    - assets/Background.jpg
    
     - assets/drop_up.png
     - assets/back.png
     - assets/drop_down.png
+    - assets/bottom_nav_dark.png
     
 
 

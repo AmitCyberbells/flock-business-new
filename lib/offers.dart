@@ -5,6 +5,7 @@ import 'package:flock/venue.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flock/app_colors.dart'; // Import AppColors for primary color
 
 class OffersScreen extends StatefulWidget {
   const OffersScreen({Key? key}) : super(key: key);
@@ -106,13 +107,21 @@ class _OffersScreenState extends State<OffersScreen> {
           SnackBar(
             content: Text(
               'Failed to remove offer. Code: ${response.statusCode}',
+              style: Theme.of(context).snackBarTheme.contentTextStyle,
             ),
+            backgroundColor: Theme.of(context).snackBarTheme.backgroundColor,
           ),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Network error: $e')),
+        SnackBar(
+          content: Text(
+            'Network error: $e',
+            style: Theme.of(context).snackBarTheme.contentTextStyle,
+          ),
+          backgroundColor: Theme.of(context).snackBarTheme.backgroundColor,
+        ),
       );
     }
   }
@@ -120,16 +129,16 @@ class _OffersScreenState extends State<OffersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppConstants.customAppBar(context: context, title: 'Offers'),
       body: isLoading
           ? Stack(
               children: [
                 Container(
-                  color: Colors.black.withOpacity(0.14),
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.14),
                 ),
                 Container(
-                  color: Colors.white10,
+                  color: Theme.of(context).colorScheme.surface.withOpacity(0.1),
                   child: Center(
                     child: Image.asset(
                       'assets/Bird_Full_Eye_Blinking.gif',
@@ -144,11 +153,16 @@ class _OffersScreenState extends State<OffersScreen> {
               ? Center(
                   child: Text(
                     errorMessage,
-                    style: const TextStyle(color: Colors.red),
+                    style: TextStyle(color: Theme.of(context).colorScheme.error),
                   ),
                 )
               : offersList.isEmpty
-                  ? const Center(child: Text('No offers found.'))
+                  ? Center(
+                      child: Text(
+                        'No offers found.',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    )
                   : Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: GridView.builder(
@@ -176,11 +190,11 @@ class _OffersScreenState extends State<OffersScreen> {
 
                           return Container(
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: Theme.of(context).colorScheme.surface,
                               borderRadius: BorderRadius.circular(12),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.grey.shade300,
+                                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
                                   blurRadius: 5,
                                   offset: const Offset(0, 2),
                                 ),
@@ -209,7 +223,7 @@ class _OffersScreenState extends State<OffersScreen> {
                                                 return Container(
                                                   height: 100,
                                                   width: double.infinity,
-                                                  color: Colors.grey.shade200,
+                                                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
                                                   child: Center(
                                                     child: Image.asset(
                                                       'assets/Bird_Full_Eye_Blinking.gif',
@@ -222,10 +236,11 @@ class _OffersScreenState extends State<OffersScreen> {
                                               errorBuilder: (context, error, stackTrace) {
                                                 return Container(
                                                   height: 100,
-                                                  color: Colors.grey.shade200,
-                                                  child: const Icon(
+                                                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
+                                                  child: Icon(
                                                     Icons.broken_image,
                                                     size: 40,
+                                                    color: Theme.of(context).colorScheme.onSurface,
                                                   ),
                                                 );
                                               },
@@ -233,20 +248,16 @@ class _OffersScreenState extends State<OffersScreen> {
                                           : Container(
                                               height: 100,
                                               width: double.infinity,
-                                              color: Colors.grey.shade200,
-                                              child: const FittedBox(
-                                                fit: BoxFit.contain,
-                                                child: Icon(
-                                                  Icons.image_not_supported,
-                                                  size: 30,
-                                                ),
+                                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
+                                              child: Icon(
+                                                Icons.image_not_supported,
+                                                size: 30,
+                                                color: Theme.of(context).colorScheme.onSurface,
                                               ),
                                             ),
                                     ),
                                     // Offer details
-                                    Padding
-
-(
+                                    Padding(
                                       padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -254,10 +265,10 @@ class _OffersScreenState extends State<OffersScreen> {
                                         children: [
                                           Text(
                                             discount,
-                                            style: const TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.bold,
-                                            ),
+                                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
                                           ),
                                           const SizedBox(height: 4),
                                           Container(
@@ -266,11 +277,11 @@ class _OffersScreenState extends State<OffersScreen> {
                                               desc,
                                               maxLines: 2,
                                               overflow: TextOverflow.ellipsis,
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                color: Colors.grey.shade600,
-                                                fontWeight: FontWeight.bold,
-                                              ),
+                                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                                    fontSize: 12,
+                                                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
                                             ),
                                           ),
                                           const SizedBox(height: 4),
@@ -280,14 +291,16 @@ class _OffersScreenState extends State<OffersScreen> {
                                                 'assets/orange_hotel.png',
                                                 width: 14,
                                                 height: 14,
-                                                color: Colors.grey,
+                                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                                               ),
                                               const SizedBox(width: 4),
                                               Expanded(
                                                 child: Text(
                                                   venueName,
                                                   overflow: TextOverflow.ellipsis,
-                                                  style: const TextStyle(fontSize: 12),
+                                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                                        fontSize: 12,
+                                                      ),
                                                 ),
                                               ),
                                             ],
@@ -312,24 +325,40 @@ class _OffersScreenState extends State<OffersScreen> {
                                               child: cardWrapper(
                                                 borderRadius: 5,
                                                 elevation: 2,
-                                                color: Colors.red,
+                                                color: Theme.of(context).colorScheme.error,
                                                 child: InkWell(
                                                   onTap: () {
                                                     showDialog(
                                                       context: context,
                                                       builder: (BuildContext context) {
                                                         return AlertDialog(
-                                                          title: const Text('Confirm Deletion'),
-                                                          content: const Text(
-                                                              'Are you sure you want to delete this offer?'),
+                                                          backgroundColor: Theme.of(context).colorScheme.surface,
+                                                          title: Text(
+                                                            'Confirm Deletion',
+                                                            style: Theme.of(context).textTheme.titleMedium,
+                                                          ),
+                                                          content: Text(
+                                                            'Are you sure you want to delete this offer?',
+                                                            style: Theme.of(context).textTheme.bodyMedium,
+                                                          ),
                                                           actions: [
                                                             TextButton(
                                                               onPressed: () {
                                                                 Navigator.of(context).pop();
                                                               },
-                                                              child: const Text(
+                                                              child: Text(
                                                                 'CANCEL',
-                                                                style: TextStyle(color: Colors.grey),
+                                                                style: Theme.of(context)
+                                                                    .textButtonTheme
+                                                                    .style
+                                                                    ?.textStyle
+                                                                    ?.resolve({})!
+                                                                    .copyWith(
+                                                                      color: Theme.of(context)
+                                                                          .colorScheme
+                                                                          .onSurface
+                                                                          .withOpacity(0.6),
+                                                                    ),
                                                               ),
                                                             ),
                                                             TextButton(
@@ -337,11 +366,16 @@ class _OffersScreenState extends State<OffersScreen> {
                                                                 Navigator.of(context).pop();
                                                                 removeOffer(offerId);
                                                               },
-                                                              child: const Text(
+                                                              child: Text(
                                                                 'OK',
-                                                                style: TextStyle(
-                                                                  color: Color.fromRGBO(255, 130, 16, 1.0),
-                                                                ),
+                                                                style: Theme.of(context)
+                                                                    .textButtonTheme
+                                                                    .style
+                                                                    ?.textStyle
+                                                                    ?.resolve({})!
+                                                                    .copyWith(
+                                                                      color: AppColors.primary,
+                                                                    ),
                                                               ),
                                                             ),
                                                           ],
@@ -349,23 +383,23 @@ class _OffersScreenState extends State<OffersScreen> {
                                                       },
                                                     );
                                                   },
-                                                  child: const Padding(
-                                                    padding: EdgeInsets.symmetric(horizontal: 4),
+                                                  child: Padding(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 4),
                                                     child: Row(
                                                       mainAxisSize: MainAxisSize.min,
                                                       children: [
                                                         Icon(
                                                           Icons.delete,
                                                           size: 14,
-                                                          color: Colors.white,
+                                                          color: Theme.of(context).colorScheme.onError,
                                                         ),
-                                                        SizedBox(width: 4),
+                                                        const SizedBox(width: 4),
                                                         Text(
                                                           'Delete',
-                                                          style: TextStyle(
-                                                            fontSize: 11,
-                                                            color: Colors.white,
-                                                          ),
+                                                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                                                fontSize: 11,
+                                                                color: Theme.of(context).colorScheme.onError,
+                                                              ),
                                                         ),
                                                       ],
                                                     ),
@@ -381,7 +415,7 @@ class _OffersScreenState extends State<OffersScreen> {
                                             child: cardWrapper(
                                               borderRadius: 5,
                                               elevation: 2,
-                                              color: const Color.fromRGBO(255, 130, 16, 1),
+                                              color: AppColors.primary,
                                               child: InkWell(
                                                 onTap: () {
                                                   print('Details button tapped for offer ID: $offerId');
@@ -395,7 +429,14 @@ class _OffersScreenState extends State<OffersScreen> {
                                                   } catch (e) {
                                                     print('Navigation error: $e');
                                                     ScaffoldMessenger.of(context).showSnackBar(
-                                                      SnackBar(content: Text('Failed to navigate to details: $e')),
+                                                      SnackBar(
+                                                        content: Text(
+                                                          'Failed to navigate to details: $e',
+                                                          style: Theme.of(context).snackBarTheme.contentTextStyle,
+                                                        ),
+                                                        backgroundColor:
+                                                            Theme.of(context).snackBarTheme.backgroundColor,
+                                                      ),
                                                     );
                                                   }
                                                 },
@@ -408,15 +449,15 @@ class _OffersScreenState extends State<OffersScreen> {
                                                         'assets/view.png',
                                                         height: 14,
                                                         width: 12,
-                                                        color: Colors.white,
+                                                        color: Theme.of(context).colorScheme.onPrimary,
                                                       ),
                                                       const SizedBox(width: 4),
-                                                      const Text(
+                                                      Text(
                                                         'Details',
-                                                        style: TextStyle(
-                                                          fontSize: 11,
-                                                          color: Colors.white,
-                                                        ),
+                                                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                                              fontSize: 11,
+                                                              color: Theme.of(context).colorScheme.onPrimary,
+                                                            ),
                                                       ),
                                                     ],
                                                   ),
@@ -436,14 +477,14 @@ class _OffersScreenState extends State<OffersScreen> {
                                     left: 8,
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                      color: Colors.red.withOpacity(0.8),
-                                      child: const Text(
+                                      color: Theme.of(context).colorScheme.error.withOpacity(0.8),
+                                      child: Text(
                                         'Expired',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                              color: Theme.of(context).colorScheme.onError,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                       ),
                                     ),
                                   ),

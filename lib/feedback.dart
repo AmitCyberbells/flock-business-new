@@ -1,19 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-
-/// Define your design tokens. Adjust these values as needed.
-class Design {
-  static const Color lightPurple = Colors.white;
-  static const Color primaryColorOrange = Color.fromRGBO(255, 130, 16, 1);
-
-  static var font14;
-
-  static var white;
-}
+import 'package:flock/app_colors.dart';
 
 void main() {
   runApp(const MyApp());
@@ -27,7 +17,43 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Report Screen Demo',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(primaryColor: const Color.fromRGBO(255, 130, 16, 1)),
+      theme: ThemeData(
+        primaryColor: AppColors.primary,
+        colorScheme: ColorScheme.light(
+          primary: AppColors.primary,
+          surface: Colors.white,
+          onSurface: Colors.black,
+          onPrimary: Colors.white,
+        ),
+        scaffoldBackgroundColor: Colors.white,
+        textTheme: const TextTheme(
+          titleLarge: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+          titleMedium: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+          bodyMedium: TextStyle(fontSize: 14),
+          bodySmall: TextStyle(fontSize: 12),
+          labelLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+        ),
+        iconTheme: const IconThemeData(color: Colors.black),
+      ),
+      darkTheme: ThemeData(
+        primaryColor: AppColors.primary,
+        colorScheme: ColorScheme.dark(
+          primary: AppColors.primary,
+          surface: Colors.grey[850]!,
+          onSurface: Colors.white,
+          onPrimary: Colors.white,
+        ),
+        scaffoldBackgroundColor: Colors.grey[850],
+        textTheme: const TextTheme(
+          titleLarge: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+          titleMedium: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+          bodyMedium: TextStyle(fontSize: 14),
+          bodySmall: TextStyle(fontSize: 12),
+          labelLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      themeMode: ThemeMode.system,
       home: const ReportScreen(),
     );
   }
@@ -41,17 +67,11 @@ class ReportScreen extends StatefulWidget {
 }
 
 class _ReportScreenState extends State<ReportScreen> {
-  /// We'll store venues as a list of maps: [{'id': 65, 'name': 'Venue Name'}, ...]
   List<Map<String, dynamic>> _venues = [];
-
-  /// The selected venue object (with id & name)
   Map<String, dynamic>? _selectedVenue;
-
-  /// We'll store report types as a list of strings (e.g. ['Boost', 'Complaint', ...])
   List<String> _reportTypes = [];
   String? _selectedReportType;
 
-  // Controls for the custom dropdowns.
   bool _showVenueDropdown = false;
   bool _showReportTypeDropdown = false;
 
@@ -65,13 +85,11 @@ class _ReportScreenState extends State<ReportScreen> {
     _fetchReportTypes();
   }
 
-  /// Retrieve the token from SharedPreferences
   Future<String?> _getToken() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return prefs.getString('access_token');
   }
 
-  /// Fetch the list of venues from the API
   Future<void> _fetchVenues() async {
     final token = await _getToken();
     if (token == null || token.isEmpty) {
@@ -96,15 +114,14 @@ class _ReportScreenState extends State<ReportScreen> {
         if (data['status'] == 'success' && data['data'] != null) {
           final List<dynamic> venueData = data['data'];
           setState(() {
-            _venues =
-                venueData
-                    .map(
-                      (venue) => {
-                        'id': venue['id'],
-                        'name': venue['name']?.toString() ?? 'Unnamed Venue',
-                      },
-                    )
-                    .toList();
+            _venues = venueData
+                .map(
+                  (venue) => {
+                    'id': venue['id'],
+                    'name': venue['name']?.toString() ?? 'Unnamed Venue',
+                  },
+                )
+                .toList();
           });
         } else {
           setState(() {
@@ -123,7 +140,6 @@ class _ReportScreenState extends State<ReportScreen> {
     }
   }
 
-  /// Fetch the list of report types from the API
   Future<void> _fetchReportTypes() async {
     final token = await _getToken();
     if (token == null || token.isEmpty) {
@@ -144,21 +160,15 @@ class _ReportScreenState extends State<ReportScreen> {
       );
 
       if (response.statusCode == 200) {
-        // Debug print the response to check structure
         print("Report types API response: ${response.body}");
         final data = json.decode(response.body);
 
-        // Check if the response is a map with a key 'data'
-        if (data is Map &&
-            data['status'] == 'success' &&
-            data['data'] != null) {
+        if (data is Map && data['status'] == 'success' && data['data'] != null) {
           final List<dynamic> reportTypeData = data['data'];
           setState(() {
-            _reportTypes =
-                reportTypeData.map((rt) => rt['label'].toString()).toList();
+            _reportTypes = reportTypeData.map((rt) => rt['label'].toString()).toList();
           });
         } else if (data is List) {
-          // If the API returns a plain list
           setState(() {
             _reportTypes = data.map((rt) => rt['label'].toString()).toList();
           });
@@ -179,7 +189,6 @@ class _ReportScreenState extends State<ReportScreen> {
     }
   }
 
-  /// Handle form submission
   Future<void> _submitReport() async {
     if (_selectedVenue == null) {
       setState(() {
@@ -227,14 +236,19 @@ class _ReportScreenState extends State<ReportScreen> {
         if (responseData['status'] == 'success') {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(responseData['message'] ?? 'Report submitted!'),
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              content: Text(
+                responseData['message'] ?? 'Report submitted!',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                    ),
+              ),
             ),
           );
           Navigator.pop(context);
         } else {
           setState(() {
-            _errorMessage =
-                responseData['message'] ?? 'Failed to submit report.';
+            _errorMessage = responseData['message'] ?? 'Failed to submit report.';
           });
         }
       } else {
@@ -249,17 +263,15 @@ class _ReportScreenState extends State<ReportScreen> {
     }
   }
 
-  /// Custom Venue Dropdown Widget (same as before)
   Widget customVenueDropdown() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8.0),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(5),
-        // Box shadow for a subtle elevation effect.
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.4),
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
             spreadRadius: 1,
             blurRadius: 5,
             offset: const Offset(0, 2),
@@ -278,7 +290,7 @@ class _ReportScreenState extends State<ReportScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
               decoration: BoxDecoration(
-                color: Design.lightPurple,
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(5),
               ),
               child: Row(
@@ -288,13 +300,11 @@ class _ReportScreenState extends State<ReportScreen> {
                     _selectedVenue == null
                         ? "Select Venue"
                         : _selectedVenue!['name'] ?? "Select Venue",
-                    style: const TextStyle(fontSize: 15),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 15),
                   ),
                   Icon(
-                    _showVenueDropdown
-                        ? Icons.arrow_drop_up
-                        : Icons.arrow_drop_down,
-                    color: Colors.grey,
+                    _showVenueDropdown ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                   ),
                 ],
               ),
@@ -304,7 +314,7 @@ class _ReportScreenState extends State<ReportScreen> {
             Container(
               constraints: const BoxConstraints(maxHeight: 200),
               decoration: BoxDecoration(
-                color: Design.lightPurple,
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(5),
                   bottomRight: Radius.circular(5),
@@ -322,10 +332,8 @@ class _ReportScreenState extends State<ReportScreen> {
                         itemCount: _venues.length,
                         itemBuilder: (context, index) {
                           final venue = _venues[index];
-                          final isSelected =
-                              _selectedVenue != null &&
-                              _selectedVenue!['id'].toString() ==
-                                  venue['id'].toString();
+                          final isSelected = _selectedVenue != null &&
+                              _selectedVenue!['id'].toString() == venue['id'].toString();
                           return InkWell(
                             onTap: () {
                               setState(() {
@@ -338,15 +346,12 @@ class _ReportScreenState extends State<ReportScreen> {
                                 horizontal: 20,
                                 vertical: 6,
                               ),
-                              color:
-                                  isSelected
-                                      ? Design.primaryColorOrange.withOpacity(
-                                        0.1,
-                                      )
-                                      : Colors.transparent,
+                              color: isSelected
+                                  ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+                                  : Colors.transparent,
                               child: Text(
                                 venue['name'] ?? '',
-                                style: const TextStyle(fontSize: 15),
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 15),
                               ),
                             ),
                           );
@@ -358,24 +363,6 @@ class _ReportScreenState extends State<ReportScreen> {
                     padding: const EdgeInsets.all(6.0),
                     child: SizedBox(
                       width: double.infinity,
-                      // child: ElevatedButton(
-                      //   onPressed: () {
-                      //     setState(() {
-                      //       _showVenueDropdown = false;
-                      //     });
-                      //   },
-                      //   style: ElevatedButton.styleFrom(
-                      //     backgroundColor: Design.primaryColorOrange,
-                      //     shape: RoundedRectangleBorder(
-                      //       borderRadius: BorderRadius.circular(5),
-                      //     ),
-                      //     padding: const EdgeInsets.symmetric(vertical: 8),
-                      //   ),
-                      //   child: const Text(
-                      //     "Done",
-                      //     style: TextStyle(color: Colors.white),
-                      //   ),
-                      // ),
                     ),
                   ),
                 ],
@@ -386,17 +373,15 @@ class _ReportScreenState extends State<ReportScreen> {
     );
   }
 
-  /// Custom Report Type Dropdown Widget with similar styling as the venue dropdown.
   Widget customReportTypeDropdown() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8.0),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(5),
-        // Same box shadow.
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.4),
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
             spreadRadius: 1,
             blurRadius: 5,
             offset: const Offset(0, 2),
@@ -415,23 +400,19 @@ class _ReportScreenState extends State<ReportScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
               decoration: BoxDecoration(
-                color: Design.lightPurple,
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(5),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    _selectedReportType == null
-                        ? "Select Report Type"
-                        : _selectedReportType!,
-                    style: const TextStyle(fontSize: 15),
+                    _selectedReportType == null ? "Select Report Type" : _selectedReportType!,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 15),
                   ),
                   Icon(
-                    _showReportTypeDropdown
-                        ? Icons.arrow_drop_up
-                        : Icons.arrow_drop_down,
-                    color: Colors.grey,
+                    _showReportTypeDropdown ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                   ),
                 ],
               ),
@@ -441,7 +422,7 @@ class _ReportScreenState extends State<ReportScreen> {
             Container(
               constraints: const BoxConstraints(maxHeight: 200),
               decoration: BoxDecoration(
-                color: Design.lightPurple,
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(5),
                   bottomRight: Radius.circular(5),
@@ -459,9 +440,7 @@ class _ReportScreenState extends State<ReportScreen> {
                         itemCount: _reportTypes.length,
                         itemBuilder: (context, index) {
                           final rt = _reportTypes[index];
-                          final isSelected =
-                              _selectedReportType != null &&
-                              _selectedReportType == rt;
+                          final isSelected = _selectedReportType != null && _selectedReportType == rt;
                           return InkWell(
                             onTap: () {
                               setState(() {
@@ -474,15 +453,12 @@ class _ReportScreenState extends State<ReportScreen> {
                                 horizontal: 20,
                                 vertical: 6,
                               ),
-                              color:
-                                  isSelected
-                                      ? Design.primaryColorOrange.withOpacity(
-                                        0.1,
-                                      )
-                                      : Colors.transparent,
+                              color: isSelected
+                                  ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+                                  : Colors.transparent,
                               child: Text(
                                 rt,
-                                style: const TextStyle(fontSize: 15),
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 15),
                               ),
                             ),
                           );
@@ -494,24 +470,6 @@ class _ReportScreenState extends State<ReportScreen> {
                     padding: const EdgeInsets.all(6.0),
                     child: SizedBox(
                       width: double.infinity,
-                      // child: ElevatedButton(
-                      //   onPressed: () {
-                      //     setState(() {
-                      //       _showReportTypeDropdown = false;
-                      //     });
-                      //   },
-                      //   style: ElevatedButton.styleFrom(
-                      //     backgroundColor: Design.primaryColorOrange,
-                      //     shape: RoundedRectangleBorder(
-                      //       borderRadius: BorderRadius.circular(5),
-                      //     ),
-                      //     padding: const EdgeInsets.symmetric(vertical: 8),
-                      //   ),
-                      //   child: const Text(
-                      //     "Done",
-                      //     style: TextStyle(color: Colors.white),
-                      //   ),
-                      // ),
                     ),
                   ),
                 ],
@@ -525,7 +483,7 @@ class _ReportScreenState extends State<ReportScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -533,28 +491,27 @@ class _ReportScreenState extends State<ReportScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Top bar
                 Row(
                   children: [
-                    InkWell(
-                      onTap: () => Navigator.of(context).pop(),
-                      child: Image.asset(
-                        'assets/back_updated.png',
-                        height: 40,
-                        width: 34,
-                        fit: BoxFit.contain,
-                        // color: const Color.fromRGBO(255, 130, 16, 1.0), // Orange tint
-                      ),
-                    ),
-                    const Expanded(
+                     InkWell(
+  onTap: () => Navigator.of(context).pop(),
+  child: Image.asset(
+    'assets/back_updated.png',
+    height: 40,
+    width: 34,
+    // fit: BoxFit.contain,
+    // color: Theme.of(context).colorScheme.primary, // Orange tint
+  ),
+),
+                    Expanded(
                       child: Center(
                         child: Text(
                           "Report",
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black,
-                          ),
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
                         ),
                       ),
                     ),
@@ -562,47 +519,41 @@ class _ReportScreenState extends State<ReportScreen> {
                   ],
                 ),
                 const SizedBox(height: 20),
-                // Subtitle
-                // const Text(
-                //   "Enter Details",
-                //   style: TextStyle(
-                //     fontSize: 16,
-                //     fontWeight: FontWeight.w500,
-                //   ),
-                // ),
-                const SizedBox(height: 16),
-                // "Choose venue" label
-                const Text(
+                Text(
                   "Choose venue",
-                  style: TextStyle(fontSize: 14, color: Colors.black87),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontSize: 14,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
                 ),
                 const SizedBox(height: 8),
-                // Custom Venue Dropdown
                 customVenueDropdown(),
                 const SizedBox(height: 16),
-                // "Choose report type" label
-                const Text(
+                Text(
                   "Choose report type",
-                  style: TextStyle(fontSize: 14, color: Colors.black87),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontSize: 14,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
                 ),
                 const SizedBox(height: 8),
-                // Custom Report Type Dropdown
                 customReportTypeDropdown(),
                 const SizedBox(height: 16),
-                // "Description" label
-                const Text("Description", style: TextStyle(fontSize: 14)),
+                Text(
+                  "Description",
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 14),
+                ),
                 const SizedBox(height: 8),
-                // Multiline TextField for Description
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: Container(
                     decoration: BoxDecoration(
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.grey.withOpacity(0.5),
+                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
                           spreadRadius: 2,
                           blurRadius: 5,
-                          offset: Offset(0, 3),
+                          offset: const Offset(0, 3),
                         ),
                       ],
                     ),
@@ -610,48 +561,55 @@ class _ReportScreenState extends State<ReportScreen> {
                       controller: _descriptionController,
                       maxLines: 5,
                       decoration: InputDecoration(
-                        hintText: "",
-                        fillColor: Colors.white,
+                        hintText: "Enter description",
+                        fillColor: Theme.of(context).colorScheme.surface,
                         filled: true,
                         contentPadding: const EdgeInsets.all(16),
                         enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.white),
+                          borderSide: BorderSide(
+                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+                          ),
                           borderRadius: BorderRadius.circular(5),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.white),
+                          borderSide: BorderSide(
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
                           borderRadius: BorderRadius.circular(5),
                         ),
                       ),
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 24),
-                // Show any error messages
                 if (_errorMessage.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 8),
                     child: Text(
                       _errorMessage,
-                      style: const TextStyle(color: Colors.red),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Colors.red,
+                            fontSize: 14,
+                          ),
                     ),
                   ),
-                // Submit button
                 SizedBox(
                   width: double.infinity,
                   height: 48,
                   child: ElevatedButton(
                     onPressed: _submitReport,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromRGBO(255, 130, 16, 1),
+                      backgroundColor: Theme.of(context).colorScheme.primary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    child: const Text(
+                    child: Text(
                       "Submit",
-                      style: TextStyle(color: Colors.white, fontSize: 16),
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                            color: Theme.of(context).colorScheme.onPrimary,
+                            fontSize: 16,
+                          ),
                     ),
                   ),
                 ),

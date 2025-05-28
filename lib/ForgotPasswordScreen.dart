@@ -158,13 +158,18 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           Container(
             width: double.infinity,
             height: double.infinity,
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/login_back.jpg'), // Background image
-                fit: BoxFit.cover,
-                alignment: Alignment.center,
-              ),
-            ),
+           decoration: BoxDecoration(
+  image: DecorationImage(
+    image: AssetImage(
+      Theme.of(context).brightness == Brightness.dark
+          ? 'assets/Background.jpg'
+          : 'assets/login_back.jpg',
+    ),
+    fit: BoxFit.cover,
+    alignment: Alignment.center,
+  ),
+),
+
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Column(

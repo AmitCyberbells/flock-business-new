@@ -82,57 +82,51 @@ class AppConstants {
   }
 
   // Custom AppBar method.
-  static PreferredSizeWidget customAppBar({
+   static PreferredSizeWidget customAppBar({
     required BuildContext context,
     required String title,
-    String backIconAsset = 'assets/back_updated.png', // Default asset.
+    String backIconAsset = 'assets/back_updated.png',
     TextStyle? titleTextStyle,
-    Color backgroundColor = Colors.white,
-
+    Color? backgroundColor,
     double elevation = 0,
   }) {
+    final screenWidth = MediaQuery.of(context).size.width;
     return AppBar(
       leading: SizedBox(
-        width: 94, // Set desired width
-        height: 74, // Set desired height
+        width: screenWidth * 0.24, // Scaled from 94/390 (assuming 390px screen width)
+        height: screenWidth * 0.19, // Scaled from 74/390
         child: IconButton(
-          icon: Container(
-            width: 94,
-            height: 74,
-            // color: Colors.black, // Background color
-            child: Image.asset(
-              backIconAsset,
-              height: 74,
-              width: 94,
-              fit: BoxFit.contain,
-              // color: const Color.fromRGBO(255, 130, 16, 1), // Tint the image
-            ),
+          icon: Image.asset(
+            backIconAsset,
+            width: screenWidth * 0.24,
+            height: screenWidth * 0.19,
+            fit: BoxFit.contain,
+            // color: Theme.of(context).colorScheme.onSurface,
           ),
-
-     onPressed: () {
- 
- Navigator.pushNamed(context, '/dashboard');
- },
+          onPressed: () {
+            Navigator.pushNamed(context, '/dashboard');
+          },
         ),
       ),
       title: Text(
         title,
-        style:
-            titleTextStyle ??
-            const TextStyle(
-              color: Colors.black,
-              fontFamily: 'YourRegularFont', // Replace with your regular font.
-              fontSize: 20,
-              fontWeight: FontWeight.w500, // Adjust weight as needed.
-            ),
+        style: titleTextStyle ??
+            Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurface,
+                  fontFamily: 'YourRegularFont',
+                  fontSize: 20,
+                  fontWeight: FontWeight.w500,
+                ),
       ),
       centerTitle: true,
-      backgroundColor: backgroundColor,
+      backgroundColor: backgroundColor ?? Theme.of(context).colorScheme.surface,
       elevation: elevation,
+      shadowColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
     );
   }
 
   // Reusable InputDecoration for TextFields
+  
   static final InputDecoration textFieldDecoration = InputDecoration(
     hintText: 'Enter Email Address',
     hintStyle: TextStyle(
@@ -811,46 +805,4 @@ static Widget assignPermissionsDropdown({
     );
   }
 
-  // static Widget dropdownField({
-  //   required List<String> items,
-  //   required String selectedValue,
-  //   required ValueChanged<String> onChanged,
-  //   required String placeholder,
-  // }) {
-  //   return Container(
-  //     decoration: textFieldBoxDecoration,
-  //     padding: const EdgeInsets.symmetric(horizontal: 15),
-  //     child: DropdownButtonHideUnderline(
-  //       child: DropdownButton<String>(
-  //         isExpanded: true,
-  //         // If nothing is selected, we pass null to 'value' so the placeholder shows
-  //         value: selectedValue.isEmpty ? null : selectedValue,
-  //         hint: Text(
-  //           placeholder,
-  //           style: const TextStyle(
-  //             color: Colors.grey,
-  //             fontSize: 14.0,
-  //             fontFamily: 'YourFontFamily', // Replace with your actual font family
-  //           ),
-  //         ),
-  //         icon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
-  //         style: const TextStyle(
-  //           color: Colors.black,
-  //           fontSize: 14.0,
-  //           fontFamily: 'YourFontFamily', // Replace with your actual font family
-  //         ),
-  //         items: items.map((String item) {
-  //           return DropdownMenuItem<String>(
-  //             value: item,
-  //             child: Text(item),
-  //           );
-  //         }).toList(),
-  //         onChanged: (value) {
-  //           if (value != null) {
-  //             onChanged(value);
-  //           }
-  //         },
-  //       ),
-  //     ),
-  //   );
 }

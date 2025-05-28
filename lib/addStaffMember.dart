@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flock/constants.dart';
+import 'package:flock/app_colors.dart';
 
 class AddMemberScreen extends StatefulWidget {
   final Map<String, String>? existingMember;
@@ -47,8 +48,7 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
       _emailController.text = widget.existingMember!['email'] ?? '';
       _phoneController.text = widget.existingMember!['phone'] ?? '';
       _selectedVenues = widget.existingMember!['venue']?.split(',') ?? [];
-      _selectedPermissions =
-          widget.existingMember!['permission']?.split(',') ?? [];
+      _selectedPermissions = widget.existingMember!['permission']?.split(',') ?? [];
       if (!_selectedPermissions.contains('2')) {
         _selectedPermissions.add('2');
       }
@@ -79,7 +79,7 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
         });
       }
     } catch (e) {
-      _showError('Error saving member');
+      _showError('Error fetching venues');
     }
 
     try {
@@ -95,8 +95,7 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
       if (permissionResponse.statusCode == 200) {
         setState(() {
           _permissionList = permissionResponse.data['data'] ?? [];
-          if (_permissionList.any((p) => p['id'].toString() == '2') &&
-              !_selectedPermissions.contains('2')) {
+          if (_permissionList.any((p) => p['id'].toString() == '2') && !_selectedPermissions.contains('2')) {
             _selectedPermissions.add('2');
           }
         });
@@ -138,9 +137,9 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
       hasError = true;
     }
     if (_lastNameController.text.isEmpty) {
-      setState(() {
+      setState() {
         _lastNameError = 'Last name is required';
-      });
+      };
       hasError = true;
     }
     if (_phoneController.text.isEmpty) {
@@ -154,8 +153,7 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
         _emailError = 'Email is required';
       });
       hasError = true;
-    } else if (!RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
-        .hasMatch(_emailController.text)) {
+    } else if (!RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$').hasMatch(_emailController.text)) {
       setState(() {
         _emailError = 'Incorrect email format';
       });
@@ -194,8 +192,7 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
         "last_name": _lastNameController.text,
         "email": _emailController.text,
         "contact": _phoneController.text,
-        if (_passwordController.text.isNotEmpty)
-          "password": _passwordController.text,
+        if (_passwordController.text.isNotEmpty) "password": _passwordController.text,
       };
 
       for (var i = 0; i < _selectedPermissions.length; i++) {
@@ -216,10 +213,9 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
       FormData formData = FormData.fromMap(formDataMap);
 
       final dio = Dio();
-      final String url =
-          widget.existingMember != null && widget.existingMember!['id'] != null
-              ? "https://api.getflock.io/api/vendor/teams/${widget.existingMember!['id']}"
-              : "https://api.getflock.io/api/vendor/teams";
+      final String url = widget.existingMember != null && widget.existingMember!['id'] != null
+          ? "https://api.getflock.io/api/vendor/teams/${widget.existingMember!['id']}"
+          : "https://api.getflock.io/api/vendor/teams";
 
       final response = await dio.post(
         url,
@@ -239,10 +235,12 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
+              backgroundColor: Theme.of(context).colorScheme.primary,
               content: Text(
-                widget.existingMember != null
-                    ? "Member updated successfully!"
-                    : "Member added successfully!",
+                widget.existingMember != null ? "Member updated successfully!" : "Member added successfully!",
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                    ),
               ),
             ),
           );
@@ -250,8 +248,7 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
         }
       } else {
         final errorMessage = response.data['message'] ?? 'Unknown error';
-        final errors =
-            response.data['errors']?.toString() ?? 'No details provided';
+        final errors = response.data['errors']?.toString() ?? 'No details provided';
         _showError('Failed to save member, Please Check fields');
       }
     } catch (e) {
@@ -263,7 +260,15 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
   void _showError(String message) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
+        SnackBar(
+          backgroundColor: Colors.red,
+          content: Text(
+            message,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Colors.white,
+                ),
+          ),
+        ),
       );
     }
   }
@@ -271,8 +276,11 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppConstants.customAppBar(context: context, title: 'Add Member'),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppConstants.customAppBar(
+        context: context,
+        title: 'Add Member',
+      ),
       body: Stack(
         children: [
           SingleChildScrollView(
@@ -286,11 +294,14 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
                     children: [
                       CircleAvatar(
                         radius: 50,
-                        backgroundColor: Colors.grey[300],
-                        backgroundImage:
-                            _pickedImage != null ? FileImage(_pickedImage!) : null,
+                        backgroundColor: Theme.of(context).colorScheme.surface,
+                        backgroundImage: _pickedImage != null ? FileImage(_pickedImage!) : null,
                         child: _pickedImage == null
-                            ? const Icon(Icons.person, size: 60, color: Colors.grey)
+                            ? Icon(
+                                Icons.person,
+                                size: 60,
+                                color: Theme.of(context).iconTheme.color,
+                              )
                             : null,
                       ),
                       Positioned(
@@ -298,11 +309,11 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
                         right: -10,
                         child: CircleAvatar(
                           radius: 18,
-                          backgroundColor: const Color.fromRGBO(255, 130, 16, 1),
+                          backgroundColor: Theme.of(context).colorScheme.primary,
                           child: IconButton(
-                            icon: const Icon(
+                            icon: Icon(
                               Icons.camera_alt,
-                              color: Colors.white,
+                              color: Theme.of(context).colorScheme.onPrimary,
                               size: 18,
                             ),
                             onPressed: _pickImage,
@@ -328,10 +339,9 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
                               padding: const EdgeInsets.only(top: 4, left: 12),
                               child: Text(
                                 _firstNameError!,
-                                style: const TextStyle(
-                                  color: Colors.red,
-                                  fontSize: 12,
-                                ),
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: Colors.red,
+                                    ),
                               ),
                             ),
                         ],
@@ -350,10 +360,9 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
                               padding: const EdgeInsets.only(top: 4, left: 12),
                               child: Text(
                                 _lastNameError!,
-                                style: const TextStyle(
-                                  color: Colors.red,
-                                  fontSize: 12,
-                                ),
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: Colors.red,
+                                    ),
                               ),
                             ),
                         ],
@@ -371,10 +380,9 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
                         padding: const EdgeInsets.only(top: 4, left: 12),
                         child: Text(
                           _emailError!,
-                          style: const TextStyle(
-                            color: Colors.red,
-                            fontSize: 12,
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: Colors.red,
+                              ),
                         ),
                       ),
                   ],
@@ -389,10 +397,9 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
                         padding: const EdgeInsets.only(top: 4, left: 12),
                         child: Text(
                           _phoneError!,
-                          style: const TextStyle(
-                            color: Colors.red,
-                            fontSize: 12,
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: Colors.red,
+                              ),
                         ),
                       ),
                   ],
@@ -415,10 +422,9 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
                         padding: const EdgeInsets.only(top: 4, left: 12),
                         child: Text(
                           _passwordError!,
-                          style: const TextStyle(
-                            color: Colors.red,
-                            fontSize: 12,
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: Colors.red,
+                              ),
                         ),
                       ),
                   ],
@@ -433,7 +439,7 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
                       onConfirm: (values) {
                         setState(() {
                           _selectedVenues = values.cast<String>();
-                          _venuesError = null; // Clear error when venues are selected
+                          _venuesError = null;
                         });
                       },
                     ),
@@ -442,10 +448,9 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
                         padding: const EdgeInsets.only(top: 4, left: 12),
                         child: Text(
                           _venuesError!,
-                          style: const TextStyle(
-                            color: Colors.red,
-                            fontSize: 12,
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: Colors.red,
+                              ),
                         ),
                       ),
                   ],
@@ -467,7 +472,13 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
                 ),
                 const SizedBox(height: 40),
                 _isLoading
-                    ? const Center(child: CircularProgressIndicator())
+                    ? Center(
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
+                      )
                     : AppConstants.fullWidthButton(
                         text: "Submit",
                         onPressed: _submitForm,
@@ -477,8 +488,14 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
           ),
           if (_isLoading)
             Container(
-              color: Colors.black.withOpacity(0.5),
-              child: const Center(child: CircularProgressIndicator()),
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+              child: Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+              ),
             ),
         ],
       ),

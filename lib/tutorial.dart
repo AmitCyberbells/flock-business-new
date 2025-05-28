@@ -25,9 +25,7 @@ class _TutorialsScreenState extends State<TutorialsScreen> {
 
   Future<String?> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(
-      'access_token',
-    ); // Changed from 'token' to 'access_token'
+    return prefs.getString('access_token');
   }
 
   Future<void> _fetchTutorials() async {
@@ -66,7 +64,6 @@ class _TutorialsScreenState extends State<TutorialsScreen> {
         }
         throw Exception(data['message'] ?? 'Invalid data format');
       } else if (response.statusCode == 401) {
-        // Clear token and redirect to login
         final prefs = await SharedPreferences.getInstance();
         await prefs.remove('access_token');
         setState(() {
@@ -92,7 +89,7 @@ class _TutorialsScreenState extends State<TutorialsScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Card(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         elevation: 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         child: Column(
@@ -105,15 +102,17 @@ class _TutorialsScreenState extends State<TutorialsScreen> {
                 children: [
                   Text(
                     tutorial['name'] ?? 'No Title',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     tutorial['description'] ?? 'No description',
-                    style: const TextStyle(fontSize: 14, color: Colors.grey),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
+                        ),
                   ),
                 ],
               ),
@@ -121,7 +120,7 @@ class _TutorialsScreenState extends State<TutorialsScreen> {
             Container(
               height: 120,
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: Theme.of(context).colorScheme.surfaceVariant,
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(8),
                   bottomRight: Radius.circular(8),
@@ -129,13 +128,11 @@ class _TutorialsScreenState extends State<TutorialsScreen> {
               ),
               child: Center(
                 child: IconButton(
-                  icon: Image.asset(
-                    'assets/tutorials.png',
-                    width: 40,
-                    height: 40,
-                    fit: BoxFit.contain,
+                  icon: Icon(
+                    Icons.play_circle_outline,
+                    size: 40,
+                    color: Theme.of(context).iconTheme.color,
                   ),
-
                   onPressed: () {
                     _playTutorial(tutorial['url'] ?? '');
                   },
@@ -150,13 +147,16 @@ class _TutorialsScreenState extends State<TutorialsScreen> {
 
   void _playTutorial(String rawUrl) {
     if (rawUrl.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('No video available')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('No video available'),
+          backgroundColor: Theme.of(context).snackBarTheme.backgroundColor,
+          // contentTextStyle: Theme.of(context).snackBarTheme.contentTextStyle,
+        ),
+      );
       return;
     }
 
-    // If backend returns: http://IP/storage/https://actual-url.com/video.mp4
     String videoUrl;
     if (rawUrl.contains('https://')) {
       final split = rawUrl.split('https://');
@@ -178,7 +178,7 @@ class _TutorialsScreenState extends State<TutorialsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -187,24 +187,23 @@ class _TutorialsScreenState extends State<TutorialsScreen> {
               child: Row(
                 children: [
                   InkWell(
-                    onTap: () => Navigator.of(context).pop(),
-                    child: Image.asset(
-                      'assets/back_updated.png',
-                      height: 40,
-                      width: 34,
-                      fit: BoxFit.contain,
-                      // color: const Color.fromRGBO(255, 130, 16, 1.0), // Orange tint
-                    ),
-                  ),
-                  const Expanded(
+  onTap: () => Navigator.of(context).pop(),
+  child: Image.asset(
+    'assets/back_updated.png',
+    height: 40,
+    width: 34,
+    // fit: BoxFit.contain,
+    // color: Theme.of(context).colorScheme.primary, // Orange tint
+  ),
+),
+                  Expanded(
                     child: Center(
                       child: Text(
                         "Tutorials",
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black,
-                        ),
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                            ),
                       ),
                     ),
                   ),
@@ -214,59 +213,64 @@ class _TutorialsScreenState extends State<TutorialsScreen> {
             ),
             const SizedBox(height: 16),
             Expanded(
-              child:
-                  isLoading
-                      ? Stack(
-                        children: [
-                          // Semi-transparent dark overlay
-                          Container(
-                            color: Colors.black.withOpacity(
-                              0.14,
-                            ), // Dark overlay
-                          ),
-
-                          // Your original container with white tint and loader
-                          Container(
-                            color: Colors.white10,
-                            child: Center(
-                              child: Image.asset(
-                                'assets/Bird_Full_Eye_Blinking.gif',
-                                width: 100, // Adjust size as needed
-                                height: 100,
-                              ),
-                            ),
-                          ),
-                        ],
-                      )
-                      : errorMessage.isNotEmpty
-                      ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              errorMessage,
-                              style: const TextStyle(color: Colors.red),
-                            ),
-                            if (!errorMessage.contains('login'))
-                              const SizedBox(height: 16),
-                            if (!errorMessage.contains('login'))
-                              ElevatedButton(
-                                onPressed: _fetchTutorials,
-                                child: const Text('Retry'),
-                              ),
-                          ],
+              child: isLoading
+                  ? Stack(
+                      children: [
+                        Container(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.black.withOpacity(0.4)
+                              : Colors.black.withOpacity(0.14),
                         ),
-                      )
+                        Container(
+                          color: Colors.transparent,
+                          child: Center(
+                            child: Image.asset(
+                              'assets/Bird_Full_Eye_Blinking.gif',
+                              width: 100,
+                              height: 100,
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  : errorMessage.isNotEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                errorMessage,
+                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                      color: Theme.of(context).brightness == Brightness.dark
+                                          ? Colors.redAccent
+                                          : Colors.red,
+                                    ),
+                              ),
+                              if (!errorMessage.contains('login'))
+                                const SizedBox(height: 16),
+                              if (!errorMessage.contains('login'))
+                                ElevatedButton(
+                                  onPressed: _fetchTutorials,
+                                  style: Theme.of(context).elevatedButtonTheme.style,
+                                  child: const Text('Retry'),
+                                ),
+                            ],
+                          ),
+                        )
                       : tutorials.isEmpty
-                      ? const Center(child: Text('No tutorials available'))
-                      : ListView.builder(
-                        itemCount: tutorials.length,
-                        itemBuilder: (context, index) {
-                          final tutorial =
-                              tutorials[index] as Map<String, dynamic>;
-                          return _buildTutorialCard(tutorial);
-                        },
-                      ),
+                          ? Center(
+                              child: Text(
+                                'No tutorials available',
+                                style: Theme.of(context).textTheme.bodyLarge,
+                              ),
+                            )
+                          : ListView.builder(
+                              itemCount: tutorials.length,
+                              itemBuilder: (context, index) {
+                                final tutorial = tutorials[index] as Map<String, dynamic>;
+                                return _buildTutorialCard(tutorial);
+                              },
+                            ),
             ),
             const SizedBox(height: 16),
             Padding(
@@ -287,8 +291,10 @@ class _TutorialsScreenState extends State<TutorialsScreen> {
                       if (!launched) {
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Could not open the link'),
+                            SnackBar(
+                              content: const Text('Could not open the link'),
+                              backgroundColor: Theme.of(context).snackBarTheme.backgroundColor,
+                              // contentTextStyle: Theme.of(context).snackBarTheme.contentTextStyle,
                             ),
                           );
                         }
@@ -297,20 +303,19 @@ class _TutorialsScreenState extends State<TutorialsScreen> {
                       debugPrint('Error launching URL: $e');
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Error launching URL: $e')),
+                          SnackBar(
+                            content: Text('Error launching URL: $e'),
+                            backgroundColor: Theme.of(context).snackBarTheme.backgroundColor,
+                            // contentTextStyle: Theme.of(context).snackBarTheme.contentTextStyle,
+                          ),
                         );
                       }
                     }
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color.fromRGBO(255, 130, 16, 1),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
+                  style: Theme.of(context).elevatedButtonTheme.style,
                   child: const Text(
                     "Learn More",
-                    style: TextStyle(color: Colors.white, fontSize: 16),
+                    style: TextStyle(fontSize: 16),
                   ),
                 ),
               ),

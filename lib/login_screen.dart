@@ -272,7 +272,14 @@ class _LoginScreenState extends State<LoginScreen> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: Image.asset('assets/login_back.jpg', fit: BoxFit.cover),
+            child: Image.asset(
+              Theme.of(context).brightness == Brightness.dark
+                  ? 'assets/Background.jpg'
+                  : 'assets/login_back.jpg',
+              // fit: BoxFit.cover,
+              color: Theme.of(context).colorScheme.background.withOpacity(0.2),
+              colorBlendMode: BlendMode.darken,
+            ),
           ),
           SafeArea(
             child: Column(
@@ -291,9 +298,15 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 30),
                         const Text('Login', style: TextStyle(fontSize: 24)),
-                        const Text(
+                        Text(
                           'Login to your account',
-                          style: TextStyle(fontSize: 16, color: Colors.black54),
+                          style: TextStyle(
+                            fontSize: 16,
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.white
+                                    : Colors.black54,
+                          ),
                         ),
                         const SizedBox(height: 20),
                         _buildEmailField(),
@@ -308,15 +321,20 @@ class _LoginScreenState extends State<LoginScreen> {
                                   context,
                                   '/forgot-password',
                                 ),
-                            child: const Text.rich(
+                            child: Text.rich(
                               TextSpan(
-                                style: TextStyle(fontSize: 14),
+                                style: const TextStyle(fontSize: 14),
                                 children: [
                                   TextSpan(
                                     text: 'Forgot password? ',
-                                    style: TextStyle(color: Colors.black87),
+                                    style: TextStyle(
+                                      color: Theme.of(context).brightness ==
+                                              Brightness.dark
+                                          ? Colors.white
+                                          : Colors.black54,
+                                    ),
                                   ),
-                                  TextSpan(
+                                  const TextSpan(
                                     text: 'Reset here',
                                     style: TextStyle(
                                       color: Color.fromRGBO(255, 130, 16, 1),
@@ -337,12 +355,17 @@ class _LoginScreenState extends State<LoginScreen> {
                         TextButton(
                           onPressed:
                               () => Navigator.pushNamed(context, '/register'),
-                          child: const Text.rich(
+                          child: Text.rich(
                             TextSpan(
                               text: 'Don’t have an account? ',
-                              style: TextStyle(color: Colors.black87),
+                              style: TextStyle(
+                                color: Theme.of(context).brightness ==
+                                        Brightness.dark
+                                    ? Colors.white
+                                    : Colors.black54,
+                              ),
                               children: [
-                                TextSpan(
+                                const TextSpan(
                                   text: 'Create New',
                                   style: TextStyle(
                                     color: Color.fromRGBO(255, 130, 16, 1),

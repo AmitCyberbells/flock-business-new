@@ -430,124 +430,127 @@ class _TabDashboardState extends State<TabDashboard>
 
   /// Custom dropdown design for selecting venue.
   Widget customVenueDropdown() {
-    return 
-   Container(
-  margin: const EdgeInsets.symmetric(horizontal: 8.0),
-  decoration: BoxDecoration(
-    color: Theme.of(context).colorScheme.surface,
-    borderRadius: BorderRadius.circular(10),
-    boxShadow: [
-      BoxShadow(
-        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
-        spreadRadius: 1,
-        blurRadius: 5,
-        offset: const Offset(0, 2),
-      ),
-    ],
-  ),
-  child: Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      GestureDetector(
-        onTap: () {
-          setState(() {
-            showVenueDropdown = !showVenueDropdown;
-          });
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceContainer,
-            borderRadius: BorderRadius.circular(5),
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8.0),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
+            spreadRadius: 1,
+            blurRadius: 5,
+            offset: const Offset(0, 2),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                selectedVenue == null
-                    ? "Select Venue"
-                    : selectedVenue!['name'] ?? "Select Venue",
-                style: TextStyle(
-                  fontSize: 15,
-                  color: Theme.of(context).textTheme.bodyLarge!.color,
-                ),
-              ),
-              Icon(
-                showVenueDropdown
-                    ? Icons.arrow_drop_up
-                    : Icons.arrow_drop_down,
-                color: Theme.of(context).iconTheme.color,
-              ),
-            ],
-          ),
-        ),
+        ],
       ),
-      if (showVenueDropdown)
-        Container(
-          constraints: BoxConstraints(maxHeight: 35.0 * 5),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceContainer,
-            borderRadius: const BorderRadius.only(
-              bottomLeft: Radius.circular(5),
-              bottomRight: Radius.circular(5),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                showVenueDropdown = !showVenueDropdown;
+              });
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainer,
+                borderRadius: BorderRadius.circular(5),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    selectedVenue == null
+                        ? "Select Venue"
+                        : selectedVenue!['name'] ?? "Select Venue",
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: Theme.of(context).textTheme.bodyLarge!.color,
+                    ),
+                  ),
+                  Icon(
+                    showVenueDropdown
+                        ? Icons.arrow_drop_up
+                        : Icons.arrow_drop_down,
+                    color: Theme.of(context).iconTheme.color,
+                  ),
+                ],
+              ),
             ),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Flexible(
-                child: Scrollbar(
-                  thumbVisibility: true,
-                  child: ListView.builder(
-                    padding: EdgeInsets.zero,
-                    shrinkWrap: true,
-                    itemCount: venueList.length,
-                    itemBuilder: (context, index) {
-                      final venue = venueList[index];
-                      final isSelected =
-                          selectedVenue != null &&
-                          selectedVenue!['id'].toString() ==
-                              venue['id'].toString();
-                      return InkWell(
-                        onTap: () {
-                          setState(() {
-                            selectedVenue = venue;
-                            showVenueDropdown = false;
-                          });
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 6,
-                          ),
-                          color:
-                              isSelected
-                                  ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
-                                  : Colors.transparent,
-                          child: Text(
-                            venue['name'] ?? '',
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: Theme.of(context).textTheme.bodyLarge!.color,
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+          if (showVenueDropdown)
+            Container(
+              constraints: BoxConstraints(maxHeight: 35.0 * 5),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainer,
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(5),
+                  bottomRight: Radius.circular(5),
                 ),
               ),
-            ],
-          ),
-        ),
-    ],
-  ),
-);
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Scrollbar(
+                      thumbVisibility: true,
+                      child: ListView.builder(
+                        padding: EdgeInsets.zero,
+                        shrinkWrap: true,
+                        itemCount: venueList.length,
+                        itemBuilder: (context, index) {
+                          final venue = venueList[index];
+                          final isSelected =
+                              selectedVenue != null &&
+                              selectedVenue!['id'].toString() ==
+                                  venue['id'].toString();
+                          return InkWell(
+                            onTap: () {
+                              setState(() {
+                                selectedVenue = venue;
+                                showVenueDropdown = false;
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 6,
+                              ),
+                              color:
+                                  isSelected
+                                      ? Theme.of(
+                                        context,
+                                      ).colorScheme.primary.withOpacity(0.1)
+                                      : Colors.transparent,
+                              child: Text(
+                                venue['name'] ?? '',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color:
+                                      Theme.of(
+                                        context,
+                                      ).textTheme.bodyLarge!.color,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
   }
 
   /// Updated venue list with QR Codes method (includes the custom dropdown)
-  ///
-  /// Updated venue list with QR Codes method (includes the custom dropdown)
+
 
   Widget venueListWithQRCodes() {
     if (!hasPermission('verify_voucher')) {
@@ -563,7 +566,10 @@ class _TabDashboardState extends State<TabDashboard>
           child: Text(
             'You don’t have any venues yet, please add a venue by clicking on the "Bird Image" at the bottom.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 16, color: Theme.of(context).textTheme.bodyMedium!.color,),
+            style: TextStyle(
+              fontSize: 16,
+              color: Theme.of(context).textTheme.bodyMedium!.color,
+            ),
           ),
         ),
       );
@@ -574,21 +580,29 @@ class _TabDashboardState extends State<TabDashboard>
         customVenueDropdown(),
         if (selectedVenue != null)
           Padding(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(20),
             child: Center(
-              child:Container(
-  decoration: BoxDecoration(
-    color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Theme.of(context).colorScheme.surface,
-    borderRadius: BorderRadius.circular(10),
-  ),
-  child: QrImageView(
-    data: selectedVenue!['id'].toString(),
-    version: QrVersions.auto,
-    size: 150.0,
-    backgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.white : Theme.of(context).colorScheme.surface,
-    padding: const EdgeInsets.all(8.0), // Optional: Add padding for better appearance
-  ),
-)
+              child: Container(
+                decoration: BoxDecoration(
+                  color:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white
+                          : Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: QrImageView(
+                  data: selectedVenue!['id'].toString(),
+                  version: QrVersions.auto,
+                  size: 150.0,
+                  backgroundColor:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white
+                          : Theme.of(context).colorScheme.surface,
+                  padding: const EdgeInsets.all(
+                    8.0,
+                  ), // Optional: Add padding for better appearance
+                ),
+              ),
             ),
           ),
       ],
@@ -621,21 +635,27 @@ class _TabDashboardState extends State<TabDashboard>
                       children: [
                         Row(
                           children: [
-                           Text(
-  'Hello, ',
-  style: TextStyle(
-    fontSize: 18,
-    color: Theme.of(context).textTheme.bodyLarge!.color,
-  ),
-),
-Text(
-  '$firstName $lastName',
-  style: TextStyle(
-    fontSize: 18,
-    color: Theme.of(context).textTheme.bodyLarge!.color,
-    fontWeight: FontWeight.w600,
-  ),
-),
+                            Text(
+                              'Hello, ',
+                              style: TextStyle(
+                                fontSize: 18,
+                                color:
+                                    Theme.of(
+                                      context,
+                                    ).textTheme.bodyLarge!.color,
+                              ),
+                            ),
+                            Text(
+                              '$firstName $lastName',
+                              style: TextStyle(
+                                fontSize: 18,
+                                color:
+                                    Theme.of(
+                                      context,
+                                    ).textTheme.bodyLarge!.color,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ],
                         ),
                         IconButton(
@@ -685,11 +705,15 @@ Text(
                                           0.0025,
                                     ),
                                     decoration: BoxDecoration(
-                                     color: Theme.of(context).colorScheme.surface,
+                                      color:
+                                          Theme.of(context).colorScheme.surface,
                                       borderRadius: BorderRadius.circular(10),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface
+                                              .withOpacity(0.2),
                                           spreadRadius: 1,
                                           blurRadius: 5,
                                           offset: const Offset(0, 2),
@@ -715,7 +739,10 @@ Text(
                                                     item['img'],
                                                     width: deviceWidth * 0.06,
                                                     height: deviceWidth * 0.06,
-                                                  color: Theme.of(context).colorScheme.primary
+                                                    color:
+                                                        Theme.of(
+                                                          context,
+                                                        ).colorScheme.primary,
                                                   ),
                                                   const SizedBox(width: 6),
                                                   Expanded(
@@ -724,7 +751,11 @@ Text(
                                                       style: TextStyle(
                                                         fontSize:
                                                             deviceWidth * 0.040,
-                                                       color: Theme.of(context).textTheme.titleMedium!.color,
+                                                        color:
+                                                            Theme.of(context)
+                                                                .textTheme
+                                                                .titleMedium!
+                                                                .color,
                                                         fontWeight:
                                                             FontWeight.w600,
                                                       ),
@@ -750,7 +781,11 @@ Text(
                                                   style: TextStyle(
                                                     fontSize:
                                                         deviceWidth * 0.03,
-                                                  color: Theme.of(context).textTheme.bodyMedium!.color,
+                                                    color:
+                                                        Theme.of(context)
+                                                            .textTheme
+                                                            .bodyMedium!
+                                                            .color,
                                                   ),
                                                   maxLines: 2,
                                                   overflow:
@@ -771,7 +806,10 @@ Text(
                                                   style: TextStyle(
                                                     fontSize:
                                                         deviceWidth * 0.08,
-                                                   color: Theme.of(context).colorScheme.primary,
+                                                    color:
+                                                        Theme.of(
+                                                          context,
+                                                        ).colorScheme.primary,
                                                     fontWeight: FontWeight.w800,
                                                   ),
                                                 ),
@@ -814,22 +852,24 @@ Text(
           ),
           if (loader)
             Stack(
-  children: [
-    Container(
-      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
-    ),
-    Container(
-      color: Theme.of(context).colorScheme.surface.withOpacity(0.1),
-      child: Center(
-        child: Image.asset(
-          'assets/Bird_Full_Eye_Blinking.gif',
-          width: 100,
-          height: 100,
-        ),
-      ),
-    ),
-  ],
-)
+              children: [
+                Container(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.2),
+                ),
+                Container(
+                  color: Theme.of(context).colorScheme.surface.withOpacity(0.1),
+                  child: Center(
+                    child: Image.asset(
+                      'assets/Bird_Full_Eye_Blinking.gif',
+                      width: 100,
+                      height: 100,
+                    ),
+                  ),
+                ),
+              ],
+            ),
         ],
       ),
     );

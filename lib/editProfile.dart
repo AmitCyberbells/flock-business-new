@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flock/constants.dart'; // Adjust the import path as needed.
+import 'package:flock/app_colors.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({Key? key}) : super(key: key);
@@ -23,7 +24,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController passwordController;
 
   String profilePic = "";
-  bool _isLoading = false; // To show loading while fetching profile
+  bool _isLoading = false;
   bool _isUpdating = false;
   String _errorMessage = '';
   File? _selectedImage;
@@ -38,7 +39,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     emailController = TextEditingController();
     phoneController = TextEditingController();
     passwordController = TextEditingController();
-    _fetchProfile(); // Fetch profile data when the screen loads
+    _fetchProfile();
   }
 
   @override
@@ -98,7 +99,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             _isLoading = false;
           });
 
-          // Update SharedPreferences with the latest data
           SharedPreferences prefs = await SharedPreferences.getInstance();
           await prefs.setString('firstName', userData['first_name'] ?? '');
           await prefs.setString('lastName', userData['last_name'] ?? '');
@@ -112,13 +112,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           Fluttertoast.showToast(msg: _errorMessage);
         }
       } else {
-        setState() {
+        setState(() {
           _isLoading = false;
-          // _errorMessage = 'Error ${response.statusCode} fetching profile.';
           _errorMessage = 'Failed to fetch profile. Please try again.';
-        }
-
-        ;
+        });
         Fluttertoast.showToast(msg: _errorMessage);
       }
     } catch (e) {
@@ -139,8 +136,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       return true;
     } else if (status.isPermanentlyDenied) {
       Fluttertoast.showToast(
-        msg:
-            'Camera permission is permanently denied. Please enable it in settings.',
+        msg: 'Camera permission is permanently denied. Please enable it in settings.',
       );
       await openAppSettings();
       return false;
@@ -156,22 +152,35 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
+      backgroundColor: Theme.of(context).colorScheme.surface,
       builder: (BuildContext context) {
         return Padding(
           padding: const EdgeInsets.all(20.0),
           child: Wrap(
             children: [
               ListTile(
-                leading: const Icon(Icons.photo_library),
-                title: const Text('Choose from Gallery'),
+                leading: Icon(
+                  Icons.photo_library,
+                  color: Theme.of(context).iconTheme.color,
+                ),
+                title: Text(
+                  'Choose from Gallery',
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
                 onTap: () {
                   Navigator.pop(context);
                   _pickImage(ImageSource.gallery);
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.camera_alt),
-                title: const Text('Take a Photo'),
+                leading: Icon(
+                  Icons.camera_alt,
+                  color: Theme.of(context).iconTheme.color,
+                ),
+                title: Text(
+                  'Take a Photo',
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
                 onTap: () async {
                   Navigator.pop(context);
                   bool hasPermission = await _requestCameraPermission();
@@ -255,8 +264,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         final data = json.decode(response.body);
         if (data['status'] == 'success') {
           Fluttertoast.showToast(msg: data['message'] ?? 'Profile updated!');
-          String newProfilePic =
-              data['data']?['image']?.toString() ?? profilePic;
+          String newProfilePic = data['data']?['image']?.toString() ?? profilePic;
 
           SharedPreferences prefs = await SharedPreferences.getInstance();
           await prefs.setString('firstName', firstName);
@@ -294,261 +302,241 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
         children: [
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child:
-                  _isLoading
-                      ? Stack(
+              child: _isLoading
+                  ? Stack(
+                      children: [
+                        Container(
+                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.14),
+                        ),
+                        Container(
+                          color: Theme.of(context).colorScheme.surface.withOpacity(0.1),
+                          child: Center(
+                            child: Image.asset(
+                              'assets/Bird_Full_Eye_Blinking.gif',
+                              width: 100,
+                              height: 100,
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  : SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          // Semi-transparent dark overlay
-                          Container(color: Colors.black.withOpacity(0.14)),
-                          // Container with white tint and loader
-                          Container(
-                            color: Colors.white10,
-                            child: Center(
-                              child: Image.asset(
-                                'assets/Bird_Full_Eye_Blinking.gif',
-                                width: 100,
-                                height: 100,
+                          Row(
+                            children: [
+                             InkWell(
+  onTap: () => Navigator.of(context).pop(),
+  child: Image.asset(
+    'assets/back_updated.png',
+    height: 40,
+    width: 34,
+    // fit: BoxFit.contain,
+    // color: Theme.of(context).colorScheme.primary, // Orange tint
+  ),
+),
+                              Expanded(
+                                child: Center(
+                                  child: Text(
+                                    "Edit Profile",
+                                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 24),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                          Center(
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                CircleAvatar(
+                                  radius: 50,
+                                  backgroundColor: Theme.of(context).colorScheme.surface,
+                                  backgroundImage: _selectedImage != null
+                                      ? FileImage(_selectedImage!)
+                                      : (profilePic.isNotEmpty && profilePic.startsWith('http')
+                                          ? NetworkImage(profilePic)
+                                          : null) as ImageProvider<Object>?,
+                                  child: (profilePic.isEmpty && _selectedImage == null)
+                                      ? Icon(
+                                          Icons.person,
+                                          size: 60,
+                                          color: Theme.of(context).iconTheme.color,
+                                        )
+                                      : null,
+                                ),
+                                Positioned(
+                                  bottom: 0,
+                                  right: 0,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Theme.of(context).colorScheme.surface,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+                                      ),
+                                    ),
+                                    child: CircleAvatar(
+                                      radius: 16,
+                                      backgroundColor: Theme.of(context).colorScheme.primary,
+                                      child: IconButton(
+                                        onPressed: _selectImage,
+                                        icon: Icon(
+                                          Icons.camera_alt,
+                                          size: 16,
+                                          color: Theme.of(context).colorScheme.onPrimary,
+                                        ),
+                                        padding: EdgeInsets.zero,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 30),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: AppConstants.firstNameField(
+                                  controller: firstNameController,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: AppConstants.lastNameField(
+                                  controller: lastNameController,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 25),
+                          TextField(
+                            controller: emailController,
+                            readOnly: true,
+                            keyboardType: TextInputType.emailAddress,
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                                  fontSize: 14.0,
+                                ),
+                            decoration: InputDecoration(
+                              hintText: 'Enter Email Address',
+                              hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                                    fontSize: 14.0,
+                                  ),
+                              filled: true,
+                              fillColor: Theme.of(context).colorScheme.surface.withOpacity(0.1),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 15,
+                                vertical: 15,
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10.0),
+                                borderSide: BorderSide.none,
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10.0),
+                                borderSide: BorderSide.none,
+                              ),
+                              disabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10.0),
+                                borderSide: BorderSide.none,
                               ),
                             ),
                           ),
+                          const SizedBox(height: 25),
+                          TextField(
+                            controller: phoneController,
+                            readOnly: true,
+                            keyboardType: TextInputType.phone,
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                                  fontSize: 14.0,
+                                ),
+                            decoration: InputDecoration(
+                              hintText: 'Enter phone number',
+                              hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                                    fontSize: 14.0,
+                                  ),
+                              filled: true,
+                              fillColor: Theme.of(context).colorScheme.surface.withOpacity(0.1),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 15,
+                                vertical: 15,
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10.0),
+                                borderSide: BorderSide.none,
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10.0),
+                                borderSide: BorderSide.none,
+                              ),
+                              disabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10.0),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 25),
+                          const SizedBox(height: 30),
+                          if (_errorMessage.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 10),
+                              child: Text(
+                                _errorMessage,
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                      color: Colors.red,
+                                    ),
+                              ),
+                            ),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 48,
+                            child: ElevatedButton(
+                              style: Theme.of(context).elevatedButtonTheme.style?.copyWith(
+                                    backgroundColor: MaterialStateProperty.all(
+                                      Theme.of(context).colorScheme.primary,
+                                    ),
+                                  ),
+                              onPressed: _updateProfile,
+                              child: Text(
+                                'Update',
+                                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                      fontSize: 18,
+                                      color: Theme.of(context).colorScheme.onPrimary,
+                                    ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
                         ],
-                      )
-                      : SingleChildScrollView(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Row(
-                              children: [
-                                InkWell(
-                                  onTap: () => Navigator.of(context).pop(),
-                                  child: Image.asset(
-                                    'assets/back_updated.png',
-                                    height: 40,
-                                    width: 34,
-                                    fit: BoxFit.contain,
-                                  ),
-                                ),
-                                const Expanded(
-                                  child: Center(
-                                    child: Text(
-                                      "Edit Profile",
-                                      style: TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.black,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 24),
-                              ],
-                            ),
-                            const SizedBox(height: 20),
-                            Center(
-                              child: Stack(
-                                clipBehavior: Clip.none,
-                                children: [
-                                  CircleAvatar(
-                                    radius: 50,
-                                    backgroundColor: Colors.grey.shade200,
-                                    backgroundImage:
-                                        _selectedImage != null
-                                            ? FileImage(_selectedImage!)
-                                            : (profilePic.isNotEmpty &&
-                                                        profilePic.startsWith(
-                                                          'http',
-                                                        )
-                                                    ? NetworkImage(profilePic)
-                                                    : null)
-                                                as ImageProvider<Object>?,
-                                    child:
-                                        (profilePic.isEmpty &&
-                                                _selectedImage == null)
-                                            ? const Icon(
-                                              Icons.person,
-                                              size: 60,
-                                              color: Colors.grey,
-                                            )
-                                            : null,
-                                  ),
-                                  Positioned(
-                                    bottom: 0,
-                                    right: 0,
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: Colors.grey.shade300,
-                                        ),
-                                      ),
-                                      child: CircleAvatar(
-                                        radius: 16,
-                                        backgroundColor: const Color.fromRGBO(
-                                          255,
-                                          130,
-                                          16,
-                                          1,
-                                        ),
-                                        child: IconButton(
-                                          onPressed: _selectImage,
-                                          icon: const Icon(
-                                            Icons.camera_alt,
-                                            size: 16,
-                                            color: Colors.white,
-                                          ),
-                                          padding: EdgeInsets.zero,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 30),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: AppConstants.firstNameField(
-                                    controller: firstNameController,
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: AppConstants.lastNameField(
-                                    controller: lastNameController,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 25),
-                            TextField(
-                              controller: emailController,
-                              readOnly: true,
-                              keyboardType: TextInputType.emailAddress,
-                              style: const TextStyle(
-                                color: Colors.grey,
-                                fontSize: 14.0,
-                                fontFamily: 'YourFontFamily',
-                              ),
-                              decoration: InputDecoration(
-                                hintText: 'Enter Email Address',
-                                hintStyle: TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 14.0,
-                                  fontFamily: 'YourFontFamily',
-                                ),
-                                filled: true,
-                                fillColor: Colors.grey.shade100,
-                                contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 15,
-                                  vertical: 15,
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10.0),
-                                  borderSide: BorderSide.none,
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10.0),
-                                  borderSide: BorderSide.none,
-                                ),
-                                disabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10.0),
-                                  borderSide: BorderSide.none,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 25),
-                            TextField(
-                              controller: phoneController,
-                              readOnly: true,
-                              keyboardType: TextInputType.phone,
-                              style: const TextStyle(
-                                color: Colors.grey,
-                                fontSize: 14.0,
-                                fontFamily: 'YourFontFamily',
-                              ),
-                              decoration: InputDecoration(
-                                hintText: 'Enter phone number',
-                                hintStyle: TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 14.0,
-                                  fontFamily: 'YourFontFamily',
-                                ),
-                                filled: true,
-                                fillColor: Colors.grey.shade100,
-                                contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 15,
-                                  vertical: 15,
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10.0),
-                                  borderSide: BorderSide.none,
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10.0),
-                                  borderSide: BorderSide.none,
-                                ),
-                                disabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10.0),
-                                  borderSide: BorderSide.none,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 25),
-                            const SizedBox(height: 30),
-                            if (_errorMessage.isNotEmpty)
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 10),
-                                child: Text(
-                                  _errorMessage,
-                                  style: const TextStyle(color: Colors.red),
-                                ),
-                              ),
-                            SizedBox(
-                              width: double.infinity,
-                              height: 48,
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color.fromRGBO(
-                                    255,
-                                    130,
-                                    16,
-                                    1,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  elevation: 0,
-                                ),
-                                onPressed: _updateProfile,
-                                child: const Text(
-                                  'Update',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                          ],
-                        ),
                       ),
+                    ),
             ),
           ),
           if (_isUpdating)
             Stack(
               children: [
-                Container(color: Colors.black.withOpacity(0.14)),
                 Container(
-                  color: Colors.white10,
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.14),
+                ),
+                Container(
+                  color: Theme.of(context).colorScheme.surface.withOpacity(0.1),
                   child: Center(
                     child: Image.asset(
                       'assets/Bird_Full_Eye_Blinking.gif',

@@ -3,6 +3,7 @@ import 'package:flock/feedback.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flock/app_colors.dart'; // Import AppColors for primary color
 
 class OpenHoursScreen extends StatefulWidget {
   const OpenHoursScreen({Key? key}) : super(key: key);
@@ -300,7 +301,11 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
         if (data['status'] == 'success') {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(data['message'] ?? 'Hours updated successfully!'),
+              content: Text(
+                data['message'] ?? 'Hours updated successfully!',
+                style: Theme.of(context).snackBarTheme.contentTextStyle,
+              ),
+              backgroundColor: Theme.of(context).snackBarTheme.backgroundColor,
             ),
           );
           setState(() {
@@ -354,7 +359,7 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
         children: [
           SafeArea(
@@ -375,17 +380,17 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
                             height: 40,
                             width: 34,
                             fit: BoxFit.contain,
+                            // color: Theme.of(context).iconTheme.color, // Adapt icon color
                           ),
                         ),
-                        const Expanded(
+                        Expanded(
                           child: Center(
                             child: Text(
                               "Open Hours",
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.black,
-                              ),
+                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                             ),
                           ),
                         ),
@@ -405,30 +410,29 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
                           vertical: 14,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.surface,
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
+                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
                               blurRadius: 4,
                               offset: const Offset(0, 2),
                             ),
                           ],
-                          border: Border.all(color: Colors.grey.shade300),
+                          border: Border.all(
+                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
+                          ),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
                               _selectedVenue?['name'] ?? 'Select a venue',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: Colors.black87,
-                              ),
+                              style: Theme.of(context).textTheme.bodyMedium,
                             ),
-                            const Icon(
+                            Icon(
                               Icons.keyboard_arrow_down,
-                              color: Colors.black54,
+                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                             ),
                           ],
                         ),
@@ -443,7 +447,7 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
                         child: SingleChildScrollView(
                           child: Text(
                             _errorMessage,
-                            style: const TextStyle(color: Colors.red),
+                            style: TextStyle(color: Theme.of(context).colorScheme.error),
                           ),
                         ),
                       ),
@@ -465,20 +469,13 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
                       height: 48,
                       child: ElevatedButton(
                         onPressed: _saveOpeningHours,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color.fromRGBO(
-                            255,
-                            130,
-                            16,
-                            1,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: const Text(
+                        style: Theme.of(context).elevatedButtonTheme.style,
+                        child: Text(
                           "Save",
-                          style: TextStyle(color: Colors.white, fontSize: 16),
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: Theme.of(context).colorScheme.onPrimary,
+                                fontSize: 16,
+                              ),
                         ),
                       ),
                     ),
@@ -490,9 +487,11 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
           if (_isLoading)
             Stack(
               children: [
-                Container(color: Colors.black.withOpacity(0.14)),
                 Container(
-                  color: Colors.white10,
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.14),
+                ),
+                Container(
+                  color: Theme.of(context).colorScheme.surface.withOpacity(0.1),
                   child: Center(
                     child: Image.asset(
                       'assets/Bird_Full_Eye_Blinking.gif',
@@ -513,10 +512,13 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: Colors.white,
-          title: const Text(
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          title: Text(
             "Select Venue",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
           ),
           content: SizedBox(
             width: double.maxFinite,
@@ -536,15 +538,9 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
                     Navigator.pop(context);
                   },
                   child: Container(
-                    color:
-                        isSelected
-                            ? const Color.fromRGBO(
-                              255,
-                              130,
-                              16,
-                              1,
-                            ).withOpacity(0.1)
-                            : Colors.transparent,
+                    color: isSelected
+                        ? AppColors.primary.withOpacity(0.1)
+                        : Colors.transparent,
                     padding: const EdgeInsets.symmetric(
                       vertical: 10,
                       horizontal: 8,
@@ -554,7 +550,9 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
                         Expanded(
                           child: Text(
                             venue['name'] ?? 'Unnamed Venue',
-                            style: const TextStyle(fontSize: 14),
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  fontSize: 14,
+                                ),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
@@ -562,7 +560,7 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
                           Icon(
                             Icons.check,
                             size: 18,
-                            color: const Color.fromRGBO(255, 130, 16, 1),
+                            color: AppColors.primary,
                           ),
                       ],
                     ),
@@ -581,9 +579,11 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.grey.shade300),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
+          ),
         ),
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -591,7 +591,10 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
           children: [
             SizedBox(
               width: 40,
-              child: Text(dayInfo["day"], style: const TextStyle(fontSize: 16)),
+              child: Text(
+                dayInfo["day"],
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 16),
+              ),
             ),
             SizedBox(
               width: 60,
@@ -610,18 +613,17 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color:
-                        dayInfo["isOpen"]
-                            ? (dayInfo["updated"]
-                                ? const Color.fromRGBO(255, 130, 16, 1)
-                                : const Color.fromRGBO(255, 130, 16, 1))
-                            : Colors.grey.shade300,
+                    color: dayInfo["isOpen"]
+                        ? (dayInfo["updated"] ? AppColors.primary : AppColors.primary)
+                        : Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
                     dayInfo["isOpen"] ? "On" : "Off",
                     style: TextStyle(
-                      color: dayInfo["isOpen"] ? Colors.white : Colors.black54,
+                      color: dayInfo["isOpen"]
+                          ? Theme.of(context).colorScheme.onPrimary
+                          : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
@@ -636,27 +638,29 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
                 children: [
                   Text(
                     dayInfo["openTime"],
-                    style: const TextStyle(fontSize: 14),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 14),
                   ),
-                  const Text(" - "),
+                  Text(
+                    " - ",
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
                   Text(
                     dayInfo["closeTime"],
-                    style: const TextStyle(fontSize: 14),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 14),
                   ),
                 ],
               ),
             ),
             IconButton(
-              icon: const Icon(
+              icon: Icon(
                 Icons.access_time,
-                color: Color.fromRGBO(255, 130, 16, 1),
+                color: dayInfo["isOpen"] ? AppColors.primary : Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
               ),
-              onPressed:
-                  dayInfo["isOpen"]
-                      ? () {
-                        _showDayDialog(dayInfo["day"], index);
-                      }
-                      : null,
+              onPressed: dayInfo["isOpen"]
+                  ? () {
+                      _showDayDialog(dayInfo["day"], index);
+                    }
+                  : null,
             ),
           ],
         ),
@@ -674,7 +678,11 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
         return StatefulBuilder(
           builder: (ctx, setStateDialog) {
             return AlertDialog(
-              title: Text(day),
+              backgroundColor: Theme.of(context).colorScheme.surface,
+              title: Text(
+                day,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -685,10 +693,15 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
                         initialTime: _parseTimeOfDay(tempOpen),
                         initialEntryMode: TimePickerEntryMode.input,
                         builder: (BuildContext context, Widget? child) {
-                          return MediaQuery(
-                            data: MediaQuery.of(
-                              context,
-                            ).copyWith(alwaysUse24HourFormat: false),
+                          return Theme(
+                            data: Theme.of(context).copyWith(
+                              timePickerTheme: TimePickerThemeData(
+                                backgroundColor: Theme.of(context).colorScheme.surface,
+                                hourMinuteTextColor: Theme.of(context).colorScheme.onSurface,
+                                dialHandColor: AppColors.primary,
+                                entryModeIconColor: AppColors.primary,
+                              ),
+                            ),
                             child: child!,
                           );
                         },
@@ -699,13 +712,13 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
                         });
                       }
                     },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromRGBO(255, 130, 16, 1),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+                    style: Theme.of(context).elevatedButtonTheme.style,
+                    child: Text(
+                      "Set Opening Time: $tempOpen",
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Theme.of(context).colorScheme.onPrimary,
+                          ),
                     ),
-                    child: Text("Set Opening Time: $tempOpen"),
                   ),
                   const SizedBox(height: 8),
                   ElevatedButton(
@@ -715,10 +728,15 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
                         initialTime: _parseTimeOfDay(tempClose),
                         initialEntryMode: TimePickerEntryMode.input,
                         builder: (BuildContext context, Widget? child) {
-                          return MediaQuery(
-                            data: MediaQuery.of(
-                              context,
-                            ).copyWith(alwaysUse24HourFormat: false),
+                          return Theme(
+                            data: Theme.of(context).copyWith(
+                              timePickerTheme: TimePickerThemeData(
+                                backgroundColor: Theme.of(context).colorScheme.surface,
+                                hourMinuteTextColor: Theme.of(context).colorScheme.onSurface,
+                                dialHandColor: AppColors.primary,
+                                entryModeIconColor: AppColors.primary,
+                              ),
+                            ),
                             child: child!,
                           );
                         },
@@ -729,13 +747,13 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
                         });
                       }
                     },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromRGBO(255, 130, 16, 1),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+                    style: Theme.of(context).elevatedButtonTheme.style,
+                    child: Text(
+                      "Set Closing Time: $tempClose",
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Theme.of(context).colorScheme.onPrimary,
+                          ),
                     ),
-                    child: Text("Set Closing Time: $tempClose"),
                   ),
                   const SizedBox(height: 16),
                   Row(
@@ -747,8 +765,13 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
                             applyToAllDays = value ?? false;
                           });
                         },
+                        activeColor: AppColors.primary,
+                        checkColor: Theme.of(context).colorScheme.onPrimary,
                       ),
-                      const Text("Apply to all days"),
+                      Text(
+                        "Apply to all days",
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
                     ],
                   ),
                 ],
@@ -756,7 +779,12 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(null),
-                  child: const Text("Cancel"),
+                  child: Text(
+                    "Cancel",
+                    style: Theme.of(context).textButtonTheme.style?.textStyle?.resolve({})?.copyWith(
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                  ),
                 ),
                 ElevatedButton(
                   onPressed: () {
@@ -767,7 +795,13 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
                       'index': index,
                     });
                   },
-                  child: const Text("OK"),
+                  style: Theme.of(context).elevatedButtonTheme.style,
+                  child: Text(
+                    "OK",
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.onPrimary,
+                        ),
+                  ),
                 ),
               ],
             );

@@ -7,9 +7,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
-
-// Assuming CustomScaffold is in a separate file
-// Remove the import for HistoryScreen if no longer needed.
+import 'package:flock/app_colors.dart';
 
 class CheckInsScreen extends StatefulWidget {
   const CheckInsScreen({Key? key}) : super(key: key);
@@ -79,7 +77,11 @@ class _CheckInsScreenState extends State<CheckInsScreen> {
       }
     } catch (e) {
       setState(() => loader = false);
-      Fluttertoast.showToast(msg: 'Failed to load check-ins: $e');
+      Fluttertoast.showToast(
+        msg: 'Failed to load check-ins: $e',
+        backgroundColor: Colors.red,
+        textColor: Theme.of(context).colorScheme.onError,
+      );
     }
   }
 
@@ -89,6 +91,20 @@ class _CheckInsScreenState extends State<CheckInsScreen> {
       initialDate: selectedDate ?? DateTime.now(),
       firstDate: DateTime(2000),
       lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: Theme.of(context).colorScheme.copyWith(
+                  primary: AppColors.primary,
+                  onPrimary: Theme.of(context).colorScheme.onPrimary,
+                  surface: Theme.of(context).colorScheme.surface,
+                  onSurface: Theme.of(context).colorScheme.onSurface,
+                ),
+            dialogBackgroundColor: Theme.of(context).colorScheme.surface,
+          ),
+          child: child!,
+        );
+      },
     );
     if (picked != null && picked != selectedDate) {
       setState(() {
@@ -103,11 +119,11 @@ class _CheckInsScreenState extends State<CheckInsScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-            color: Colors.black12,
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
             blurRadius: 5,
             offset: const Offset(0, 2),
           ),
@@ -116,7 +132,6 @@ class _CheckInsScreenState extends State<CheckInsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Top row: image + category name
           Row(
             children: [
               ClipRRect(
@@ -126,40 +141,42 @@ class _CheckInsScreenState extends State<CheckInsScreen> {
                   width: 50,
                   height: 50,
                   fit: BoxFit.cover,
-                  errorBuilder:
-                      (context, error, stackTrace) => Container(
-                        width: 50,
-                        height: 50,
-                        color: Colors.grey[300],
-                        child: const Icon(Icons.image_not_supported),
-                      ),
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    width: 50,
+                    height: 50,
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
+                    child: Icon(
+                      Icons.image_not_supported,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: Text(
                   item['name'] ?? 'Unknown',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          const Divider(),
+          Divider(
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
+          ),
           const SizedBox(height: 12),
-          // Bottom row: "Today's Check-Ins" + "Feathers Earn"
           Row(
             children: [
               Expanded(
                 child: Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.check_circle,
-                      color: Color.fromRGBO(255, 130, 16, 1.0),
+                      color: AppColors.primary,
                       size: 20,
                     ),
                     const SizedBox(width: 8),
@@ -167,17 +184,21 @@ class _CheckInsScreenState extends State<CheckInsScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             "Today's Check-Ins",
-                            style: TextStyle(fontSize: 12, color: Colors.grey),
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurface
+                                      .withOpacity(0.6),
+                                ),
                             overflow: TextOverflow.ellipsis,
                           ),
                           Text(
                             item['total_checkins'].toString(),
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
+                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ],
@@ -192,12 +213,12 @@ class _CheckInsScreenState extends State<CheckInsScreen> {
                     Container(
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
-                        color: const Color.fromRGBO(255, 130, 16, 1),
+                        color: AppColors.primary,
                         borderRadius: BorderRadius.circular(5),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.arrow_downward,
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.onPrimary,
                         size: 16,
                       ),
                     ),
@@ -206,17 +227,21 @@ class _CheckInsScreenState extends State<CheckInsScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             "Feathers Allotted",
-                            style: TextStyle(fontSize: 12, color: Colors.grey),
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurface
+                                      .withOpacity(0.6),
+                                ),
                             overflow: TextOverflow.ellipsis,
                           ),
                           Text(
                             "${item['total_feather_points']} fts",
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
+                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ],
@@ -235,81 +260,85 @@ class _CheckInsScreenState extends State<CheckInsScreen> {
   @override
   Widget build(BuildContext context) {
     return CustomScaffold(
-      currentIndex: 3, //2
+      currentIndex: 3,
       body: SafeArea(
         child: Column(
           children: [
-   AppConstants.customAppBar(
-  context: context,
-  title: 'Check-Ins',
-  backIconAsset: 'assets/back_updated.png',
-
-),
-
-
-// Date selector aligned to the right
-Align(
-  alignment: Alignment.centerRight,
-  child: Padding(
-    padding: const EdgeInsets.only(right: 16, top: 8),
-    child: TextButton(
-      onPressed: () => _selectDate(context),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            selectedDate == null
-                ? "Choose Date"
-                : DateFormat('MMM d, yyyy').format(selectedDate!),
-            style: const TextStyle(
-              color: Color.fromRGBO(255, 130, 16, 1.0),
-              fontSize: 16,
+            AppConstants.customAppBar(
+              context: context,
+              title: 'Check-Ins',
+              backIconAsset: 'assets/back_updated.png',
             ),
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(width: 4),
-          const Icon(
-            Icons.arrow_drop_down,
-            color: Color.fromRGBO(255, 130, 16, 1.0),
-          ),
-        ],
-      ),
-    ),
-  ),
-),
-
-
+            Align(
+              alignment: Alignment.centerRight,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 16, top: 8),
+                child: TextButton(
+                  onPressed: () => _selectDate(context),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        selectedDate == null
+                            ? "Choose Date"
+                            : DateFormat('MMM d, yyyy').format(selectedDate!),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: AppColors.primary,
+                              fontSize: 16,
+                            ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(
+                        Icons.arrow_drop_down,
+                        color: AppColors.primary,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
             const SizedBox(height: 8),
-
-            // Main content area
             Expanded(
-              child:
-                  loader
-                      ? Stack(
-                        children: [
-                          Container(color: Colors.black.withOpacity(0.14)),
-                          Container(
-                            color: Colors.white10,
-                            child: Center(
-                              child: Image.asset(
-                                'assets/Bird_Full_Eye_Blinking.gif',
-                                width: 100,
-                                height: 100,
-                              ),
+              child: loader
+                  ? Stack(
+                      children: [
+                        Container(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withOpacity(0.14),
+                        ),
+                        Container(
+                          color:
+                              Theme.of(context).colorScheme.surface.withOpacity(0.1),
+                          child: Center(
+                            child: Image.asset(
+                              'assets/Bird_Full_Eye_Blinking.gif',
+                              width: 100,
+                              height: 100,
                             ),
                           ),
-                        ],
-                      )
-                      : checkInData.isEmpty
-                      ? const Center(child: Text('No Check-Ins Found'))
+                        ),
+                      ],
+                    )
+                  : checkInData.isEmpty
+                      ? Center(
+                          child: Text(
+                            'No Check-Ins Found',
+                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                  color: Theme.of(context).colorScheme.onSurface,
+                                ),
+                          ),
+                        )
                       : ListView.builder(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        itemCount: checkInData.length,
-                        itemBuilder: (context, index) {
-                          final item = checkInData[index];
-                          return buildCheckInItem(item);
-                        },
-                      ),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          itemCount: checkInData.length,
+                          itemBuilder: (context, index) {
+                            final item = checkInData[index];
+                            return buildCheckInItem(item);
+                          },
+                        ),
             ),
           ],
         ),

@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'addStaffMember.dart';
 import 'package:intl/intl.dart';
+import 'package:flock/app_colors.dart';
 
 class StaffManagementScreen extends StatefulWidget {
   const StaffManagementScreen({Key? key}) : super(key: key);
@@ -65,8 +66,7 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
         final data = response.data;
         if (data != null && data['data'] != null) {
           final List<dynamic> rawList = data['data'];
-          final List<Map<String, String>> loadedStaff =
-              rawList.map<Map<String, String>>((item) {
+          final List<Map<String, String>> loadedStaff = rawList.map<Map<String, String>>((item) {
             return {
               "id": item["id"]?.toString() ?? '',
               "firstName": item["first_name"] ?? '',
@@ -127,7 +127,15 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
     if (memberId == null || memberId.isEmpty) {
       debugPrint("Cannot delete member: ID is missing.");
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Cannot delete member: ID is missing.")),
+        SnackBar(
+          backgroundColor: Colors.red,
+          content: Text(
+            "Cannot delete member: ID is missing.",
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Colors.white,
+                ),
+          ),
+        ),
       );
       return;
     }
@@ -150,7 +158,15 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
           staffMembers.removeAt(index);
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Member deleted successfully!")),
+          SnackBar(
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            content: Text(
+              "Member deleted successfully!",
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  ),
+            ),
+          ),
         );
       } else {
         final errorMessage = response.data['message'] ?? 'Unknown error';
@@ -158,13 +174,29 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
           "Delete request failed with status: ${response.statusCode}, message: $errorMessage",
         );
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Failed to delete member: $errorMessage")),
+          SnackBar(
+            backgroundColor: Colors.red,
+            content: Text(
+              "Failed to delete member: $errorMessage",
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.white,
+                  ),
+            ),
+          ),
         );
       }
     } catch (e) {
       debugPrint("Exception while deleting staff member: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error deleting member: $e")),
+        SnackBar(
+          backgroundColor: Colors.red,
+          content: Text(
+            "Error deleting member: $e",
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Colors.white,
+                ),
+          ),
+        ),
       );
     }
   }
@@ -174,7 +206,7 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
     return Stack(
       children: [
         Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           body: SafeArea(
             child: LayoutBuilder(
               builder: (context, constraints) {
@@ -195,24 +227,24 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                             padding: const EdgeInsets.symmetric(vertical: 8.0),
                             child: Row(
                               children: [
-                                InkWell(
-                                  onTap: () => Navigator.of(context).pop(),
-                                  child: Image.asset(
-                                    'assets/back_updated.png',
-                                    height: 40,
-                                    width: 34,
-                                    fit: BoxFit.contain,
-                                  ),
-                                ),
-                                const Expanded(
+                                  InkWell(
+  onTap: () => Navigator.of(context).pop(),
+  child: Image.asset(
+    'assets/back_updated.png',
+    height: 40,
+    width: 34,
+    // fit: BoxFit.contain,
+    // color: Theme.of(context).colorScheme.primary, // Orange tint
+  ),
+),
+                                Expanded(
                                   child: Center(
                                     child: Text(
                                       "Staff Members",
-                                      style: TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.black,
-                                      ),
+                                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.w600,
+                                          ),
                                     ),
                                   ),
                                 ),
@@ -227,18 +259,18 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                               padding: const EdgeInsets.only(right: 10.0),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
-                                children: const [
+                                children: [
                                   Icon(
                                     Icons.add_circle,
-                                    color: Color.fromRGBO(255, 130, 16, 1),
+                                    color: Theme.of(context).colorScheme.primary,
                                   ),
-                                  SizedBox(width: 4),
+                                  const SizedBox(width: 4),
                                   Text(
                                     "Add Member",
-                                    style: TextStyle(
-                                      color: Color.fromRGBO(255, 130, 16, 1),
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                          color: Theme.of(context).colorScheme.primary,
+                                          fontWeight: FontWeight.w500,
+                                        ),
                                   ),
                                 ],
                               ),
@@ -249,10 +281,10 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                             Stack(
                               children: [
                                 Container(
-                                  color: Colors.black.withOpacity(0.14),
+                                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.14),
                                 ),
                                 Container(
-                                  color: Colors.white10,
+                                  color: Theme.of(context).colorScheme.surface.withOpacity(0.1),
                                   child: Center(
                                     child: Image.asset(
                                       'assets/Bird_Full_Eye_Blinking.gif',
@@ -264,14 +296,14 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                               ],
                             ),
                           staffMembers.isEmpty && !_isLoading
-                              ? const Padding(
-                                  padding: EdgeInsets.only(top: 16.0),
+                              ? Padding(
+                                  padding: const EdgeInsets.only(top: 16.0),
                                   child: Text(
                                     "No Member Found...",
-                                    style: TextStyle(
-                                      color: Colors.grey,
-                                      fontSize: 16,
-                                    ),
+                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                                          fontSize: 16,
+                                        ),
                                   ),
                                 )
                               : ListView.builder(
@@ -281,7 +313,7 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                                   itemBuilder: (context, index) {
                                     final member = staffMembers[index];
                                     return Card(
-                                      color: Colors.white,
+                                      color: Theme.of(context).colorScheme.surface,
                                       elevation: 2,
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(10),
@@ -289,17 +321,17 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                                       child: ListTile(
                                         title: Text(
                                           '${member["firstName"]} ${member["lastName"]}',
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 16,
-                                          ),
+                                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                                fontWeight: FontWeight.w500,
+                                                fontSize: 16,
+                                              ),
                                         ),
                                         subtitle: Text(
                                           formatDateTime(member["createdAt"]),
-                                          style: TextStyle(
-                                            color: Colors.grey.shade600,
-                                            fontSize: 14,
-                                          ),
+                                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                                                fontSize: 14,
+                                              ),
                                         ),
                                         trailing: Row(
                                           mainAxisSize: MainAxisSize.min,
@@ -309,7 +341,7 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                                                 'assets/edit.png',
                                                 width: 20,
                                                 height: 20,
-                                                color: Colors.black,
+                                                color: Theme.of(context).iconTheme.color,
                                               ),
                                               onPressed: () {
                                                 final id = member["id"] ?? "";
@@ -323,38 +355,45 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                                                 'assets/closebtn.png',
                                                 width: 20,
                                                 height: 20,
+                                                // color: Theme.of(context).iconTheme.color,
                                               ),
                                               onPressed: () {
                                                 showDialog(
                                                   context: context,
-                                                  builder:
-                                                      (BuildContext context) {
+                                                  builder: (BuildContext context) {
                                                     return AlertDialog(
-                                                      title: const Text(
-                                                          'Confirm Delete'),
-                                                      content: const Text(
-                                                          'Are you sure you want to delete this member?'),
+                                                      backgroundColor: Theme.of(context).colorScheme.surface,
+                                                      title: Text(
+                                                        'Confirm Delete',
+                                                        style: Theme.of(context).textTheme.titleLarge,
+                                                      ),
+                                                      content: Text(
+                                                        'Are you sure you want to delete this member?',
+                                                        style: Theme.of(context).textTheme.bodyMedium,
+                                                      ),
                                                       actions: [
                                                         TextButton(
                                                           onPressed: () {
-                                                            Navigator.of(context)
-                                                                .pop();
+                                                            Navigator.of(context).pop();
                                                           },
-                                                          child: const Text(
+                                                          child: Text(
                                                             'CANCEL',
-                                                            style: TextStyle(
-                                                              color: Colors.grey,
-                                                            ),
+                                                            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                                                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                                                                ),
                                                           ),
                                                         ),
                                                         TextButton(
                                                           onPressed: () {
                                                             deleteMember(index);
-                                                            Navigator.of(context)
-                                                                .pop();
+                                                            Navigator.of(context).pop();
                                                           },
-                                                          child:
-                                                              const Text('OK'),
+                                                          child: Text(
+                                                            'OK',
+                                                            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                                                  color: Theme.of(context).colorScheme.primary,
+                                                                ),
+                                                          ),
                                                         ),
                                                       ],
                                                     );
