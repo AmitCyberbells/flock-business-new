@@ -4,6 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart' as foundation;
+import 'dart:developer' as developer;
+import 'dart:io';
+import 'dart:async';
+import 'package:flock/services/fcm_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -24,6 +29,43 @@ class _LoginScreenState extends State<LoginScreen> {
   final String _loginUrl = 'https://api.getflock.io/api/vendor/login';
   final String _deviceUpdateUrl =
       'https://api.getflock.io/api/vendor/devices/update';
+  final String _appLogsUrl =
+      'https://api.getflock.io/api/customer/app-logs/store';
+
+  // Add logging levels
+  static const String _logPrefix = '[Flock Business]';
+
+  void _logInfo(String message) {
+    _logWithLevel('INFO', message);
+  }
+
+  void _logError(String message) {
+    _logWithLevel('ERROR', message);
+  }
+
+  void _logDebug(String message) {
+    _logWithLevel('DEBUG', message);
+  }
+
+  void _logWarning(String message) {
+    _logWithLevel('WARNING', message);
+  }
+
+  void _logWithLevel(String level, String message) {
+    final String formattedMessage = '$_logPrefix [$level] $message';
+
+    // Always log in both debug and release mode
+    developer.log(
+      formattedMessage,
+      time: DateTime.now(),
+      level: 1000,
+      name: 'FlockBusiness',
+      error: message,
+    );
+
+    // Also use debugPrint for immediate console visibility
+    foundation.debugPrint(formattedMessage);
+  }
 
   @override
   void dispose() {
@@ -63,39 +105,287 @@ class _LoginScreenState extends State<LoginScreen> {
     return isValid;
   }
 
-  Future<void> _updateDeviceToken(String accessToken) async {
+  Future<void> _storeAppLog(
+    String accessToken,
+    String activity, {
+    Map<String, dynamic>? payload,
+  }) async {
     try {
-      // Get FCM token
-      final fcmToken = await FirebaseMessaging.instance.getToken();
-      if (fcmToken == null) {
-        print('Failed to retrieve FCM token');
-        return;
+      String buildMode = 'Debug';
+      if (foundation.kReleaseMode) {
+        buildMode = 'Release';
+      } else if (foundation.kProfileMode) {
+        buildMode = 'Profile';
       }
 
-      // Prepare payload (adjust based on API requirements)
-      final body = {
-        'fcm_token': fcmToken,
-        'platform': 'android', // or 'ios' based on Platform.isIOS
-      };
-
       final response = await http.post(
-        Uri.parse(_deviceUpdateUrl),
+        Uri.parse(_appLogsUrl),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $accessToken',
+          'Accept': 'application/json',
         },
-        body: jsonEncode(body),
+        body: jsonEncode({
+          'activity': activity,
+          'payload': payload,
+          'device_agent':
+              'Flock Business App ${Platform.isIOS ? 'iOS' : 'Android'} $buildMode',
+          'device_timestamp': DateTime.now().toIso8601String(),
+        }),
+      );
+      _logInfo(
+        'Stored log for activity: $activity, Status: ${response.statusCode}',
+      );
+    } catch (e) {
+      _logError('Failed to store log for activity: $activity, Error: $e');
+    }
+  }
+
+  Future<void> _updateDeviceToken(String accessToken) async {
+    try {
+      await _storeAppLog(
+        accessToken,
+        'device_token_update_started',
+        payload: {
+          'platform': Platform.isIOS ? 'iOS' : 'Android',
+          'environment': foundation.kReleaseMode ? 'Production' : 'Debug',
+          'timestamp_start': DateTime.now().toIso8601String(),
+        },
       );
 
-      if (response.statusCode == 200) {
-        print('Device token updated successfully');
-      } else {
-        print('Failed to update device token: ${response.statusCode}');
-        final responseData = jsonDecode(response.body);
-        print('Error: ${responseData['message'] ?? 'Unknown error'}');
+      _logInfo('====== Starting Device Token Update ======');
+      _logDebug('Current Platform: ${Platform.isIOS ? 'iOS' : 'Android'}');
+      _logDebug(
+        'Environment: ${foundation.kReleaseMode ? 'Production' : 'Debug'}',
+      );
+      _logDebug('Access Token Valid: ${accessToken.isNotEmpty}');
+
+      final uri = Uri.parse(_deviceUpdateUrl);
+      _logDebug('Protocol: ${uri.scheme}');
+      _logDebug('Host: ${uri.host}');
+      _logDebug('Path: ${uri.path}');
+
+      FirebaseMessaging messaging = FirebaseMessaging.instance;
+      String? fcmToken;
+
+      if (Platform.isIOS) {
+        _logInfo('Requesting iOS notification permissions...');
+        final settings = await FirebaseMessaging.instance.requestPermission(
+          alert: true,
+          announcement: false,
+          badge: true,
+          carPlay: false,
+          criticalAlert: false,
+          provisional: false,
+          sound: true,
+        );
+        _logDebug('iOS notification settings:');
+        _logDebug('- Authorization status: ${settings.authorizationStatus}');
+
+        int maxRetries = foundation.kReleaseMode ? 10 : 5;
+        int currentRetry = 0;
+        String? apnsToken;
+
+        while (currentRetry < maxRetries) {
+          _logDebug(
+            'Attempting to get APNS token (Attempt ${currentRetry + 1}/$maxRetries)',
+          );
+          apnsToken = await messaging.getAPNSToken();
+          if (apnsToken != null) {
+            _logInfo('APNS token obtained successfully');
+            break;
+          }
+          _logWarning('APNS token not available, waiting longer...');
+          await Future.delayed(
+            Duration(seconds: foundation.kReleaseMode ? 3 : 2),
+          );
+          currentRetry++;
+        }
+
+        if (apnsToken == null) {
+          _logError('Failed to get APNS token after $maxRetries attempts');
+          await _storeAppLog(accessToken, 'device_token_update_started');
+          return;
+        }
       }
-    } catch (error) {
-      print('Error updating device token: $error');
+
+      int fcmMaxRetries = foundation.kReleaseMode ? 5 : 3;
+      int fcmCurrentRetry = 0;
+
+      while (fcmCurrentRetry < fcmMaxRetries) {
+        _logDebug(
+          'Attempting to get FCM token (Attempt ${fcmCurrentRetry + 1}/$fcmMaxRetries)',
+        );
+        try {
+          fcmToken = await messaging.getToken();
+          if (fcmToken != null) {
+            _logInfo('FCM token obtained successfully');
+            break;
+          }
+        } catch (e) {
+          _logError('Error getting FCM token: $e');
+        }
+        await Future.delayed(
+          Duration(seconds: foundation.kReleaseMode ? 3 : 2),
+        );
+        fcmCurrentRetry++;
+      }
+
+      if (fcmToken == null) {
+        _logError('Failed to get FCM token after $fcmMaxRetries attempts');
+        await _storeAppLog(accessToken, 'device_token_update_started');
+        return;
+      }
+
+      if (fcmToken.length > 255) {
+        _logError('FCM token exceeds maximum length of 255 characters');
+        await _storeAppLog(accessToken, 'device_token_update_started');
+        return;
+      }
+
+      final deviceType = Platform.isIOS ? 'ios' : 'android';
+      final requestBody = {'token': fcmToken, 'type': deviceType};
+
+      if (!accessToken.isNotEmpty) {
+        _logError('Access token is empty, aborting API call');
+        await _storeAppLog(accessToken, 'device_token_update_started');
+        return;
+      }
+
+      _logInfo('====== Making API Call ======');
+      _logDebug('Full URL: $_deviceUpdateUrl');
+
+      await _storeAppLog(
+        accessToken,
+        'device_token_before_updating_device_token',
+        payload: {
+          'platform': Platform.isIOS ? 'iOS' : 'Android',
+          'environment': foundation.kReleaseMode ? 'Production' : 'Debug',
+          'timestamp_start': DateTime.now().toIso8601String(),
+        },
+      );
+
+      try {
+        final response = await http
+            .post(
+              Uri.parse(_deviceUpdateUrl),
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer $accessToken',
+                'Accept': 'application/json',
+                'User-Agent':
+                    'Flock Business App ${Platform.isIOS ? 'iOS' : 'Android'} ${foundation.kReleaseMode ? 'Production' : 'Debug'}',
+              },
+              body: jsonEncode(requestBody),
+            )
+            .timeout(
+              Duration(seconds: foundation.kReleaseMode ? 60 : 30),
+              onTimeout: () {
+                _storeAppLog(
+                  accessToken,
+                  'device_token_update_timeout',
+                  payload: {
+                    'platform': Platform.isIOS ? 'iOS' : 'Android',
+                    'environment':
+                        foundation.kReleaseMode ? 'Production' : 'Debug',
+                    'timestamp': DateTime.now().toIso8601String(),
+                  },
+                );
+                _logWarning('Request timed out');
+                throw TimeoutException('Request timed out');
+              },
+            );
+
+        await _storeAppLog(accessToken, '${response.statusCode}');
+
+        _logInfo('====== Response Received ======');
+        _logDebug('Status Code: ${response.statusCode}');
+        _logDebug('Response Headers: ${response.headers}');
+        _logDebug('Response Body: ${response.body}');
+
+        if (response.statusCode == 200) {
+          await _storeAppLog(accessToken, '${response.statusCode}');
+
+          _logInfo('Device token updated successfully');
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString(
+            'last_token_update',
+            DateTime.now().toIso8601String(),
+          );
+          await FCMService.setupFCMListeners(accessToken);
+
+          await _storeAppLog(
+            accessToken,
+            'device_token_update_success',
+            payload: {
+              'platform': Platform.isIOS ? 'iOS' : 'Android',
+              'environment': foundation.kReleaseMode ? 'Production' : 'Debug',
+              'timestamp_end': DateTime.now().toIso8601String(),
+              'response_status': response.statusCode,
+            },
+          );
+        } else {
+          _logError(
+            'Failed to update device token. Status: ${response.statusCode}',
+          );
+
+          await _storeAppLog(
+            accessToken,
+            'device_token_update_failed',
+            payload: {
+              'platform': Platform.isIOS ? 'iOS' : 'Android',
+              'environment': foundation.kReleaseMode ? 'Production' : 'Debug',
+              'timestamp_end': DateTime.now().toIso8601String(),
+              'error_status': response.statusCode,
+              'error_body': response.body,
+            },
+          );
+
+          throw Exception(
+            'Failed to update device token: ${response.statusCode}',
+          );
+        }
+      } catch (e) {
+        _logError('====== API Call Failed ======');
+        _logError('Error Type: ${e.runtimeType}');
+        _logError('Error Details: $e');
+
+        await _storeAppLog(
+          accessToken,
+          'device_token_update_error',
+          payload: {
+            'platform': Platform.isIOS ? 'iOS' : 'Android',
+            'environment': foundation.kReleaseMode ? 'Production' : 'Debug',
+            'timestamp_error': DateTime.now().toIso8601String(),
+            'error_type': e.runtimeType.toString(),
+            'error_message': e.toString(),
+          },
+        );
+
+        if (e is SocketException) {
+          _logWarning('Network Error: Could not connect to server');
+        } else if (e is TimeoutException) {
+          _logWarning('Request timed out');
+        } else if (e is HandshakeException) {
+          _logWarning('SSL/Security Error');
+        }
+        rethrow;
+      }
+    } catch (error, stackTrace) {
+      _logError('Error in _updateDeviceToken: $error');
+      _logError('Stack trace: $stackTrace');
+
+      await _storeAppLog(
+        accessToken,
+        'device_token_update_uncaught_error',
+        payload: {
+          'platform': Platform.isIOS ? 'iOS' : 'Android',
+          'environment': foundation.kReleaseMode ? 'Production' : 'Debug',
+          'timestamp_error': DateTime.now().toIso8601String(),
+          'error_message': error.toString(),
+          'stack_trace': stackTrace.toString(),
+        },
+      );
     }
   }
 
@@ -135,9 +425,9 @@ class _LoginScreenState extends State<LoginScreen> {
             fName = responseData['data']['user']['first_name']?.toString();
             lName = responseData['data']['user']['last_name']?.toString();
 
-            print('First name from API: $fName');
-            print('Last name from API: $lName');
-            print('User details: ${responseData['data']['user']}');
+            _logDebug('First name from API: $fName');
+            _logDebug('Last name from API: $lName');
+            _logDebug('User details: ${responseData['data']['user']}');
           } else {
             userId =
                 responseData['userId']?.toString() ??
@@ -152,13 +442,31 @@ class _LoginScreenState extends State<LoginScreen> {
           if (fName != null) await prefs.setString('firstName', fName);
           if (lName != null) await prefs.setString('lastName', lName);
 
-          print('Stored firstName: ${prefs.getString('firstName')}');
-          print('Stored lastName: ${prefs.getString('lastName')}');
+          _logDebug('Stored firstName: ${prefs.getString('firstName')}');
+          _logDebug('Stored lastName: ${prefs.getString('lastName')}');
+
+          // Navigate first, then update token in background
+          Navigator.pushReplacementNamed(context, '/home');
+
+          // Add a longer delay before updating device token in release mode
+          _logInfo('Waiting before device token update...');
+          await Future.delayed(
+            Duration(seconds: foundation.kReleaseMode ? 5 : 2),
+          );
 
           // Call API to update device token after successful login
-          await _updateDeviceToken(token);
-
-          Navigator.pushReplacementNamed(context, '/home');
+          try {
+            await _updateDeviceToken(token);
+          } catch (e) {
+            _logError('Failed to update device token: $e');
+            // Retry once after a longer delay
+            await Future.delayed(Duration(seconds: 3));
+            try {
+              await _updateDeviceToken(token);
+            } catch (e) {
+              _logError('Failed to update device token on retry: $e');
+            }
+          }
         } else {
           _showError(
             responseData['message'] ?? 'Please check your email or password',
@@ -197,62 +505,120 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildEmailField() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color:
+            isDarkMode
+                ? Theme.of(context).colorScheme.surface.withOpacity(0.1)
+                : Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 5.0,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+        ),
       ),
       child: TextField(
         controller: _emailController,
         keyboardType: TextInputType.emailAddress,
-        style: const TextStyle(
-          color: Colors.black,
+        style: TextStyle(
+          color: Theme.of(context).colorScheme.onBackground,
           fontSize: 14.0,
           fontFamily: 'YourFontFamily',
         ),
-        decoration: AppConstants.textFieldDecoration.copyWith(
+        decoration: InputDecoration(
           hintText: "Enter Email Address",
           errorText: _emailError,
+          hintStyle: TextStyle(
+            color: Theme.of(context).colorScheme.onBackground.withOpacity(0.5),
+            fontSize: 14.0,
+          ),
+          filled: true,
+          fillColor: Colors.transparent,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 15,
+            vertical: 15,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10.0),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10.0),
+            borderSide: BorderSide(
+              color: Theme.of(context).colorScheme.primary,
+            ),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10.0),
+            borderSide: BorderSide(color: Theme.of(context).colorScheme.error),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10.0),
+            borderSide: BorderSide(color: Theme.of(context).colorScheme.error),
+          ),
         ),
       ),
     );
   }
 
   Widget _buildPasswordField() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color:
+            isDarkMode
+                ? Theme.of(context).colorScheme.surface.withOpacity(0.1)
+                : Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 5.0,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+        ),
       ),
       child: TextField(
         controller: _passwordController,
         obscureText: _obscureText,
-        style: const TextStyle(
-          color: Colors.black,
+        style: TextStyle(
+          color: Theme.of(context).colorScheme.onBackground,
           fontSize: 14.0,
           fontFamily: 'YourFontFamily',
         ),
-        decoration: AppConstants.textFieldDecoration.copyWith(
+        decoration: InputDecoration(
           hintText: "Enter password",
           errorText: _passwordError,
+          hintStyle: TextStyle(
+            color: Theme.of(context).colorScheme.onBackground.withOpacity(0.5),
+            fontSize: 14.0,
+          ),
+          filled: true,
+          fillColor: Colors.transparent,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 15,
+            vertical: 15,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10.0),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10.0),
+            borderSide: BorderSide(
+              color: Theme.of(context).colorScheme.primary,
+            ),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10.0),
+            borderSide: BorderSide(color: Theme.of(context).colorScheme.error),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10.0),
+            borderSide: BorderSide(color: Theme.of(context).colorScheme.error),
+          ),
           suffixIcon: IconButton(
             icon: Icon(
               _obscureText ? Icons.visibility : Icons.visibility_off,
-              color: Colors.grey,
+              color: Theme.of(
+                context,
+              ).colorScheme.onBackground.withOpacity(0.5),
             ),
             onPressed: () {
               setState(() {
@@ -267,17 +633,19 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
           Positioned.fill(
             child: Image.asset(
-              Theme.of(context).brightness == Brightness.dark
-                  ? 'assets/Background.jpg'
-                  : 'assets/login_back.jpg',
-              // fit: BoxFit.cover,
-              color: Theme.of(context).colorScheme.background.withOpacity(0.2),
+              isDarkMode ? 'assets/Background.jpg' : 'assets/login_back.jpg',
+              fit: BoxFit.cover,
+              color: Theme.of(
+                context,
+              ).colorScheme.background.withOpacity(isDarkMode ? 0.1 : 0.2),
               colorBlendMode: BlendMode.darken,
             ),
           ),
@@ -297,15 +665,21 @@ class _LoginScreenState extends State<LoginScreen> {
                           height: 120,
                         ),
                         const SizedBox(height: 30),
-                        const Text('Login', style: TextStyle(fontSize: 24)),
+                        Text(
+                          'Login',
+                          style: TextStyle(
+                            fontSize: 24,
+                            color: Theme.of(context).colorScheme.onBackground,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                         Text(
                           'Login to your account',
                           style: TextStyle(
                             fontSize: 16,
-                            color:
-                                Theme.of(context).brightness == Brightness.dark
-                                    ? Colors.white
-                                    : Colors.black54,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onBackground.withOpacity(0.7),
                           ),
                         ),
                         const SizedBox(height: 20),
@@ -328,16 +702,17 @@ class _LoginScreenState extends State<LoginScreen> {
                                   TextSpan(
                                     text: 'Forgot password? ',
                                     style: TextStyle(
-                                      color: Theme.of(context).brightness ==
-                                              Brightness.dark
-                                          ? Colors.white
-                                          : Colors.black54,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onBackground
+                                          .withOpacity(0.7),
                                     ),
                                   ),
-                                  const TextSpan(
+                                  TextSpan(
                                     text: 'Reset here',
                                     style: TextStyle(
-                                      color: Color.fromRGBO(255, 130, 16, 1),
+                                      color:
+                                          Theme.of(context).colorScheme.primary,
                                     ),
                                   ),
                                 ],
@@ -350,25 +725,24 @@ class _LoginScreenState extends State<LoginScreen> {
                           text: 'Continue',
                           onPressed: _login,
                         ),
-
                         const SizedBox(height: 20),
                         TextButton(
                           onPressed:
                               () => Navigator.pushNamed(context, '/register'),
                           child: Text.rich(
                             TextSpan(
-                              text: 'Don’t have an account? ',
+                              text: 'Don\'t have an account? ',
                               style: TextStyle(
-                                color: Theme.of(context).brightness ==
-                                        Brightness.dark
-                                    ? Colors.white
-                                    : Colors.black54,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onBackground.withOpacity(0.7),
                               ),
                               children: [
-                                const TextSpan(
+                                TextSpan(
                                   text: 'Create New',
                                   style: TextStyle(
-                                    color: Color.fromRGBO(255, 130, 16, 1),
+                                    color:
+                                        Theme.of(context).colorScheme.primary,
                                   ),
                                 ),
                               ],

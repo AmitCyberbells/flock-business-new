@@ -9,6 +9,43 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flock/app_colors.dart';
 
+class Design {
+  static const Color primaryColorOrange = Color.fromRGBO(255, 152, 0, 1);
+  static const Color black = Colors.black;
+  static const Color white = Colors.white;
+  static const Color lightPurple = Color(0xFFF0F0F5);
+  static const Color blue = Colors.blue;
+  static const Color errorRed = Colors.red;
+
+  // Dark mode colors
+  static const Color darkBackground = Color(0xFF1E1E1E);
+  static const Color darkSurface = Color(0xFF242424);
+  static const Color darkBorder = Color(0xFF3E3E3E);
+
+  // Theme-aware colors
+  static Color getBackgroundColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? darkBackground
+        : white;
+  }
+
+  static Color getSurfaceColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? darkSurface
+        : white;
+  }
+
+  static Color getTextColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark ? white : black;
+  }
+
+  static Color getBorderColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? darkBorder
+        : Colors.grey.withOpacity(0.3);
+  }
+}
+
 /* ───────────────────────────── SCREEN ───────────────────────────── */
 
 class AddOfferScreen extends StatefulWidget {
@@ -95,9 +132,10 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
       if (res.statusCode == 200) {
         final json = jsonDecode(res.body);
         if (json['status'] == 'success' && json['data'] != null) {
-          final v = (json['data'] as List<dynamic>)
-              .map((e) => {'id': e['id'], 'name': e['name'] ?? 'Unnamed'})
-              .toList();
+          final v =
+              (json['data'] as List<dynamic>)
+                  .map((e) => {'id': e['id'], 'name': e['name'] ?? 'Unnamed'})
+                  .toList();
           _venues = [
             {'id': null, 'name': 'Select Venue'},
             ...v,
@@ -143,7 +181,8 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
 
   Future<void> _submitOffer() async {
     setState(() {
-      _venueValidationError = _selectedVenue == null || _selectedVenue!['id'] == null;
+      _venueValidationError =
+          _selectedVenue == null || _selectedVenue!['id'] == null;
       _imageValidationError = _pickedImage == null;
       _redeemTypeValidationError = !_useVenuePoints && !_useAppPoints;
       _showValidationMessages = true;
@@ -185,23 +224,26 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
       return;
     }
 
-    final req = http.MultipartRequest(
-      'POST',
-      Uri.parse('https://api.getflock.io/api/vendor/offers'),
-    )..headers['Authorization'] = 'Bearer $token'
-        ..fields.addAll({
-          'name': name,
-          'description': desc,
-          'venue_id': _selectedVenue!['id'].toString(),
-          'redeem_by': _useVenuePoints && _useAppPoints
-              ? 'both'
-              : _useVenuePoints
-                  ? 'venue_points'
-                  : 'feather_points',
-          'venue_points': venuePts,
-          'feather_points': appPts,
-          'redemption_limit': redemptionLimit.toString(),
-        });
+    final req =
+        http.MultipartRequest(
+            'POST',
+            Uri.parse('https://api.getflock.io/api/vendor/offers'),
+          )
+          ..headers['Authorization'] = 'Bearer $token'
+          ..fields.addAll({
+            'name': name,
+            'description': desc,
+            'venue_id': _selectedVenue!['id'].toString(),
+            'redeem_by':
+                _useVenuePoints && _useAppPoints
+                    ? 'both'
+                    : _useVenuePoints
+                    ? 'venue_points'
+                    : 'feather_points',
+            'venue_points': venuePts,
+            'feather_points': appPts,
+            'redemption_limit': redemptionLimit.toString(),
+          });
 
     if (_pickedImage != null) {
       req.files.add(
@@ -214,7 +256,9 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
       final data = jsonDecode(res.body);
       if (res.statusCode == 200 || res.statusCode == 201) {
         if (data['status'] == 'success' ||
-            (data['message'] ?? '').toString().toLowerCase().contains('success')) {
+            (data['message'] ?? '').toString().toLowerCase().contains(
+              'success',
+            )) {
           if (mounted) _showSuccessDialog();
         }
       }
@@ -226,16 +270,24 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
   }
 
   void _showSuccessDialog() => showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-          backgroundColor: Theme.of(context).colorScheme.surface,
+    context: context,
+    builder:
+        (_) => AlertDialog(
+          backgroundColor: Design.getSurfaceColor(context),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
           title: Text(
             'Success',
-            style: Theme.of(context).textTheme.titleLarge,
+            style: TextStyle(
+              color: Design.getTextColor(context),
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           content: Text(
             'Offer added successfully!',
-            style: Theme.of(context).textTheme.bodyMedium,
+            style: TextStyle(color: Design.getTextColor(context), fontSize: 14),
           ),
           actions: [
             TextButton(
@@ -245,14 +297,16 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
               },
               child: Text(
                 'OK',
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
+                style: TextStyle(
+                  color: Design.primaryColorOrange,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
           ],
         ),
-      );
+  );
 
   void _scrollToError() {
     final ctx = _formKey.currentContext;
@@ -266,257 +320,294 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        appBar: AppConstants.customAppBar(context: context, title: 'Add New Offer'),
-        resizeToAvoidBottomInset: false,
-        body: Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-          child: SingleChildScrollView(
-            controller: _scrollController,
-            padding: const EdgeInsets.all(16),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Title of Offer',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: 16),
-                  ),
-                  const SizedBox(height: 8),
-                  AppConstants.customTextField(
-                    controller: _nameController,
-                    hintText: 'Title of Offer',
-                    textInputAction: TextInputAction.next,
-                    validator: (v) => v == null || v.isEmpty ? '' : null,
-                  ),
-                  if (_showValidationMessages && _nameController.text.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 6, left: 8),
-                      child: Text(
-                        'Please Enter Title',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.red,
-                              fontSize: 12,
-                            ),
-                      ),
-                    ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Venue',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: 16),
-                  ),
-                  const SizedBox(height: 8),
-                  _buildVenueDropdown(),
-                  if (_venueValidationError)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 6, left: 8),
-                      child: Text(
-                        'Please select venue',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.red,
-                              fontSize: 12,
-                            ),
-                      ),
-                    ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Redemption Requirements',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: 16),
-                  ),
-                  _buildRedeemTypeRow(),
-                  if (_redeemTypeValidationError)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 6, left: 8),
-                      child: Text(
-                        'Select at least one redeem type',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.red,
-                              fontSize: 12,
-                            ),
-                      ),
-                    ),
-                  if (_useVenuePoints || _useAppPoints) ...[
-                    _buildPointsInputs(),
-                    const SizedBox(height: 16),
-                  ],
-                  Text(
-                    'Description',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: 16),
-                  ),
-                  const SizedBox(height: 8),
-                  _buildDescriptionField(),
-                  if (_showValidationMessages && _descriptionController.text.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 6, left: 8),
-                      child: Text(
-                        'Please enter the description',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.red,
-                              fontSize: 12,
-                            ),
-                      ),
-                    ),
-                  const SizedBox(height: 16),
-                  _buildRedemptionLimit(),
-                  if (_showValidationMessages &&
-                      _redemptionLimitController.text.isNotEmpty &&
-                      (int.tryParse(_redemptionLimitController.text) == null ||
-                          int.parse(_redemptionLimitController.text) < -1))
-                    Padding(
-                      padding: const EdgeInsets.only(top: 6, left: 8),
-                      child: Text(
-                        'Invalid redemption limit',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.red,
-                              fontSize: 12,
-                            ),
-                      ),
-                    ),
-                  const SizedBox(height: 16),
-                  _buildImagePicker(),
-                  if (_imageValidationError)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 6, left: 8),
-                      child: Text(
-                        'Please upload an image',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.red,
-                              fontSize: 12,
-                            ),
-                      ),
-                    ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    height: 48,
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      onPressed: _isSubmitting ? null : _submitOffer,
-                      child: _isSubmitting
-                          ? Container(
-                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.19),
-                              child: Center(
-                                child: Image.asset(
-                                  'assets/Bird_Full_Eye_Blinking.gif',
-                                  width: 100,
-                                  height: 100,
-                                ),
-                              ),
-                            )
-                          : Text(
-                              'Save Offer',
-                              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                                    color: Theme.of(context).colorScheme.onPrimary,
-                                    fontSize: 16,
-                                  ),
-                            ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                ],
+    backgroundColor: Design.getBackgroundColor(context),
+    appBar: AppBar(
+      backgroundColor: Design.getSurfaceColor(context),
+      leading: IconButton(
+        icon: Icon(Icons.arrow_back, color: Design.getTextColor(context)),
+        onPressed: () => Navigator.pop(context),
+      ),
+      title: Text(
+        'Add New Offer',
+        style: TextStyle(
+          color: Design.getTextColor(context),
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      elevation: 0,
+    ),
+    resizeToAvoidBottomInset: false,
+    body: Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: SingleChildScrollView(
+        controller: _scrollController,
+        padding: const EdgeInsets.all(16),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Title of Offer',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Design.getTextColor(context),
+                ),
               ),
-            ),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _nameController,
+                style: TextStyle(
+                  color: Design.getTextColor(context),
+                  fontSize: 14,
+                ),
+                decoration: _inputDecoration('Title of Offer'),
+                textInputAction: TextInputAction.next,
+                validator: (v) => v == null || v.isEmpty ? '' : null,
+              ),
+              if (_showValidationMessages && _nameController.text.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4, left: 12),
+                  child: Text(
+                    'Please Enter Title',
+                    style: TextStyle(color: Design.errorRed, fontSize: 12),
+                  ),
+                ),
+              const SizedBox(height: 16),
+              Text(
+                'Venue',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Design.getTextColor(context),
+                ),
+              ),
+              const SizedBox(height: 8),
+              _buildVenueDropdown(),
+              if (_venueValidationError)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4, left: 12),
+                  child: Text(
+                    'Please select venue',
+                    style: TextStyle(color: Design.errorRed, fontSize: 12),
+                  ),
+                ),
+              const SizedBox(height: 16),
+              Text(
+                'Redemption Requirements',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Design.getTextColor(context),
+                ),
+              ),
+              _buildRedeemTypeRow(),
+              if (_redeemTypeValidationError)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4, left: 12),
+                  child: Text(
+                    'Select at least one redeem type',
+                    style: TextStyle(color: Design.errorRed, fontSize: 12),
+                  ),
+                ),
+              if (_useVenuePoints || _useAppPoints) ...[
+                _buildPointsInputs(),
+                const SizedBox(height: 16),
+              ],
+              Text(
+                'Description',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Design.getTextColor(context),
+                ),
+              ),
+              const SizedBox(height: 8),
+              _buildDescriptionField(),
+              if (_showValidationMessages &&
+                  _descriptionController.text.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4, left: 12),
+                  child: Text(
+                    'Please enter the description',
+                    style: TextStyle(color: Design.errorRed, fontSize: 12),
+                  ),
+                ),
+              const SizedBox(height: 16),
+              _buildRedemptionLimit(),
+              if (_showValidationMessages &&
+                  _redemptionLimitController.text.isNotEmpty &&
+                  (int.tryParse(_redemptionLimitController.text) == null ||
+                      int.parse(_redemptionLimitController.text) < -1))
+                Padding(
+                  padding: const EdgeInsets.only(top: 4, left: 12),
+                  child: Text(
+                    'Invalid redemption limit',
+                    style: TextStyle(color: Design.errorRed, fontSize: 12),
+                  ),
+                ),
+              const SizedBox(height: 16),
+              _buildImagePicker(),
+              if (_imageValidationError)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4, left: 12),
+                  child: Text(
+                    'Please upload an image',
+                    style: TextStyle(color: Design.errorRed, fontSize: 12),
+                  ),
+                ),
+              const SizedBox(height: 16),
+              SizedBox(
+                height: 48,
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Design.primaryColorOrange,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  onPressed: _isSubmitting ? null : _submitOffer,
+                  child:
+                      _isSubmitting
+                          ? Container(
+                            color: Design.getTextColor(
+                              context,
+                            ).withOpacity(0.19),
+                            child: Center(
+                              child: Image.asset(
+                                'assets/Bird_Full_Eye_Blinking.gif',
+                                width: 100,
+                                height: 100,
+                              ),
+                            ),
+                          )
+                          : Text(
+                            'Save Offer',
+                            style: TextStyle(
+                              color: Design.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
           ),
         ),
-      );
+      ),
+    ),
+  );
 
   Widget _buildVenueDropdown() => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          GestureDetector(
-            onTap: () => _scrollToBottom(),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: _venueValidationError
-                      ? Colors.red
-                      : Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
-                    spreadRadius: 1,
-                    blurRadius: 2,
-                    offset: const Offset(0, 1),
-                  ),
-                ],
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      GestureDetector(
+        onTap: () => _scrollToBottom(),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Design.getSurfaceColor(context),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color:
+                  _venueValidationError
+                      ? Design.errorRed
+                      : Design.getBorderColor(context),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color:
+                    Theme.of(context).brightness == Brightness.dark
+                        ? Colors.black.withOpacity(0.3)
+                        : Colors.black.withOpacity(0.1),
+                spreadRadius: 1,
+                blurRadius: 6,
+                offset: const Offset(0, 3),
               ),
-              child: _isVenuesLoading
+            ],
+          ),
+          child:
+              _isVenuesLoading
                   ? Padding(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 14,
-                        horizontal: 16,
-                      ),
-                      child: Row(
-                        children: [
-                          SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Theme.of(context).colorScheme.primary,
-                              ),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 14,
+                      horizontal: 16,
+                    ),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Design.primaryColorOrange,
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Loading venues...',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                                  fontSize: 14,
-                                ),
-                          ),
-                        ],
-                      ),
-                    )
-                  : DropdownButtonHideUnderline(
-                      child: ButtonTheme(
-                        alignedDropdown: true,
-                        child: DropdownButton<Map<String, dynamic>>(
-                          value: _selectedVenue,
-                          isExpanded: true,
-                          icon: Icon(
-                            Icons.keyboard_arrow_down,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                          items: _venues
-                              .map(
-                                (v) => DropdownMenuItem<Map<String, dynamic>>(
-                                  value: v,
-                                  child: Text(
-                                    v['name'] ?? 'Unnamed',
-                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                          fontSize: 14,
-                                        ),
-                                  ),
-                                ),
-                              )
-                              .toList(),
-                          onChanged: (v) => setState(() {
-                            _selectedVenue = v;
-                            _venueValidationError = false;
-                            _scrollToBottom();
-                          }),
                         ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Loading venues...',
+                          style: TextStyle(
+                            color: Design.getTextColor(
+                              context,
+                            ).withOpacity(0.7),
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                  : DropdownButtonHideUnderline(
+                    child: ButtonTheme(
+                      alignedDropdown: true,
+                      child: DropdownButton<Map<String, dynamic>>(
+                        value: _selectedVenue,
+                        isExpanded: true,
+                        icon: Icon(
+                          Icons.keyboard_arrow_down,
+                          color: Design.getTextColor(context).withOpacity(0.5),
+                        ),
+                        dropdownColor: Design.getSurfaceColor(context),
+                        items:
+                            _venues
+                                .map(
+                                  (v) => DropdownMenuItem<Map<String, dynamic>>(
+                                    value: v,
+                                    child: Text(
+                                      v['name'] ?? 'Unnamed',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Design.getTextColor(context),
+                                      ),
+                                    ),
+                                  ),
+                                )
+                                .toList(),
+                        onChanged:
+                            (v) => setState(() {
+                              _selectedVenue = v;
+                              _venueValidationError = false;
+                              _scrollToBottom();
+                            }),
                       ),
                     ),
-            ),
-          ),
-        ],
-      );
+                  ),
+        ),
+      ),
+    ],
+  );
 
   Widget _buildRedeemTypeRow() {
     Color _label(bool enabled) =>
-        enabled ? Theme.of(context).colorScheme.onSurface : Theme.of(context).colorScheme.onSurface.withOpacity(0.5);
+        enabled
+            ? Design.getTextColor(context)
+            : Design.getTextColor(context).withOpacity(0.5);
 
     return Wrap(
       spacing: 24,
@@ -528,7 +619,7 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Checkbox(
-                activeColor: Theme.of(context).colorScheme.primary,
+                activeColor: Design.primaryColorOrange,
                 visualDensity: const VisualDensity(
                   horizontal: -2,
                   vertical: -2,
@@ -537,15 +628,14 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
                 onChanged: (value) {
                   setState(() {
                     _useVenuePoints = value ?? false;
-                    _redeemTypeValidationError = !_useVenuePoints && !_useAppPoints;
+                    _redeemTypeValidationError =
+                        !_useVenuePoints && !_useAppPoints;
                   });
                 },
               ),
               Text(
                 'Venue Points',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: _label(true),
-                    ),
+                style: TextStyle(color: _label(true), fontSize: 14),
               ),
             ],
           ),
@@ -556,7 +646,7 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Checkbox(
-                activeColor: Theme.of(context).colorScheme.primary,
+                activeColor: Design.primaryColorOrange,
                 visualDensity: const VisualDensity(
                   horizontal: -2,
                   vertical: -2,
@@ -565,15 +655,14 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
                 onChanged: (value) {
                   setState(() {
                     _useAppPoints = value ?? false;
-                    _redeemTypeValidationError = !_useVenuePoints && !_useAppPoints;
+                    _redeemTypeValidationError =
+                        !_useVenuePoints && !_useAppPoints;
                   });
                 },
               ),
               Text(
                 'Feathers',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: _label(true),
-                    ),
+                style: TextStyle(color: _label(true), fontSize: 14),
               ),
             ],
           ),
@@ -583,231 +672,289 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
   }
 
   Widget _buildPointsInputs() => Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (_useVenuePoints)
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  TextFormField(
-                    controller: _venuePointsController,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    decoration: _inputDecoration('Venue Points (min 5)'),
-                    validator: (v) {
-                      if (!_useVenuePoints) return null;
-                      if (v == null || v.isEmpty) return 'Enter Venue Points';
-                      final p = int.tryParse(v);
-                      if (p == null || p < 5) return 'Min 5';
-                      return null;
-                    },
-                  ),
-                  if (_showValidationMessages &&
-                      _useVenuePoints &&
-                      (_venuePointsController.text.isEmpty ||
-                          (int.tryParse(_venuePointsController.text) != null &&
-                              int.parse(_venuePointsController.text) < 5)))
-                    Padding(
-                      padding: const EdgeInsets.only(top: 6, left: 8),
-                      child: Text(
-                        _venuePointsController.text.isEmpty
-                            ? 'Please enter Venue Points'
-                            : 'Minimum 5 points',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.red,
-                              fontSize: 12,
-                            ),
-                      ),
-                    ),
-                ],
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      if (_useVenuePoints)
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextFormField(
+                controller: _venuePointsController,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                decoration: _inputDecoration('Venue Points (min 5)'),
+                validator: (v) {
+                  if (!_useVenuePoints) return null;
+                  if (v == null || v.isEmpty) return 'Enter Venue Points';
+                  final p = int.tryParse(v);
+                  if (p == null || p < 5) return 'Min 5';
+                  return null;
+                },
               ),
-            ),
-          if (_useVenuePoints && _useAppPoints) const SizedBox(width: 16),
-          if (_useAppPoints)
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  TextFormField(
-                    controller: _appPointsController,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    decoration: _inputDecoration('Feathers (min 5)'),
-                    validator: (v) {
-                      if (!_useAppPoints) return null;
-                      if (v == null || v.isEmpty) return 'Enter Feathers';
-                      final p = int.tryParse(v);
-                      if (p == null || p < 5) return 'Min 5';
-                      return null;
-                    },
-                  ),
-                  if (_showValidationMessages &&
-                      _useAppPoints &&
-                      (_appPointsController.text.isEmpty ||
-                          (int.tryParse(_appPointsController.text) != null &&
-                              int.parse(_appPointsController.text) < 5)))
-                    Padding(
-                      padding: const EdgeInsets.only(top: 6, left: 8),
-                      child: Text(
-                        _appPointsController.text.isEmpty
-                            ? 'Please enter Feathers'
-                            : 'Minimum 5 points',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.red,
-                              fontSize: 12,
-                            ),
-                      ),
+              if (_showValidationMessages &&
+                  _useVenuePoints &&
+                  (_venuePointsController.text.isEmpty ||
+                      (int.tryParse(_venuePointsController.text) != null &&
+                          int.parse(_venuePointsController.text) < 5)))
+                Padding(
+                  padding: const EdgeInsets.only(top: 6, left: 8),
+                  child: Text(
+                    _venuePointsController.text.isEmpty
+                        ? 'Please enter Venue Points'
+                        : 'Minimum 5 points',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.red,
+                      fontSize: 12,
                     ),
-                ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+      if (_useVenuePoints && _useAppPoints) const SizedBox(width: 16),
+      if (_useAppPoints)
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextFormField(
+                controller: _appPointsController,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                decoration: _inputDecoration('Feathers (min 5)'),
+                validator: (v) {
+                  if (!_useAppPoints) return null;
+                  if (v == null || v.isEmpty) return 'Enter Feathers';
+                  final p = int.tryParse(v);
+                  if (p == null || p < 5) return 'Min 5';
+                  return null;
+                },
               ),
-            ),
-        ],
-      );
+              if (_showValidationMessages &&
+                  _useAppPoints &&
+                  (_appPointsController.text.isEmpty ||
+                      (int.tryParse(_appPointsController.text) != null &&
+                          int.parse(_appPointsController.text) < 5)))
+                Padding(
+                  padding: const EdgeInsets.only(top: 6, left: 8),
+                  child: Text(
+                    _appPointsController.text.isEmpty
+                        ? 'Please enter Feathers'
+                        : 'Minimum 5 points',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.red,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+    ],
+  );
 
   InputDecoration _inputDecoration(String hint) => InputDecoration(
-        hintText: hint,
-        hintStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
-              fontSize: 12,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-            ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
-          ),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(
-            color: Theme.of(context).colorScheme.primary,
-          ),
-        ),
-      );
+    hintText: hint,
+    hintStyle: TextStyle(
+      color: Design.getTextColor(context).withOpacity(0.5),
+      fontSize: 14,
+    ),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+    filled: true,
+    fillColor: Design.getSurfaceColor(context),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10),
+      borderSide: BorderSide(color: Design.getBorderColor(context)),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10),
+      borderSide: BorderSide(color: Design.getBorderColor(context)),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10),
+      borderSide: const BorderSide(color: Design.primaryColorOrange),
+    ),
+    errorBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10),
+      borderSide: BorderSide(color: Design.errorRed),
+    ),
+    focusedErrorBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10),
+      borderSide: BorderSide(color: Design.errorRed),
+    ),
+  );
 
   Widget _buildDescriptionField() => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
-              ),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: TextFormField(
-              controller: _descriptionController,
-              maxLines: 4,
-              decoration: InputDecoration(
-                hintText: 'Offer description',
-                hintStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-                    ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                border: InputBorder.none,
-              ),
-              textInputAction: TextInputAction.done,
-              onFieldSubmitted: (_) => FocusScope.of(context).unfocus(),
-              validator: (v) => v == null || v.isEmpty ? 'Enter description' : null,
-            ),
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Container(
+        decoration: BoxDecoration(
+          color: Design.getSurfaceColor(context),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color:
+                _showValidationMessages && _descriptionController.text.isEmpty
+                    ? Design.errorRed
+                    : Design.getBorderColor(context),
           ),
-        ],
-      );
+          boxShadow: [
+            BoxShadow(
+              color:
+                  Theme.of(context).brightness == Brightness.dark
+                      ? Colors.black.withOpacity(0.3)
+                      : Colors.black.withOpacity(0.1),
+              spreadRadius: 1,
+              blurRadius: 6,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: TextFormField(
+          controller: _descriptionController,
+          maxLines: 4,
+          style: TextStyle(color: Design.getTextColor(context), fontSize: 14),
+          decoration: InputDecoration(
+            hintText: 'Offer description',
+            hintStyle: TextStyle(
+              color: Design.getTextColor(context).withOpacity(0.5),
+              fontSize: 14,
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 15,
+              vertical: 15,
+            ),
+            border: InputBorder.none,
+          ),
+          textInputAction: TextInputAction.done,
+          onFieldSubmitted: (_) => FocusScope.of(context).unfocus(),
+          validator: (v) => v == null || v.isEmpty ? 'Enter description' : null,
+        ),
+      ),
+    ],
+  );
 
   Widget _buildRedemptionLimit() => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          RichText(
-            text: TextSpan(
-              children: [
-                TextSpan(
-                  text: 'Redemption Limit  ',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontSize: 16,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
-                ),
-                TextSpan(
-                  text: '(Leave blank for unlimited)',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        fontSize: 14,
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                      ),
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      RichText(
+        text: TextSpan(
+          children: [
+            TextSpan(
+              text: 'Redemption Limit  ',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Design.getTextColor(context),
+              ),
+            ),
+            TextSpan(
+              text: '(Leave blank for unlimited)',
+              style: TextStyle(
+                fontSize: 14,
+                color: Design.getTextColor(context).withOpacity(0.7),
+              ),
+            ),
+          ],
+        ),
+      ),
+      const SizedBox(height: 8),
+      TextFormField(
+        controller: _redemptionLimitController,
+        keyboardType: TextInputType.number,
+        style: TextStyle(color: Design.getTextColor(context), fontSize: 14),
+        decoration: _inputDecoration('Redemption Limit'),
+        validator: (v) {
+          if (v != null && v.isNotEmpty) {
+            final p = int.tryParse(v);
+            if (p == null || p < -1) return 'Invalid';
+          }
+          return null;
+        },
+      ),
+    ],
+  );
+
+  Widget _buildImagePicker() => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        'Upload Pictures',
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          color: Design.getTextColor(context),
+        ),
+      ),
+      const SizedBox(height: 8),
+      _pickedImage == null
+          ? Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: Design.getSurfaceColor(context),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color:
+                    _imageValidationError
+                        ? Design.errorRed
+                        : Design.getBorderColor(context),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? Colors.black.withOpacity(0.3)
+                          : Colors.black.withOpacity(0.1),
+                  spreadRadius: 1,
+                  blurRadius: 6,
+                  offset: const Offset(0, 3),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 8),
-          AppConstants.customTextField(
-            controller: _redemptionLimitController,
-            hintText: 'Redemption Limit',
-            textInputAction: TextInputAction.next,
-            validator: (v) {
-              if (v != null && v.isNotEmpty) {
-                final p = int.tryParse(v);
-                if (p == null || p < -1) return 'Invalid';
-              }
-              return null;
+            child: IconButton(
+              icon: Icon(
+                Icons.camera_alt,
+                size: 50,
+                color: Design.getTextColor(context).withOpacity(0.5),
+              ),
+              onPressed: () {
+                _pickImage();
+                _scrollToBottom();
+              },
+            ),
+          )
+          : InkWell(
+            onTap: () {
+              _pickImage();
+              _scrollToBottom();
             },
-          ),
-        ],
-      );
-
-  Widget _buildImagePicker() => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Upload Pictures',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: 16),
-          ),
-          const SizedBox(height: 8),
-          _pickedImage == null
-              ? Container(
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color:
+                        Theme.of(context).brightness == Brightness.dark
+                            ? Colors.black.withOpacity(0.3)
+                            : Colors.black.withOpacity(0.1),
+                    spreadRadius: 1,
+                    blurRadius: 6,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Image.file(
+                  File(_pickedImage!.path),
                   width: 80,
                   height: 80,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: _imageValidationError
-                          ? Colors.red
-                          : Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
-                    ),
-                  ),
-                  child: IconButton(
-                    icon: Icon(
-                      Icons.camera_alt,
-                      size: 50,
-                      color: Theme.of(context).iconTheme.color,
-                    ),
-                    onPressed: () {
-                      _pickImage();
-                      _scrollToBottom();
-                    },
-                  ),
-                )
-              : InkWell(
-                  onTap: () {
-                    _pickImage();
-                    _scrollToBottom();
-                  },
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.file(
-                      File(_pickedImage!.path),
-                      width: 80,
-                      height: 80,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
+                  fit: BoxFit.cover,
                 ),
-        ],
-      );
+              ),
+            ),
+          ),
+    ],
+  );
 }

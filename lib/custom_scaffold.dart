@@ -7,6 +7,41 @@ import 'package:flock/checkIns.dart';
 import 'package:flock/profile_screen.dart' as profile hide TabEggScreen;
 import 'package:flock/HomeScreen.dart';
 
+class Design {
+  static const Color primaryColorOrange = Color.fromRGBO(255, 152, 0, 1);
+  static const Color black = Colors.black;
+  static const Color white = Colors.white;
+  static const Color lightPurple = Color(0xFFF0F0F5);
+  static const Color blue = Color(0xFF2A4CE1);
+
+  // Dark mode colors
+  static const Color darkBackground = Color(0xFF1E1E1E);
+  static const Color darkSurface = Color(0xFF242424);
+  static const Color darkBorder = Color(0xFF3E3E3E);
+
+  static Color getBackgroundColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? darkBackground
+        : white;
+  }
+
+  static Color getSurfaceColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? darkSurface
+        : white;
+  }
+
+  static Color getTextColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark ? white : black;
+  }
+
+  static Color getBorderColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? darkBorder
+        : Colors.grey.withOpacity(0.3);
+  }
+}
+
 class _CustomFABLocation extends FloatingActionButtonLocation {
   @override
   Offset getOffset(ScaffoldPrelayoutGeometry scaffoldGeometry) {
@@ -23,7 +58,7 @@ class _CustomFABLocation extends FloatingActionButtonLocation {
 }
 
 class CustomScaffold extends StatelessWidget {
-  static final AssetImage _bird=const AssetImage('assets/bird.png');
+  static final AssetImage _bird = const AssetImage('assets/bird.png');
   final Widget body;
   final int currentIndex;
 
@@ -32,117 +67,120 @@ class CustomScaffold extends StatelessWidget {
     required this.body,
     required this.currentIndex,
   }) : super(key: key);
-  
+
   BuildContext get context => context;
 
   @override
   Widget build(BuildContext context) {
-    precacheImage(_bird, context); //add not to reload
+    precacheImage(_bird, context);
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
 
-    return Stack(
-      children: [
-        // Background layer
-       Container(decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor)),
-        Scaffold(
-          backgroundColor: Colors.transparent,
-          body: SafeArea(top: true, bottom: true, child: body),
-          floatingActionButtonLocation: _CustomFABLocation(),
-          floatingActionButton: GestureDetector(
-            onTap: () {
-       showModalBottomSheet(
-  context: context,
-  backgroundColor: Colors.transparent,
-  isScrollControlled: true,
-  builder: (BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => Navigator.of(context).pop(),
-      child: Stack(
-        children: [
-          Positioned(
-            bottom: MediaQuery.of(context).size.height * 0.14, // Adjust position just above bottom bar
-            left: screenWidth * 0.04,
-            right: screenWidth * 0.04,
-            child: GestureDetector(
-              onTap: () {}, // Prevent tap-through to dismiss
-              child: Container(
-                padding: EdgeInsets.all(screenWidth * 0.02),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Scaffold(
+      backgroundColor: Design.getBackgroundColor(context),
+      body: SafeArea(top: true, bottom: true, child: body),
+      floatingActionButtonLocation: _CustomFABLocation(),
+      floatingActionButton: GestureDetector(
+        onTap: () {
+          showModalBottomSheet(
+            context: context,
+            backgroundColor: Colors.transparent,
+            isScrollControlled: true,
+            builder: (BuildContext context) {
+              return GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => Navigator.of(context).pop(),
+                child: Stack(
                   children: [
-                    Expanded(
-                      child: _buildActionButton(
-                        context: context,
-                        icon: Icons.apartment,
-                        label: "Add Venue",
-                        iconColor: const Color(0xFF2A4CE1),
-                        textColor: const Color(0xFF2A4CE1),
-                        onTap: () async {
-                          Navigator.pop(context);
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => addVenue.AddEggScreen(),
+                    Positioned(
+                      bottom: MediaQuery.of(context).size.height * 0.14,
+                      left: screenWidth * 0.04,
+                      right: screenWidth * 0.04,
+                      child: GestureDetector(
+                        onTap: () {}, // Prevent tap-through to dismiss
+                        child: Container(
+                          padding: EdgeInsets.all(screenWidth * 0.02),
+                          decoration: BoxDecoration(
+                            color: Design.getSurfaceColor(context),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: Design.getBorderColor(context),
                             ),
-                          );
-                        },
-                      ),
-                    ),
-                    SizedBox(width: screenWidth * 0.03),
-                    Expanded(
-                      child: _buildActionButton(
-                        context: context,
-                        icon: Icons.percent,
-                        label: "Add Offer",
-                        iconColor: const Color(0xFF2A4CE1),
-                        textColor: const Color(0xFF2A4CE1),
-                        onTap: () {
-                          Navigator.pop(context);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => AddOfferScreen(),
-                            ),
-                          );
-                        },
+                            boxShadow: [
+                              BoxShadow(
+                                color:
+                                    Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? Colors.black.withOpacity(0.3)
+                                        : Colors.black.withOpacity(0.1),
+                                spreadRadius: 1,
+                                blurRadius: 6,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: _buildActionButton(
+                                  context: context,
+                                  icon: Icons.apartment,
+                                  label: "Add Venue",
+                                  iconColor: Design.blue,
+                                  textColor: Design.blue,
+                                  onTap: () async {
+                                    Navigator.pop(context);
+                                    await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder:
+                                            (context) =>
+                                                addVenue.AddEggScreen(),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                              SizedBox(width: screenWidth * 0.03),
+                              Expanded(
+                                child: _buildActionButton(
+                                  context: context,
+                                  icon: Icons.percent,
+                                  label: "Add Offer",
+                                  iconColor: Design.blue,
+                                  textColor: Design.blue,
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => AddOfferScreen(),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ],
                 ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  },
-);
-
+              );
             },
-            child: Center(
-              child: Image(
-               image: _bird,
-                width: screenWidth * 0.2,
-                height: screenWidth * 0.2,
-              ),
-            ),
+          );
+        },
+        child: Center(
+          child: Image(
+            image: _bird,
+            width: screenWidth * 0.2,
+            height: screenWidth * 0.2,
           ),
-          bottomNavigationBar: CustomBottomBar(currentIndex: currentIndex),
         ),
-      ],
+      ),
+      bottomNavigationBar: CustomBottomBar(currentIndex: currentIndex),
     );
   }
 
@@ -166,13 +204,18 @@ class CustomScaffold extends StatelessWidget {
           horizontal: screenWidth * 0.04,
         ),
         decoration: BoxDecoration(
-          color: backgroundColor ?? Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(5),
+          color: backgroundColor ?? Design.getSurfaceColor(context),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Design.getBorderColor(context)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 5,
-              offset: const Offset(0, 2),
+              color:
+                  Theme.of(context).brightness == Brightness.dark
+                      ? Colors.black.withOpacity(0.3)
+                      : Colors.black.withOpacity(0.1),
+              spreadRadius: 1,
+              blurRadius: 6,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
@@ -186,7 +229,7 @@ class CustomScaffold extends StatelessWidget {
                 style: TextStyle(
                   fontSize: screenWidth * 0.04,
                   color: textColor,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ),
@@ -204,11 +247,10 @@ class CustomBottomBar extends StatelessWidget {
     : super(key: key);
 
   void _onItemTapped(BuildContext context, int index) {
-    if (index == currentIndex) return; // Prevent unnecessary navigation
+    if (index == currentIndex) return;
     switch (index) {
       case 0:
         Navigator.pushReplacement(
-          // Use pushReplacement to avoid stack buildup
           context,
           MaterialPageRoute(builder: (context) => TabDashboard()),
         );
@@ -219,7 +261,7 @@ class CustomBottomBar extends StatelessWidget {
           MaterialPageRoute(builder: (context) => venue.TabEggScreen()),
         );
         break;
-      case 2: //bird
+      case 2:
         break;
       case 3:
         Navigator.pushReplacement(
@@ -244,11 +286,11 @@ class CustomBottomBar extends StatelessWidget {
     required Color color,
   }) {
     final bool isActive = (currentIndex == index);
-final Brightness brightness = Theme.of(context).brightness;
-final Color activeColor = brightness == Brightness.dark
-    ? const Color.fromRGBO(255, 255, 255, 1) // White in dark mode
-    : Colors.black; // Black in light mode
-    final Color inactiveColor = color;
+    final Color activeColor = Design.getTextColor(context);
+    final Color inactiveColor =
+        Theme.of(context).brightness == Brightness.dark
+            ? Design.primaryColorOrange
+            : color;
     final screenWidth = MediaQuery.of(context).size.width;
 
     return InkWell(
@@ -284,9 +326,9 @@ final Color activeColor = brightness == Brightness.dark
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
-    const Color iconTextColor = Color.fromRGBO(204, 204, 204, 1);
 
-    return SizedBox(
+    return Container(
+      color: Design.getBackgroundColor(context),
       height: screenHeight * 0.14,
       child: Stack(
         alignment: Alignment.center,
@@ -295,13 +337,16 @@ final Color activeColor = brightness == Brightness.dark
             top: 0,
             left: 0,
             right: 0,
-child: Image.asset(
-  Theme.of(context).colorScheme.brightness == Brightness.dark
-      ? 'assets/bottom_nav_dark.png'
-      : 'assets/bottom_nav.png',
-  fit: BoxFit.cover,
-  height: screenHeight * 0.16,
-),
+            child: Container(
+              color: Design.getBackgroundColor(context),
+              child: Image.asset(
+                Theme.of(context).brightness == Brightness.dark
+                    ? 'assets/bottom_nav_dark.png'
+                    : 'assets/bottom_nav.png',
+                fit: BoxFit.cover,
+                height: screenHeight * 0.16,
+              ),
+            ),
           ),
           Padding(
             padding: EdgeInsets.only(
@@ -312,45 +357,34 @@ child: Image.asset(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
-         _buildNavItem(
-  context,
-  icon: Icons.grid_view_rounded,
-  label: "Dashboard",
-  index: 0,
-  color: Theme.of(context).brightness == Brightness.dark
-      ? const Color.fromRGBO(255, 130, 16, 1) // Orange in dark mode
-      : Colors.black, // Black in light mode
-),
-
+                _buildNavItem(
+                  context,
+                  icon: Icons.grid_view_rounded,
+                  label: "Dashboard",
+                  index: 0,
+                  color: Colors.black,
+                ),
                 _buildNavItem(
                   context,
                   icon: Icons.apartment,
                   label: "Venues",
                   index: 1,
-                   color: Theme.of(context).brightness == Brightness.dark
-      ? const Color.fromRGBO(255, 130, 16, 1) // Orange in dark mode
-      : Colors.black, // Black in light mode
+                  color: Colors.black,
                 ),
-
                 SizedBox(width: screenWidth * 0.2),
                 _buildNavItem(
                   context,
                   icon: Icons.login_outlined,
                   label: "Check In",
                   index: 3,
-                   color: Theme.of(context).brightness == Brightness.dark
-      ? const Color.fromRGBO(255, 130, 16, 1) // Orange in dark mode
-      : Colors.black, // Black in light mode
+                  color: Colors.black,
                 ),
                 _buildNavItem(
                   context,
                   icon: Icons.person,
                   label: "My Profile",
                   index: 4,
-
-                   color: Theme.of(context).brightness == Brightness.dark
-      ? const Color.fromRGBO(255, 130, 16, 1) // Orange in dark mode
-      : Colors.black, // Black in light mode
+                  color: Colors.black,
                 ),
               ],
             ),

@@ -14,6 +14,7 @@ import 'package:flock/staffManagement.dart';
 import 'package:flock/tutorial.dart';
 import 'package:flock/venue.dart';
 import 'package:flutter/material.dart';
+import 'package:workmanager/workmanager.dart';
 import 'login_screen.dart';
 import 'checkIns.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -22,6 +23,12 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+import 'dart:developer' as developer;
+import 'package:flock/services/fcm_service.dart';
+import 'screens/logs_viewer_screen.dart';
 
 // Define light and dark themes
 class AppThemes {
@@ -44,9 +51,7 @@ class AppThemes {
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     ),
     textButtonTheme: TextButtonThemeData(
@@ -64,9 +69,7 @@ class AppThemes {
         color: Colors.black54,
         fontWeight: FontWeight.w600,
       ),
-      border: OutlineInputBorder(
-        borderSide: BorderSide(color: Colors.black54),
-      ),
+      border: OutlineInputBorder(borderSide: BorderSide(color: Colors.black54)),
       focusedBorder: OutlineInputBorder(
         borderSide: BorderSide(color: Colors.black54, width: 2.0),
       ),
@@ -98,9 +101,9 @@ class AppThemes {
   static final darkTheme = ThemeData(
     brightness: Brightness.dark,
     primaryColor: const Color.fromRGBO(255, 130, 16, 1),
-    scaffoldBackgroundColor: Colors.grey[850],
+    scaffoldBackgroundColor: const Color(0xFF1A1A1A), // Professional dark black
     appBarTheme: AppBarTheme(
-      backgroundColor: Colors.grey[850],
+      backgroundColor: const Color(0xFF1A1A1A),
       foregroundColor: Colors.white,
       elevation: 0,
       iconTheme: IconThemeData(color: Colors.white),
@@ -114,9 +117,7 @@ class AppThemes {
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     ),
     textButtonTheme: TextButtonThemeData(
@@ -135,10 +136,10 @@ class AppThemes {
         fontWeight: FontWeight.w600,
       ),
       border: OutlineInputBorder(
-        borderSide: BorderSide(color: Colors.white70),
+        borderSide: BorderSide(color: const Color(0xFF2C2C2C)),
       ),
       focusedBorder: OutlineInputBorder(
-        borderSide: BorderSide(color: Colors.white70, width: 2.0),
+        borderSide: BorderSide(color: AppColors.primary, width: 2.0),
       ),
     ),
     textTheme: TextTheme(
@@ -151,8 +152,8 @@ class AppThemes {
     colorScheme: ColorScheme.dark(
       primary: AppColors.primary,
       secondary: AppColors.primary.withOpacity(0.7),
-      background: Colors.grey[850]!,
-      surface: Colors.grey[800]!,
+      background: const Color(0xFF1A1A1A),
+      surface: const Color(0xFF242424),
       onPrimary: Colors.white,
       onSecondary: Colors.white,
       onBackground: Colors.white,
@@ -236,17 +237,166 @@ Future<void> _storeNotification(RemoteMessage message) async {
   print('Stored notification: ${notification.toJson()}');
 }
 
+Future<String?> getFCMToken() async {
+  try {
+    FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+    // For iOS, ensure APNS token is available first
+    if (Platform.isIOS) {
+      print('iOS device detected, waiting for APNS token...');
+      int maxRetries = 5;
+      int currentRetry = 0;
+      String? apnsToken;
+
+      while (currentRetry < maxRetries) {
+        apnsToken = await messaging.getAPNSToken();
+        if (apnsToken != null) {
+          print('APNS Token obtained: $apnsToken');
+          break;
+        }
+        print(
+          'APNS Token not available, attempt ${currentRetry + 1} of $maxRetries',
+        );
+        await Future.delayed(Duration(seconds: 2));
+        currentRetry++;
+      }
+
+      if (apnsToken == null) {
+        print('Failed to get APNS token after $maxRetries attempts');
+        return null;
+      }
+    }
+
+    // Now try to get FCM token
+    print('Requesting FCM token...');
+    int maxTokenRetries = 3;
+    int currentTokenRetry = 0;
+    String? fcmToken;
+
+    while (currentTokenRetry < maxTokenRetries) {
+      try {
+        fcmToken = await messaging.getToken();
+        if (fcmToken != null) {
+          print('FCM Token obtained: $fcmToken');
+          return fcmToken;
+        }
+        print(
+          'FCM Token not available, attempt ${currentTokenRetry + 1} of $maxTokenRetries',
+        );
+        await Future.delayed(Duration(seconds: 2));
+      } catch (e) {
+        print(
+          'Error getting FCM token on attempt ${currentTokenRetry + 1}: $e',
+        );
+      }
+      currentTokenRetry++;
+    }
+
+    print('Failed to get FCM token after $maxTokenRetries attempts');
+    return null;
+  } catch (e) {
+    print('Error in getFCMToken: $e');
+    return null;
+  }
+}
+
+// Background task names
+const backgroundRefreshTask = "com.flock.business.app.refresh";
+const backgroundProcessingTask = "com.flock.business.app.processing";
+
+@pragma('vm:entry-point')
+void callbackDispatcher() {
+  Workmanager().executeTask((task, inputData) async {
+    switch (task) {
+      case backgroundRefreshTask:
+        // Implement your background refresh logic here
+        return true;
+      case backgroundProcessingTask:
+        // Implement your background processing logic here
+        return true;
+      default:
+        return false;
+    }
+  });
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  try {
-    // Initialize Firebase
-    await Firebase.initializeApp();
-    print("Firebase has been initialized successfully.");
 
-    // Set up FCM background message handler
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  if (Platform.isIOS) {
+    // Initialize Workmanager for background tasks
+    await Workmanager().initialize(
+      callbackDispatcher,
+      isInDebugMode: false, // Set to false for release mode
+    );
+
+    // Register periodic background tasks
+    await Workmanager().registerPeriodicTask(
+      "refresh",
+      backgroundRefreshTask,
+      frequency: const Duration(minutes: 15),
+      initialDelay: const Duration(seconds: 60), // Add initial delay
+    );
+
+    await Workmanager().registerPeriodicTask(
+      "processing",
+      backgroundProcessingTask,
+      frequency: const Duration(hours: 1),
+      initialDelay: const Duration(minutes: 5), // Add initial delay
+    );
+  }
+
+  try {
+    // Initialize Firebase with retry logic
+    bool firebaseInitialized = false;
+    int retryCount = 0;
+    const maxRetries = 3;
+
+    while (!firebaseInitialized && retryCount < maxRetries) {
+      try {
+        await Firebase.initializeApp();
+        firebaseInitialized = true;
+        developer.log("[Firebase] Firebase has been initialized successfully.");
+
+        // Set up FCM background message handler
+        FirebaseMessaging.onBackgroundMessage(
+          _firebaseMessagingBackgroundHandler,
+        );
+
+        // Request permissions for iOS
+        if (Platform.isIOS) {
+          developer.log("[Firebase] Requesting iOS notification permissions");
+          final settings = await FirebaseMessaging.instance.requestPermission(
+            alert: true,
+            badge: true,
+            sound: true,
+            provisional: false,
+          );
+          developer.log(
+            "[Firebase] iOS notification settings: ${settings.authorizationStatus}",
+          );
+        }
+
+        // Enable FCM auto-init
+        await FirebaseMessaging.instance.setAutoInitEnabled(true);
+      } catch (e) {
+        retryCount++;
+        developer.log(
+          "[Firebase] Initialization attempt $retryCount failed: $e",
+        );
+        if (retryCount < maxRetries) {
+          await Future.delayed(Duration(seconds: 2));
+        }
+      }
+    }
+
+    if (!firebaseInitialized) {
+      developer.log(
+        "[Firebase] Failed to initialize Firebase after $maxRetries attempts",
+      );
+    }
   } catch (e) {
-    print("Firebase initialization failed: $e");
+    developer.log("[Firebase] Fatal error during Firebase initialization: $e");
   }
 
   runApp(const MyApp());
@@ -313,6 +463,7 @@ class LoadingScreen extends StatefulWidget {
 class _LoadingScreenState extends State<LoadingScreen> {
   int _unreadNotifications = 0;
   List<NotificationModel> _notifications = [];
+  final _platform = const MethodChannel('com.flockbusiness/notifications');
 
   @override
   void initState() {
@@ -320,6 +471,66 @@ class _LoadingScreenState extends State<LoadingScreen> {
     _setupFCM();
     _loadNotifications();
     _checkLoginStatus();
+  }
+
+  Future<void> _setupFCM() async {
+    try {
+      // Set up method channel handler
+      _platform.setMethodCallHandler((call) async {
+        switch (call.method) {
+          case 'onFCMTokenReceived':
+            print(
+              '[FCM Debug] Received FCM token from native: ${call.arguments['token']}',
+            );
+            final token = call.arguments['token'] as String;
+            final prefs = await SharedPreferences.getInstance();
+            final accessToken = prefs.getString('access_token');
+            if (accessToken != null) {
+              await FCMService.updateToken(accessToken);
+            }
+            break;
+          case 'onFCMTokenRefreshed':
+            print(
+              '[FCM Debug] Received refreshed FCM token from native: ${call.arguments['token']}',
+            );
+            final token = call.arguments['token'] as String;
+            final prefs = await SharedPreferences.getInstance();
+            final accessToken = prefs.getString('access_token');
+            if (accessToken != null) {
+              await FCMService.updateToken(accessToken);
+            }
+            break;
+        }
+      });
+
+      // Request notification permissions for iOS
+      if (Platform.isIOS) {
+        print(
+          '[FCM Debug] iOS platform detected, requesting notification permissions...',
+        );
+        final settings = await FirebaseMessaging.instance.requestPermission(
+          alert: true,
+          badge: true,
+          sound: true,
+          provisional: false,
+        );
+        print(
+          '[FCM Debug] User granted permission: ${settings.authorizationStatus}',
+        );
+      }
+
+      // Get access token and set up FCM
+      final prefs = await SharedPreferences.getInstance();
+      final accessToken = prefs.getString('access_token');
+      if (accessToken != null) {
+        await FCMService.setupFCMListeners(accessToken);
+        // Try to update token if needed
+        await FCMService.updateToken(accessToken);
+      }
+    } catch (e, stackTrace) {
+      print('[FCM Debug] Error setting up FCM: $e');
+      print('[FCM Debug] Stack trace: $stackTrace');
+    }
   }
 
   Future<void> _loadNotifications() async {
@@ -338,97 +549,33 @@ class _LoadingScreenState extends State<LoadingScreen> {
     );
   }
 
-  Future<void> _setupFCM() async {
-    FirebaseMessaging messaging = FirebaseMessaging.instance;
+  Future<void> _registerForRemoteNotifications() async {
+    if (Platform.isIOS) {
+      print('Requesting remote notification registration on iOS...');
 
-    try {
-      // Request permission for iOS
-      NotificationSettings settings = await messaging.requestPermission(
-        alert: true,
-        badge: true,
-        sound: true,
-      );
-      print('User granted permission: ${settings.authorizationStatus}');
+      // Get the current notification settings
+      final settings =
+          await FirebaseMessaging.instance.getNotificationSettings();
+      print('Current notification settings:');
+      print('Authorization status: ${settings.authorizationStatus}');
+      print('Alert permission: ${settings.alert}');
+      print('Badge permission: ${settings.badge}');
+      print('Sound permission: ${settings.sound}');
 
-      // Get and save FCM token
-      String? token = await messaging.getToken();
-      if (token != null) {
-        print('FCM Token: $token');
-        await _sendTokenToBackend(token);
+      if (settings.authorizationStatus == AuthorizationStatus.notDetermined ||
+          settings.authorizationStatus == AuthorizationStatus.denied) {
+        print('Requesting notification permissions...');
+        final NotificationSettings newSettings = await FirebaseMessaging
+            .instance
+            .requestPermission(
+              alert: true,
+              badge: true,
+              sound: true,
+              criticalAlert: true,
+              provisional: false,
+            );
+        print('New authorization status: ${newSettings.authorizationStatus}');
       }
-
-      // Listen for token refresh
-      messaging.onTokenRefresh.listen((newToken) async {
-        print('FCM Token refreshed: $newToken');
-        await _sendTokenToBackend(newToken);
-      });
-
-      // Handle foreground messages
-      FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
-        print('Foreground message received: ${message.toMap()}');
-        await _storeNotification(message);
-        setState(() {
-          _notifications.add(
-            NotificationModel(
-              id:
-                  message.messageId ??
-                  DateTime.now().millisecondsSinceEpoch.toString(),
-              title:
-                  message.notification?.title ??
-                  message.data['title'] ??
-                  'New Notification',
-              body:
-                  message.notification?.body ??
-                  message.data['body'] ??
-                  'No details available',
-              screen: message.data['screen'],
-              timestamp: DateTime.now(),
-            ),
-          );
-          _unreadNotifications = _notifications.where((n) => !n.isRead).length;
-        });
-
-        // Show SnackBar with theme-based colors
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                '${message.notification?.title ?? message.data['title'] ?? 'Notification'}: '
-                '${message.notification?.body ?? message.data['body'] ?? 'Tap to view'}',
-                style: Theme.of(context).snackBarTheme.contentTextStyle,
-              ),
-              backgroundColor: Theme.of(context).snackBarTheme.backgroundColor,
-              duration: const Duration(seconds: 5),
-              action:
-                  message.data['screen'] != null
-                      ? SnackBarAction(
-                          label: 'View',
-                          textColor: Theme.of(context).snackBarTheme.actionTextColor,
-                          onPressed: () => _handleMessageNavigation(message),
-                        )
-                      : null,
-            ),
-          );
-        }
-      });
-
-      // Handle messages when app is opened from a terminated state
-      RemoteMessage? initialMessage = await messaging.getInitialMessage();
-      if (initialMessage != null) {
-        print('Initial message received: ${initialMessage.toMap()}');
-        await _storeNotification(initialMessage);
-        await _loadNotifications();
-        _handleMessageNavigation(initialMessage);
-      }
-
-      // Handle messages when app is opened from background
-      FirebaseMessaging.onMessageOpenedApp.listen((message) async {
-        print('Message opened from background: ${message.toMap()}');
-        await _markNotificationAsRead(message.messageId);
-        _handleMessageNavigation(message);
-      });
-    } catch (e) {
-      print('Error setting up FCM: $e');
     }
   }
 
@@ -488,47 +635,6 @@ class _LoadingScreenState extends State<LoadingScreen> {
     }
   }
 
-  Future<void> _sendTokenToBackend(String token) async {
-    final prefs = await SharedPreferences.getInstance();
-    final accessToken = prefs.getString('access_token');
-    if (accessToken == null) {
-      print('No access token available, storing FCM token for later');
-      await prefs.setString('fcm_token', token);
-      return;
-    }
-
-    try {
-      var request = http.MultipartRequest(
-        'POST',
-        Uri.parse('https://api.getflock.io/api/vendor/devices/update'),
-      );
-
-      request.headers.addAll({'Authorization': 'Bearer $accessToken'});
-
-      request.fields['type'] = 'android';
-      request.fields['token'] = token;
-
-      final response = await request.send();
-      final responseBody = await response.stream.bytesToString();
-      print('Send token response: ${response.statusCode} $responseBody');
-
-      if (response.statusCode == 200) {
-        print('FCM token sent to backend successfully');
-        await prefs.remove('fcm_token'); // Clear stored token
-      } else {
-        print('Failed to send FCM token: ${response.statusCode}');
-        try {
-          final responseData = jsonDecode(responseBody);
-          print('Error: ${responseData['message'] ?? 'Unknown error'}');
-        } catch (e) {
-          print('Error decoding response: $e');
-        }
-      }
-    } catch (e) {
-      print('Error sending FCM token: $e');
-    }
-  }
-
   Future<void> _checkLoginStatus() async {
     // Wait for notifications to load
     await Future.delayed(const Duration(seconds: 1));
@@ -540,7 +646,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
     // Retry sending stored FCM token if available
     final fcmToken = prefs.getString('fcm_token');
     if (fcmToken != null && isLoggedIn && token != null) {
-      await _sendTokenToBackend(fcmToken);
+      await FCMService.updateToken(token);
     }
 
     if (mounted) {
@@ -554,6 +660,37 @@ class _LoadingScreenState extends State<LoadingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold();
+    return Scaffold(
+      appBar: AppBar(title: const Text('Flock Business')),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            const DrawerHeader(
+              decoration: BoxDecoration(color: Colors.blue),
+              child: Text(
+                'Flock Business',
+                style: TextStyle(color: Colors.white, fontSize: 24),
+              ),
+            ),
+            // ... existing drawer items ...
+            if (kReleaseMode) // Only show in release/TestFlight mode
+              ListTile(
+                leading: const Icon(Icons.bug_report),
+                title: const Text('View Logs'),
+                onTap: () {
+                  Navigator.pop(context); // Close drawer
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const LogsViewerScreen(),
+                    ),
+                  );
+                },
+              ),
+          ],
+        ),
+      ),
+    );
   }
 }

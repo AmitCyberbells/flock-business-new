@@ -6,6 +6,12 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flock/app_colors.dart';
 
+class Design {
+  static const Color darkBackground = Color(0xFF1E1E1E);
+  static const Color darkSurface = Color(0xFF242424);
+  static const Color darkBorder = Color(0xFF3E3E3E);
+}
+
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({Key? key}) : super(key: key);
 
@@ -123,10 +129,71 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     super.dispose();
   }
 
+  InputDecoration _getInputDecoration(
+    String label,
+    bool obscureText,
+    VoidCallback toggleObscure,
+  ) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: TextStyle(
+        color:
+            Theme.of(context).brightness == Brightness.dark
+                ? Colors.grey[400]
+                : Theme.of(context).textTheme.bodyMedium!.color,
+      ),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(
+          color:
+              Theme.of(context).brightness == Brightness.dark
+                  ? Design.darkBorder
+                  : Theme.of(context).colorScheme.primary,
+        ),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(
+          color:
+              Theme.of(context).brightness == Brightness.dark
+                  ? Design.darkBorder
+                  : Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+        ),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(
+          color: Theme.of(context).colorScheme.primary,
+          width: 2.0,
+        ),
+      ),
+      filled: Theme.of(context).brightness == Brightness.dark,
+      fillColor:
+          Theme.of(context).brightness == Brightness.dark
+              ? Design.darkSurface
+              : null,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      isDense: true,
+      suffixIcon: IconButton(
+        icon: Icon(
+          obscureText ? Icons.visibility : Icons.visibility_off,
+          color:
+              Theme.of(context).brightness == Brightness.dark
+                  ? Colors.grey[400]
+                  : Theme.of(context).iconTheme.color,
+        ),
+        onPressed: toggleObscure,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor:
+          Theme.of(context).brightness == Brightness.dark
+              ? Design.darkBackground
+              : Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -141,18 +208,17 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                       'assets/back_updated.png',
                       height: 40,
                       width: 34,
-                      fit: BoxFit.contain,
-                      // color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   Expanded(
                     child: Center(
                       child: Text(
                         "Change Password",
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurface,
-                              fontWeight: FontWeight.w600,
-                            ),
+                        style: TextStyle(
+                          color: Theme.of(context).textTheme.titleLarge!.color,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
@@ -160,28 +226,52 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 ],
               ),
               const SizedBox(height: 30),
-              AppConstants.currentPasswordField(
+              TextField(
                 controller: _currentPasswordController,
                 obscureText: !_currentPasswordVisible,
-                toggleObscure: () => setState(() {
-                  _currentPasswordVisible = !_currentPasswordVisible;
-                }),
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Theme.of(context).textTheme.bodyLarge!.color,
+                ),
+                decoration: _getInputDecoration(
+                  'Current Password',
+                  !_currentPasswordVisible,
+                  () => setState(() {
+                    _currentPasswordVisible = !_currentPasswordVisible;
+                  }),
+                ),
               ),
               const SizedBox(height: 15),
-              AppConstants.newPasswordField(
+              TextField(
                 controller: _newPasswordController,
                 obscureText: !_newPasswordVisible,
-                toggleObscure: () => setState(() {
-                  _newPasswordVisible = !_newPasswordVisible;
-                }),
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Theme.of(context).textTheme.bodyLarge!.color,
+                ),
+                decoration: _getInputDecoration(
+                  'New Password',
+                  !_newPasswordVisible,
+                  () => setState(() {
+                    _newPasswordVisible = !_newPasswordVisible;
+                  }),
+                ),
               ),
               const SizedBox(height: 15),
-              AppConstants.confirmPasswordField(
+              TextField(
                 controller: _confirmPasswordController,
                 obscureText: !_confirmPasswordVisible,
-                toggleObscure: () => setState(() {
-                  _confirmPasswordVisible = !_confirmPasswordVisible;
-                }),
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Theme.of(context).textTheme.bodyLarge!.color,
+                ),
+                decoration: _getInputDecoration(
+                  'Confirm Password',
+                  !_confirmPasswordVisible,
+                  () => setState(() {
+                    _confirmPasswordVisible = !_confirmPasswordVisible;
+                  }),
+                ),
               ),
               const Spacer(),
               SizedBox(
@@ -190,18 +280,20 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 child: ElevatedButton(
                   onPressed: _changePassword,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: Theme.of(context).colorScheme.primary,
                     foregroundColor: Theme.of(context).colorScheme.onPrimary,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(10),
                     ),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
                   child: Text(
                     "Update Password",
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: Theme.of(context).colorScheme.onPrimary,
-                          fontSize: 16,
-                        ),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),

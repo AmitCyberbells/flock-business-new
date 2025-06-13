@@ -111,7 +111,6 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
       debugPrint('Delete account error: $e');
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -130,24 +129,24 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                   children: [
                     Row(
                       children: [
-                         InkWell(
-  onTap: () => Navigator.of(context).pop(),
-  child: Image.asset(
-    'assets/back_updated.png',
-    height: 40,
-    width: 34,
-    // fit: BoxFit.contain,
-    // color: Theme.of(context).colorScheme.primary, // Orange tint
-  ),
-),
+                        InkWell(
+                          onTap: () => Navigator.of(context).pop(),
+                          child: Image.asset(
+                            'assets/back_updated.png',
+                            height: 40,
+                            width: 34,
+                          ),
+                        ),
                         Expanded(
                           child: Center(
                             child: Text(
                               "Delete Account",
-                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                              style: Theme.of(
+                                context,
+                              ).textTheme.titleLarge?.copyWith(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                         ),
@@ -160,10 +159,11 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                       Text(
                         _errorMessage,
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              color: Theme.of(context).brightness == Brightness.dark
+                          color:
+                              Theme.of(context).brightness == Brightness.dark
                                   ? Colors.redAccent
                                   : Colors.red,
-                            ),
+                        ),
                       ),
 
                     // Name field (read-only)
@@ -172,15 +172,22 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                       readOnly: true,
                       decoration: InputDecoration(
                         hintText: "Name",
-                        hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
-                            ),
+                        hintStyle: Theme.of(
+                          context,
+                        ).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(
+                            context,
+                          ).textTheme.bodyMedium?.color?.withOpacity(0.6),
+                        ),
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 14,
                         ),
                         border: Theme.of(context).inputDecorationTheme.border,
-                        focusedBorder: Theme.of(context).inputDecorationTheme.focusedBorder,
+                        focusedBorder:
+                            Theme.of(
+                              context,
+                            ).inputDecorationTheme.focusedBorder,
                       ),
                     ),
                     const SizedBox(height: 15),
@@ -191,15 +198,22 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                       readOnly: true,
                       decoration: InputDecoration(
                         hintText: "Email",
-                        hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
-                            ),
+                        hintStyle: Theme.of(
+                          context,
+                        ).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(
+                            context,
+                          ).textTheme.bodyMedium?.color?.withOpacity(0.6),
+                        ),
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 14,
                         ),
                         border: Theme.of(context).inputDecorationTheme.border,
-                        focusedBorder: Theme.of(context).inputDecorationTheme.focusedBorder,
+                        focusedBorder:
+                            Theme.of(
+                              context,
+                            ).inputDecorationTheme.focusedBorder,
                       ),
                     ),
                     const SizedBox(height: 15),
@@ -210,15 +224,22 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                       readOnly: true,
                       decoration: InputDecoration(
                         hintText: "Phone Number (Optional)",
-                        hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
-                            ),
+                        hintStyle: Theme.of(
+                          context,
+                        ).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(
+                            context,
+                          ).textTheme.bodyMedium?.color?.withOpacity(0.6),
+                        ),
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 14,
                         ),
                         border: Theme.of(context).inputDecorationTheme.border,
-                        focusedBorder: Theme.of(context).inputDecorationTheme.focusedBorder,
+                        focusedBorder:
+                            Theme.of(
+                              context,
+                            ).inputDecorationTheme.focusedBorder,
                       ),
                     ),
                     const SizedBox(height: 15),
@@ -229,12 +250,19 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                       maxLines: 5,
                       decoration: InputDecoration(
                         hintText: "Enter the reason to delete the account",
-                        hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
-                            ),
+                        hintStyle: Theme.of(
+                          context,
+                        ).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(
+                            context,
+                          ).textTheme.bodyMedium?.color?.withOpacity(0.6),
+                        ),
                         contentPadding: const EdgeInsets.all(16),
                         border: Theme.of(context).inputDecorationTheme.border,
-                        focusedBorder: Theme.of(context).inputDecorationTheme.focusedBorder,
+                        focusedBorder:
+                            Theme.of(
+                              context,
+                            ).inputDecorationTheme.focusedBorder,
                       ),
                     ),
                     const SizedBox(height: 30),
@@ -264,9 +292,10 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
             Stack(
               children: [
                 Container(
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? Colors.black.withOpacity(0.4)
-                      : Colors.black.withOpacity(0.14),
+                  color:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? Colors.black.withOpacity(0.4)
+                          : Colors.black.withOpacity(0.14),
                 ),
                 Container(
                   color: Colors.transparent,

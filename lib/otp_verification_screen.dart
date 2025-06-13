@@ -95,16 +95,17 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   void _showError(String message) {
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Error'),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
+      builder:
+          (_) => AlertDialog(
+            title: const Text('Error'),
+            content: Text(message),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -130,18 +131,28 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return WillPopScope(
       onWillPop: () async {
         await _navigateToLogin();
         return false;
       },
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
-          backgroundColor: Colors.white,
-          title: const Text('OTP Verification'),
+          backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+          title: Text(
+            'OTP Verification',
+            style: TextStyle(
+              color: Theme.of(context).appBarTheme.titleTextStyle?.color,
+            ),
+          ),
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
+            icon: Icon(
+              Icons.arrow_back,
+              color: Theme.of(context).iconTheme.color,
+            ),
             onPressed: _navigateToLogin,
           ),
         ),
@@ -151,14 +162,35 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
             children: [
               Text(
                 'Enter the OTP sent to ${widget.email}',
-                style: const TextStyle(fontSize: 16),
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
+                ),
               ),
               const SizedBox(height: 20),
               TextField(
                 controller: _otpController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: 'OTP',
-                  border: OutlineInputBorder(),
+                  border: OutlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                  hintStyle: TextStyle(color: Theme.of(context).hintColor),
+                ),
+                style: TextStyle(
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
                 ),
                 keyboardType: TextInputType.number,
               ),
@@ -172,7 +204,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(15),
                     ),
-                    elevation: 0,
+                    elevation: isDarkMode ? 2 : 0,
                   ),
                   onPressed: _verifyOtp,
                   child: const Text(

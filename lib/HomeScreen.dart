@@ -101,7 +101,7 @@ class _TabDashboardState extends State<TabDashboard>
     if (state == AppLifecycleState.resumed) {
       var status = await Permission.camera.status;
       print("App resumed; camera permission status: $status");
-      // Don’t navigate here
+      // Don't navigate here
     }
   }
 
@@ -433,7 +433,10 @@ class _TabDashboardState extends State<TabDashboard>
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8.0),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color:
+            Theme.of(context).brightness == Brightness.dark
+                ? Color(0xFF1E1E1E)
+                : Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
@@ -456,7 +459,10 @@ class _TabDashboardState extends State<TabDashboard>
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainer,
+                color:
+                    Theme.of(context).brightness == Brightness.dark
+                        ? Color(0xFF1E1E1E)
+                        : Theme.of(context).colorScheme.surfaceContainer,
                 borderRadius: BorderRadius.circular(5),
               ),
               child: Row(
@@ -485,7 +491,10 @@ class _TabDashboardState extends State<TabDashboard>
             Container(
               constraints: BoxConstraints(maxHeight: 35.0 * 5),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainer,
+                color:
+                    Theme.of(context).brightness == Brightness.dark
+                        ? Color(0xFF1E1E1E)
+                        : Theme.of(context).colorScheme.surfaceContainer,
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(5),
                   bottomRight: Radius.circular(5),
@@ -521,9 +530,17 @@ class _TabDashboardState extends State<TabDashboard>
                               ),
                               color:
                                   isSelected
-                                      ? Theme.of(
-                                        context,
-                                      ).colorScheme.primary.withOpacity(0.1)
+                                      ? Theme.of(context).brightness ==
+                                              Brightness.dark
+                                          ? Color(
+                                            0xFF2C2C2C,
+                                          ) // Slightly lighter for selected items
+                                          : Theme.of(
+                                            context,
+                                          ).colorScheme.primary.withOpacity(0.1)
+                                      : Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Color(0xFF1E1E1E)
                                       : Colors.transparent,
                               child: Text(
                                 venue['name'] ?? '',
@@ -551,7 +568,6 @@ class _TabDashboardState extends State<TabDashboard>
 
   /// Updated venue list with QR Codes method (includes the custom dropdown)
 
-
   Widget venueListWithQRCodes() {
     if (!hasPermission('verify_voucher')) {
       return const SizedBox.shrink();
@@ -564,7 +580,7 @@ class _TabDashboardState extends State<TabDashboard>
         padding: const EdgeInsets.all(10.0),
         child: Center(
           child: Text(
-            'You don’t have any venues yet, please add a venue by clicking on the "Bird Image" at the bottom.',
+            'You don\'t have any venues yet, please add a venue by clicking on the "Bird Image" at the bottom.',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 16,
@@ -586,9 +602,50 @@ class _TabDashboardState extends State<TabDashboard>
                 decoration: BoxDecoration(
                   color:
                       Theme.of(context).brightness == Brightness.dark
-                          ? Colors.white
+                          ? Color(
+                            0xFF242424,
+                          ) // Slightly lighter than background
                           : Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color:
+                        Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white.withOpacity(0.05)
+                            : Theme.of(
+                              context,
+                            ).colorScheme.outline.withOpacity(0.1),
+                    width: 1,
+                  ),
+                  boxShadow:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.5),
+                              spreadRadius: -2,
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.3),
+                              spreadRadius: 0,
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ]
+                          : [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.08),
+                              spreadRadius: 0,
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              spreadRadius: -1,
+                              blurRadius: 2,
+                              offset: const Offset(0, 1),
+                            ),
+                          ],
                 ),
                 child: QrImageView(
                   data: selectedVenue!['id'].toString(),
@@ -618,7 +675,10 @@ class _TabDashboardState extends State<TabDashboard>
         children: [
           SafeArea(
             child: Container(
-              color: Theme.of(context).scaffoldBackgroundColor,
+              color:
+                  Theme.of(context).brightness == Brightness.dark
+                      ? Color(0xFF1E1E1E)
+                      : Theme.of(context).scaffoldBackgroundColor,
               padding: EdgeInsets.symmetric(horizontal: deviceWidth * 0.023),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -706,19 +766,61 @@ class _TabDashboardState extends State<TabDashboard>
                                     ),
                                     decoration: BoxDecoration(
                                       color:
-                                          Theme.of(context).colorScheme.surface,
+                                          Theme.of(context).brightness ==
+                                                  Brightness.dark
+                                              ? Color(
+                                                0xFF242424,
+                                              ) // Slightly lighter than background
+                                              : Theme.of(
+                                                context,
+                                              ).colorScheme.surface,
                                       borderRadius: BorderRadius.circular(10),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .onSurface
-                                              .withOpacity(0.2),
-                                          spreadRadius: 1,
-                                          blurRadius: 5,
-                                          offset: const Offset(0, 2),
-                                        ),
-                                      ],
+                                      border: Border.all(
+                                        color:
+                                            Theme.of(context).brightness ==
+                                                    Brightness.dark
+                                                ? Colors.white.withOpacity(0.05)
+                                                : Theme.of(context)
+                                                    .colorScheme
+                                                    .outline
+                                                    .withOpacity(0.1),
+                                        width: 1,
+                                      ),
+                                      boxShadow:
+                                          Theme.of(context).brightness ==
+                                                  Brightness.dark
+                                              ? [
+                                                BoxShadow(
+                                                  color: Colors.black
+                                                      .withOpacity(0.5),
+                                                  spreadRadius: -2,
+                                                  blurRadius: 12,
+                                                  offset: const Offset(0, 4),
+                                                ),
+                                                BoxShadow(
+                                                  color: Colors.black
+                                                      .withOpacity(0.3),
+                                                  spreadRadius: 0,
+                                                  blurRadius: 4,
+                                                  offset: const Offset(0, 2),
+                                                ),
+                                              ]
+                                              : [
+                                                BoxShadow(
+                                                  color: Colors.black
+                                                      .withOpacity(0.08),
+                                                  spreadRadius: 0,
+                                                  blurRadius: 8,
+                                                  offset: const Offset(0, 4),
+                                                ),
+                                                BoxShadow(
+                                                  color: Colors.black
+                                                      .withOpacity(0.05),
+                                                  spreadRadius: -1,
+                                                  blurRadius: 2,
+                                                  offset: const Offset(0, 1),
+                                                ),
+                                              ],
                                     ),
                                     child: Padding(
                                       padding: EdgeInsets.symmetric(
@@ -854,12 +956,20 @@ class _TabDashboardState extends State<TabDashboard>
             Stack(
               children: [
                 Container(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withOpacity(0.2),
+                  color:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? Colors.black.withOpacity(0.5)
+                          : Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.2),
                 ),
                 Container(
-                  color: Theme.of(context).colorScheme.surface.withOpacity(0.1),
+                  color:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? Colors.black.withOpacity(0.3)
+                          : Theme.of(
+                            context,
+                          ).colorScheme.surface.withOpacity(0.1),
                   child: Center(
                     child: Image.asset(
                       'assets/Bird_Full_Eye_Blinking.gif',

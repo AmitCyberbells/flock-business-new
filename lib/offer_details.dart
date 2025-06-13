@@ -5,6 +5,31 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:flock/app_colors.dart';
 
+// Add Design class for dark mode colors
+class Design {
+  static const Color darkBackground = Color(
+    0xFF1A1A1A,
+  ); // Professional dark black
+  static const Color darkSurface = Color(
+    0xFF242424,
+  ); // Slightly lighter surface
+  static const Color darkCard = Color(0xFF2A2A2A); // Card background
+  static const Color darkBorder = Color(0xFF2C2C2C); // Subtle border color
+  static const Color darkDivider = Color(0xFF383838); // Divider color
+
+  static Color getBackgroundColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? darkBackground
+        : Theme.of(context).scaffoldBackgroundColor;
+  }
+
+  static Color getSurfaceColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? darkSurface
+        : Theme.of(context).colorScheme.surface;
+  }
+}
+
 class OfferDetails extends StatefulWidget {
   final Map<String, dynamic> allDetail;
 
@@ -39,16 +64,35 @@ class _OfferDetailsState extends State<OfferDetails> {
   void initState() {
     super.initState();
     final detail = widget.allDetail;
+    print('Offer details received: $detail'); // Debug log
+
     offerId = detail['id'] ?? 0;
-    venueId = detail['venue_id'];
+    venueId = detail['venue_id'] ?? detail['venue']?['id'];
     venueName = detail['venue']?['name'] ?? 'No Venue';
     offerName = detail['name'] ?? 'No Title';
+
+    // Handle both image formats
     final images = detail['images'] as List<dynamic>?;
-    imageUrl = (images != null && images.isNotEmpty) ? images[0]['image'] ?? '' : '';
-    description = detail['description'] ?? '';
-    redeemed_count = detail['people'] ?? 0;
+    if (images != null && images.isNotEmpty) {
+      imageUrl = images[0]['medium_image'] ?? images[0]['image'] ?? '';
+    } else {
+      imageUrl = '';
+    }
+
+    description = detail['description'] ?? 'No description available';
+    redeemed_count = detail['people'] ?? detail['redeemed_count'] ?? 0;
     expireAt = detail['expire_at'];
     discount = detail['discount']?.toString() ?? '0';
+
+    print('Parsed offer details:'); // Debug log
+    print('ID: $offerId');
+    print('Venue: $venueName');
+    print('Name: $offerName');
+    print('Image URL: $imageUrl');
+    print('Description: $description');
+    print('Redeemed count: $redeemed_count');
+    print('Expire at: $expireAt');
+    print('Discount: $discount');
 
     _scannerController = MobileScannerController(
       detectionSpeed: DetectionSpeed.normal,
@@ -88,8 +132,8 @@ class _OfferDetailsState extends State<OfferDetails> {
           content: Text(
             'Authentication failed. Please login again.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onError,
-                ),
+              color: Theme.of(context).colorScheme.onError,
+            ),
           ),
         ),
       );
@@ -114,12 +158,14 @@ class _OfferDetailsState extends State<OfferDetails> {
           });
         } else {
           setState(() {
-            errorMessage = data['message'] ?? 'Failed to fetch redeemed people.';
+            errorMessage =
+                data['message'] ?? 'Failed to fetch redeemed people.';
           });
         }
       } else {
         setState(() {
-          errorMessage = 'Failed to fetch redeemed people. Code: ${response.statusCode}';
+          errorMessage =
+              'Failed to fetch redeemed people. Code: ${response.statusCode}';
         });
       }
     } catch (e) {
@@ -143,8 +189,8 @@ class _OfferDetailsState extends State<OfferDetails> {
           content: Text(
             'Authentication failed. Please login again.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onError,
-                ),
+              color: Theme.of(context).colorScheme.onError,
+            ),
           ),
         ),
       );
@@ -168,8 +214,8 @@ class _OfferDetailsState extends State<OfferDetails> {
             content: Text(
               'Offer removed successfully!',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onPrimary,
-                  ),
+                color: Theme.of(context).colorScheme.onPrimary,
+              ),
             ),
           ),
         );
@@ -199,8 +245,8 @@ class _OfferDetailsState extends State<OfferDetails> {
           content: Text(
             'Authentication failed. Please login again.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onError,
-                ),
+              color: Theme.of(context).colorScheme.onError,
+            ),
           ),
         ),
       );
@@ -230,8 +276,8 @@ class _OfferDetailsState extends State<OfferDetails> {
                     ? 'Offer Ended Successfully!'
                     : 'Offer Reactivated Successfully!',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onPrimary,
-                    ),
+                  color: Theme.of(context).colorScheme.onPrimary,
+                ),
               ),
               backgroundColor: Colors.green,
               duration: const Duration(seconds: 3),
@@ -246,8 +292,8 @@ class _OfferDetailsState extends State<OfferDetails> {
               content: Text(
                 errorMessage,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onError,
-                    ),
+                  color: Theme.of(context).colorScheme.onError,
+                ),
               ),
               backgroundColor: Colors.red,
             ),
@@ -255,15 +301,16 @@ class _OfferDetailsState extends State<OfferDetails> {
         }
       } else {
         setState(() {
-          errorMessage = 'Failed to toggle offer status. Code: ${response.statusCode}';
+          errorMessage =
+              'Failed to toggle offer status. Code: ${response.statusCode}';
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
               errorMessage,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onError,
-                  ),
+                color: Theme.of(context).colorScheme.onError,
+              ),
             ),
             backgroundColor: Colors.red,
           ),
@@ -278,8 +325,8 @@ class _OfferDetailsState extends State<OfferDetails> {
           content: Text(
             errorMessage,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onError,
-                ),
+              color: Theme.of(context).colorScheme.onError,
+            ),
           ),
           backgroundColor: Colors.red,
         ),
@@ -297,8 +344,8 @@ class _OfferDetailsState extends State<OfferDetails> {
           content: Text(
             'Cannot scan QR code: Offer is expired.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onError,
-                ),
+              color: Theme.of(context).colorScheme.onError,
+            ),
           ),
         ),
       );
@@ -312,46 +359,47 @@ class _OfferDetailsState extends State<OfferDetails> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => Scaffold(
-            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-            appBar: AppBar(
-              backgroundColor: Theme.of(context).colorScheme.surface,
-              title: Text(
-                'Scan QR Code',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-            ),
-            body: Stack(
-              children: [
-                MobileScanner(
-                  controller: _scannerController,
-                  onDetect: (capture) async {
-                    final barcodes = capture.barcodes;
-                    if (barcodes.isNotEmpty) {
-                      final qrCode = barcodes.first.rawValue ?? '';
-                      await _scannerController.stop();
-                      if (!mounted) return;
-                      Navigator.pop(context);
-                      await _verifyQRCode(qrCode);
-                    }
-                  },
-                ),
-                Center(
-                  child: Container(
-                    width: 200,
-                    height: 200,
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: Theme.of(context).colorScheme.onSurface,
-                        width: 2,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+          builder:
+              (context) => Scaffold(
+                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                appBar: AppBar(
+                  backgroundColor: Theme.of(context).colorScheme.surface,
+                  title: Text(
+                    'Scan QR Code',
+                    style: Theme.of(context).textTheme.titleLarge,
                   ),
                 ),
-              ],
-            ),
-          ),
+                body: Stack(
+                  children: [
+                    MobileScanner(
+                      controller: _scannerController,
+                      onDetect: (capture) async {
+                        final barcodes = capture.barcodes;
+                        if (barcodes.isNotEmpty) {
+                          final qrCode = barcodes.first.rawValue ?? '';
+                          await _scannerController.stop();
+                          if (!mounted) return;
+                          Navigator.pop(context);
+                          await _verifyQRCode(qrCode);
+                        }
+                      },
+                    ),
+                    Center(
+                      child: Container(
+                        width: 200,
+                        height: 200,
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: Theme.of(context).colorScheme.onSurface,
+                            width: 2,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
         ),
       ).then((_) async {
         await _scannerController.stop();
@@ -363,8 +411,8 @@ class _OfferDetailsState extends State<OfferDetails> {
           content: Text(
             'Error starting scanner: $e',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onError,
-                ),
+              color: Theme.of(context).colorScheme.onError,
+            ),
           ),
         ),
       );
@@ -382,8 +430,8 @@ class _OfferDetailsState extends State<OfferDetails> {
           content: Text(
             'Authentication failed. Please login again.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onError,
-                ),
+              color: Theme.of(context).colorScheme.onError,
+            ),
           ),
         ),
       );
@@ -398,8 +446,8 @@ class _OfferDetailsState extends State<OfferDetails> {
           content: Text(
             'Cannot verify QR code: Offer is expired.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onError,
-                ),
+              color: Theme.of(context).colorScheme.onError,
+            ),
           ),
         ),
       );
@@ -414,8 +462,8 @@ class _OfferDetailsState extends State<OfferDetails> {
           content: Text(
             'Invalid QR code: Empty data.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onError,
-                ),
+              color: Theme.of(context).colorScheme.onError,
+            ),
           ),
         ),
       );
@@ -433,8 +481,8 @@ class _OfferDetailsState extends State<OfferDetails> {
           content: Text(
             'Invalid QR code.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onError,
-                ),
+              color: Theme.of(context).colorScheme.onError,
+            ),
           ),
         ),
       );
@@ -450,8 +498,8 @@ class _OfferDetailsState extends State<OfferDetails> {
           content: Text(
             'Invalid QR code.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onError,
-                ),
+              color: Theme.of(context).colorScheme.onError,
+            ),
           ),
         ),
       );
@@ -469,8 +517,8 @@ class _OfferDetailsState extends State<OfferDetails> {
           content: Text(
             'Invalid QR code.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onError,
-                ),
+              color: Theme.of(context).colorScheme.onError,
+            ),
           ),
         ),
       );
@@ -497,8 +545,8 @@ class _OfferDetailsState extends State<OfferDetails> {
               content: Text(
                 data['message'] ?? 'Offer verified successfully!',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onPrimary,
-                    ),
+                  color: Theme.of(context).colorScheme.onPrimary,
+                ),
               ),
               backgroundColor: Colors.green,
               duration: const Duration(seconds: 3),
@@ -511,8 +559,8 @@ class _OfferDetailsState extends State<OfferDetails> {
               content: Text(
                 data['message'] ?? 'Verification failed.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onError,
-                    ),
+                  color: Theme.of(context).colorScheme.onError,
+                ),
               ),
               backgroundColor: Colors.red,
             ),
@@ -524,8 +572,8 @@ class _OfferDetailsState extends State<OfferDetails> {
             content: Text(
               'Verification error: ${response.statusCode} - ${response.body}',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onError,
-                  ),
+                color: Theme.of(context).colorScheme.onError,
+              ),
             ),
             backgroundColor: Colors.red,
           ),
@@ -537,8 +585,8 @@ class _OfferDetailsState extends State<OfferDetails> {
           content: Text(
             'Network error: $e',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onError,
-                ),
+              color: Theme.of(context).colorScheme.onError,
+            ),
           ),
           backgroundColor: Colors.red,
         ),
@@ -553,40 +601,60 @@ class _OfferDetailsState extends State<OfferDetails> {
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          backgroundColor: Theme.of(context).colorScheme.surface,
+          backgroundColor:
+              Theme.of(context).brightness == Brightness.dark
+                  ? Design.darkCard
+                  : Theme.of(context).colorScheme.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+            side: BorderSide(
+              color:
+                  Theme.of(context).brightness == Brightness.dark
+                      ? Design.darkBorder
+                      : Colors.grey.withOpacity(0.2),
+            ),
+          ),
           title: Text(
             'Redeemed People List',
-            style: Theme.of(context).textTheme.titleLarge,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color:
+                  Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white
+                      : null,
+            ),
           ),
           content: SizedBox(
             width: double.maxFinite,
             height: 300,
-            child: redeemedPeopleList.isEmpty
-                ? Center(
-                    child: Text(
-                      'No data found.',
-                      style: Theme.of(context).textTheme.bodyMedium,
+            child:
+                redeemedPeopleList.isEmpty
+                    ? Center(
+                      child: Text(
+                        'No data found.',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    )
+                    : ListView.builder(
+                      itemCount: redeemedPeopleList.length,
+                      itemBuilder: (context, index) {
+                        final person = redeemedPeopleList[index];
+                        final username = person['username'] ?? 'Unknown';
+                        final image = person['images'];
+                        return ListTile(
+                          leading: CircleAvatar(
+                            backgroundImage:
+                                image != null
+                                    ? NetworkImage(image)
+                                    : const AssetImage('assets/placeholder.png')
+                                        as ImageProvider,
+                          ),
+                          title: Text(
+                            username,
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        );
+                      },
                     ),
-                  )
-                : ListView.builder(
-                    itemCount: redeemedPeopleList.length,
-                    itemBuilder: (context, index) {
-                      final person = redeemedPeopleList[index];
-                      final username = person['username'] ?? 'Unknown';
-                      final image = person['images'];
-                      return ListTile(
-                        leading: CircleAvatar(
-                          backgroundImage: image != null
-                              ? NetworkImage(image)
-                              : const AssetImage('assets/placeholder.png') as ImageProvider,
-                        ),
-                        title: Text(
-                          username,
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                      );
-                    },
-                  ),
           ),
           actions: [
             TextButton(
@@ -594,8 +662,8 @@ class _OfferDetailsState extends State<OfferDetails> {
               child: Text(
                 'Done',
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
+                  color: Theme.of(context).colorScheme.primary,
+                ),
               ),
             ),
           ],
@@ -607,82 +675,122 @@ class _OfferDetailsState extends State<OfferDetails> {
   void showRemoveDialogFunc() {
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        title: Text(
-          'Delete Offer',
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
-        content: Text(
-          'Are you sure you want to remove this offer?',
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'CANCEL',
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                  ),
+      builder:
+          (ctx) => AlertDialog(
+            backgroundColor:
+                Theme.of(context).brightness == Brightness.dark
+                    ? Design.darkCard
+                    : Theme.of(context).colorScheme.surface,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+              side: BorderSide(
+                color:
+                    Theme.of(context).brightness == Brightness.dark
+                        ? Design.darkBorder
+                        : Colors.grey.withOpacity(0.2),
+              ),
             ),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              removeOffer();
-            },
-            child: Text(
-              'OK',
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+            title: Text(
+              'Delete Offer',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color:
+                    Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white
+                        : null,
+              ),
+            ),
+            content: Text(
+              'Are you sure you want to remove this offer?',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  'CANCEL',
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.7),
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  removeOffer();
+                },
+                child: Text(
+                  'OK',
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
                     color: Theme.of(context).colorScheme.primary,
                   ),
-            ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
   void showToggleOfferDialog() {
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        title: Text(
-          expireAt != null ? 'Reactivate Offer' : 'End Offer',
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
-        content: Text(
-          expireAt != null
-              ? 'Are you sure you want to bring this offer back?'
-              : 'Are you sure you want to end this offer?',
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'CANCEL',
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                  ),
+      builder:
+          (ctx) => AlertDialog(
+            backgroundColor:
+                Theme.of(context).brightness == Brightness.dark
+                    ? Design.darkCard
+                    : Theme.of(context).colorScheme.surface,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+              side: BorderSide(
+                color:
+                    Theme.of(context).brightness == Brightness.dark
+                        ? Design.darkBorder
+                        : Colors.grey.withOpacity(0.2),
+              ),
             ),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              toggleOfferStatus();
-            },
-            child: Text(
-              'OK',
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+            title: Text(
+              expireAt != null ? 'Reactivate Offer' : 'End Offer',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color:
+                    Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white
+                        : null,
+              ),
+            ),
+            content: Text(
+              expireAt != null
+                  ? 'Are you sure you want to bring this offer back?'
+                  : 'Are you sure you want to end this offer?',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  'CANCEL',
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.7),
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  toggleOfferStatus();
+                },
+                child: Text(
+                  'OK',
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
                     color: Theme.of(context).colorScheme.primary,
                   ),
-            ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -693,17 +801,29 @@ class _OfferDetailsState extends State<OfferDetails> {
     return Stack(
       children: [
         Scaffold(
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          backgroundColor:
+              Theme.of(context).brightness == Brightness.dark
+                  ? Design.darkBackground
+                  : Theme.of(context).scaffoldBackgroundColor,
           appBar: AppBar(
-            backgroundColor: Theme.of(context).colorScheme.surface,
+            backgroundColor:
+                Theme.of(context).brightness == Brightness.dark
+                    ? Design.darkSurface
+                    : Theme.of(context).colorScheme.surface,
             title: Text(
               'Offer Detail',
-              style: Theme.of(context).textTheme.titleLarge,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color:
+                    Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white
+                        : null,
+              ),
             ),
             leading: IconButton(
-              icon: Icon(
-                Icons.arrow_back,
-                color: Theme.of(context).iconTheme.color,
+              icon: Image.asset(
+                'assets/back_updated.png',
+                height: 40,
+                width: 34,
               ),
               onPressed: () => Navigator.pop(context),
             ),
@@ -711,240 +831,289 @@ class _OfferDetailsState extends State<OfferDetails> {
               IconButton(
                 icon: Icon(
                   Icons.qr_code,
-                  color: isExpired
-                      ? Theme.of(context).iconTheme.color?.withOpacity(0.5)
-                      : Theme.of(context).iconTheme.color,
+                  color:
+                      isExpired
+                          ? Theme.of(context).iconTheme.color?.withOpacity(0.5)
+                          : Theme.of(context).iconTheme.color,
                 ),
                 onPressed: isExpired ? null : scanQR,
                 tooltip: isExpired ? 'Offer Expired' : 'Scan QR Code',
               ),
             ],
           ),
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (imageUrl.isNotEmpty)
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Stack(
+          body:
+              isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : errorMessage.isNotEmpty
+                  ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        ColorFiltered(
-                          colorFilter: isExpired
-                              ? const ColorFilter.mode(
-                                  Colors.grey,
-                                  BlendMode.saturation,
-                                )
-                              : const ColorFilter.mode(
-                                  Colors.transparent,
-                                  BlendMode.dst,
-                                ),
-                          child: Image.network(
-                            imageUrl,
-                            height: 200,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
-                                height: 200,
-                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
-                                child: Icon(
-                                  Icons.broken_image,
-                                  size: 50,
-                                  color: Theme.of(context).colorScheme.onSurface,
-                                ),
-                              );
-                            },
-                          ),
+                        Icon(
+                          Icons.error_outline,
+                          size: 48,
+                          color: Theme.of(context).colorScheme.error,
                         ),
-                        if (isExpired)
-                          Positioned(
-                            top: 10,
-                            left: 10,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                'Offer Expired',
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: Theme.of(context).colorScheme.surface,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                    ),
-                              ),
-                            ),
+                        const SizedBox(height: 16),
+                        Text(
+                          errorMessage,
+                          style: Theme.of(
+                            context,
+                          ).textTheme.bodyLarge?.copyWith(
+                            color: Theme.of(context).colorScheme.error,
                           ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () {
+                            setState(() {
+                              errorMessage = '';
+                            });
+                            fetchRedeemedPeople();
+                          },
+                          child: const Text('Retry'),
+                        ),
                       ],
                     ),
-                  ),
-                const SizedBox(height: 16),
-                Text(
-                  offerName,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-                Text(
-                  description,
-                  textAlign: TextAlign.justify,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
+                  )
+                  : SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Image.asset(
-                              'assets/orange_hotel.png',
-                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                              width: 16,
-                              height: 16,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              'Offered by:',
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                        if (imageUrl.isNotEmpty)
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Stack(
+                              children: [
+                                ColorFiltered(
+                                  colorFilter:
+                                      isExpired
+                                          ? const ColorFilter.mode(
+                                            Colors.grey,
+                                            BlendMode.saturation,
+                                          )
+                                          : const ColorFilter.mode(
+                                            Colors.transparent,
+                                            BlendMode.dst,
+                                          ),
+                                  child: Image.network(
+                                    imageUrl,
+                                    height: 200,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      print('Image error: $error'); // Debug log
+                                      return Container(
+                                        height: 200,
+                                        color:
+                                            Theme.of(context).brightness ==
+                                                    Brightness.dark
+                                                ? Colors.black.withOpacity(0.3)
+                                                : Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurface
+                                                    .withOpacity(0.2),
+                                        child: Icon(
+                                          Icons.broken_image,
+                                          size: 50,
+                                          color:
+                                              Theme.of(context).brightness ==
+                                                      Brightness.dark
+                                                  ? Colors.white.withOpacity(
+                                                    0.7,
+                                                  )
+                                                  : Theme.of(
+                                                    context,
+                                                  ).colorScheme.onSurface,
+                                        ),
+                                      );
+                                    },
                                   ),
+                                ),
+                                if (isExpired)
+                                  Positioned(
+                                    top: 10,
+                                    left: 10,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface
+                                            .withOpacity(0.7),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        'Offer Expired',
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodySmall?.copyWith(
+                                          color:
+                                              Theme.of(
+                                                context,
+                                              ).colorScheme.surface,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        const SizedBox(height: 16),
+                        Text(
+                          offerName,
+                          style: Theme.of(
+                            context,
+                          ).textTheme.titleLarge?.copyWith(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          description,
+                          textAlign: TextAlign.justify,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Image.asset(
+                                      'assets/orange_hotel.png',
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurface.withOpacity(0.7),
+                                      width: 16,
+                                      height: 16,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'Offered by:',
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodyMedium?.copyWith(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface
+                                            .withOpacity(0.7),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  venueName,
+                                  style: Theme.of(context).textTheme.bodyMedium
+                                      ?.copyWith(fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  'Redeemed',
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.bodyMedium?.copyWith(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface.withOpacity(0.7),
+                                  ),
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  redeemed_count.toString(),
+                                  style: Theme.of(context).textTheme.bodyMedium
+                                      ?.copyWith(fontWeight: FontWeight.bold),
+                                ),
+                              ],
                             ),
                           ],
                         ),
-                        const SizedBox(height: 3),
-                        Text(
-                          venueName,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
+                        const SizedBox(height: 24),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: showRemoveDialogFunc,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  elevation:
+                                      Theme.of(context).brightness ==
+                                              Brightness.dark
+                                          ? 4
+                                          : 2,
+                                ),
+                                child: Text(
+                                  'Delete Offer',
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.labelLarge?.copyWith(
+                                    color:
+                                        Theme.of(context).colorScheme.onError,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: showToggleOfferDialog,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor:
+                                      isExpired
+                                          ? Colors.green
+                                          : AppColors.primary,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  elevation:
+                                      Theme.of(context).brightness ==
+                                              Brightness.dark
+                                          ? 4
+                                          : 2,
+                                ),
+                                child: Text(
+                                  isExpired ? 'Bring Offer Back' : 'End Offer',
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.labelLarge?.copyWith(
+                                    color:
+                                        Theme.of(context).colorScheme.onPrimary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                    const SizedBox(width: 16),
-                    InkWell(
-                      onTap: showRedeemedPeopleDialog,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Image.asset(
-                                'assets/people.png',
-                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                                width: 16,
-                                height: 16,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                'Redeemed by:',
-                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                      color:
-                                          Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                                    ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            '$redeemed_count People',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                const SizedBox(height: 32),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: showRemoveDialogFunc,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: Text(
-                          'Delete Offer',
-                          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                                color: Theme.of(context).colorScheme.onError,
-                                fontWeight: FontWeight.bold,
-                              ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                      child: Expanded(
-                        child: ElevatedButton(
-                          onPressed: showToggleOfferDialog,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: isExpired ? Colors.green : AppColors.primary,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          child: Text(
-                            isExpired ? 'Bring Offer Back' : 'End Offer',
-                            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                                  color: Theme.of(context).colorScheme.onPrimary,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                if (errorMessage.isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  Center(
-                    child: Text(
-                      errorMessage,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppColors.primary,
-                          ),
-                    ),
                   ),
-                ],
-              ],
-            ),
-          ),
         ),
-        if (isLoading)
-          Stack(
-            children: [
-              Container(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.14),
-              ),
-              Container(
-                color: Theme.of(context).colorScheme.surface.withOpacity(0.1),
-                child: Center(
-                  child: Image.asset(
-                    'assets/Bird_Full_Eye_Blinking.gif',
-                    width: 100,
-                    height: 100,
-                  ),
-                ),
-              ),
-            ],
-          ),
+        // if (isLoading)
+        //   Container(
+        //     color: Colors.black.withOpacity(0.3),
+        //     child: const Center(child: CircularProgressIndicator()),
+        //   ),
       ],
     );
   }

@@ -15,6 +15,12 @@ class AddMemberScreen extends StatefulWidget {
   State<AddMemberScreen> createState() => _AddMemberScreenState();
 }
 
+class Design {
+  static const Color darkBackground = Color(0xFF1E1E1E);
+  static const Color darkSurface = Color(0xFF242424);
+  static const Color darkBorder = Color(0xFF3E3E3E);
+}
+
 class _AddMemberScreenState extends State<AddMemberScreen> {
   bool _obscurePassword = true;
   List<String> _selectedVenues = [];
@@ -48,7 +54,8 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
       _emailController.text = widget.existingMember!['email'] ?? '';
       _phoneController.text = widget.existingMember!['phone'] ?? '';
       _selectedVenues = widget.existingMember!['venue']?.split(',') ?? [];
-      _selectedPermissions = widget.existingMember!['permission']?.split(',') ?? [];
+      _selectedPermissions =
+          widget.existingMember!['permission']?.split(',') ?? [];
       if (!_selectedPermissions.contains('2')) {
         _selectedPermissions.add('2');
       }
@@ -95,7 +102,8 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
       if (permissionResponse.statusCode == 200) {
         setState(() {
           _permissionList = permissionResponse.data['data'] ?? [];
-          if (_permissionList.any((p) => p['id'].toString() == '2') && !_selectedPermissions.contains('2')) {
+          if (_permissionList.any((p) => p['id'].toString() == '2') &&
+              !_selectedPermissions.contains('2')) {
             _selectedPermissions.add('2');
           }
         });
@@ -139,7 +147,9 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
     if (_lastNameController.text.isEmpty) {
       setState() {
         _lastNameError = 'Last name is required';
-      };
+      }
+
+      ;
       hasError = true;
     }
     if (_phoneController.text.isEmpty) {
@@ -153,7 +163,9 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
         _emailError = 'Email is required';
       });
       hasError = true;
-    } else if (!RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$').hasMatch(_emailController.text)) {
+    } else if (!RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    ).hasMatch(_emailController.text)) {
       setState(() {
         _emailError = 'Incorrect email format';
       });
@@ -192,7 +204,8 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
         "last_name": _lastNameController.text,
         "email": _emailController.text,
         "contact": _phoneController.text,
-        if (_passwordController.text.isNotEmpty) "password": _passwordController.text,
+        if (_passwordController.text.isNotEmpty)
+          "password": _passwordController.text,
       };
 
       for (var i = 0; i < _selectedPermissions.length; i++) {
@@ -213,9 +226,10 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
       FormData formData = FormData.fromMap(formDataMap);
 
       final dio = Dio();
-      final String url = widget.existingMember != null && widget.existingMember!['id'] != null
-          ? "https://api.getflock.io/api/vendor/teams/${widget.existingMember!['id']}"
-          : "https://api.getflock.io/api/vendor/teams";
+      final String url =
+          widget.existingMember != null && widget.existingMember!['id'] != null
+              ? "https://api.getflock.io/api/vendor/teams/${widget.existingMember!['id']}"
+              : "https://api.getflock.io/api/vendor/teams";
 
       final response = await dio.post(
         url,
@@ -237,10 +251,12 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
             SnackBar(
               backgroundColor: Theme.of(context).colorScheme.primary,
               content: Text(
-                widget.existingMember != null ? "Member updated successfully!" : "Member added successfully!",
+                widget.existingMember != null
+                    ? "Member updated successfully!"
+                    : "Member added successfully!",
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onPrimary,
-                    ),
+                  color: Theme.of(context).colorScheme.onPrimary,
+                ),
               ),
             ),
           );
@@ -248,7 +264,8 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
         }
       } else {
         final errorMessage = response.data['message'] ?? 'Unknown error';
-        final errors = response.data['errors']?.toString() ?? 'No details provided';
+        final errors =
+            response.data['errors']?.toString() ?? 'No details provided';
         _showError('Failed to save member, Please Check fields');
       }
     } catch (e) {
@@ -264,22 +281,272 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
           backgroundColor: Colors.red,
           content: Text(
             message,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.white,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: Colors.white),
           ),
         ),
       );
     }
   }
 
+  InputDecoration _getInputDecoration(String label) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: TextStyle(
+        color:
+            Theme.of(context).brightness == Brightness.dark
+                ? Colors.grey[400]
+                : Theme.of(context).textTheme.bodyMedium!.color,
+      ),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(
+          color:
+              Theme.of(context).brightness == Brightness.dark
+                  ? Design.darkBorder
+                  : Theme.of(context).colorScheme.primary,
+        ),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(
+          color:
+              Theme.of(context).brightness == Brightness.dark
+                  ? Design.darkBorder
+                  : Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+        ),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(
+          color: Theme.of(context).colorScheme.primary,
+          width: 2.0,
+        ),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: Colors.red, width: 2.0),
+      ),
+      filled: Theme.of(context).brightness == Brightness.dark,
+      fillColor:
+          Theme.of(context).brightness == Brightness.dark
+              ? Design.darkSurface
+              : null,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      isDense: true,
+    );
+  }
+
+  Widget _buildDropdownField({
+    required String label,
+    required List<dynamic> items,
+    required List<String> selectedValues,
+    required Function(List<String>) onConfirm,
+    bool isMandatory = false,
+    String? mandatoryId,
+  }) {
+    return InkWell(
+      onTap: () async {
+        await showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            List<String> tempSelected = List.from(selectedValues);
+            return StatefulBuilder(
+              builder: (context, setStateDialog) {
+                return AlertDialog(
+                  backgroundColor:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? Design.darkSurface
+                          : Theme.of(context).colorScheme.surface,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    side: BorderSide(
+                      color:
+                          Theme.of(context).brightness == Brightness.dark
+                              ? Design.darkBorder
+                              : Colors.grey.withOpacity(0.2),
+                    ),
+                  ),
+                  title: Text(
+                    "Select $label",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).textTheme.titleLarge!.color,
+                    ),
+                  ),
+                  content: SizedBox(
+                    width: double.maxFinite,
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: items.length,
+                      itemBuilder: (context, index) {
+                        final item = items[index];
+                        final id = item['id'].toString();
+                        final name = item['name'].toString();
+                        final isSelected = tempSelected.contains(id);
+                        final isMandatoryItem =
+                            mandatoryId != null && id == mandatoryId;
+
+                        return Container(
+                          decoration: BoxDecoration(
+                            color:
+                                isSelected
+                                    ? Theme.of(
+                                      context,
+                                    ).colorScheme.primary.withOpacity(0.1)
+                                    : Colors.transparent,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: ListTile(
+                            dense: true,
+                            title: Text(
+                              name,
+                              style: TextStyle(
+                                color:
+                                    Theme.of(
+                                      context,
+                                    ).textTheme.bodyLarge!.color,
+                                fontSize: 15,
+                              ),
+                            ),
+                            trailing:
+                                isMandatoryItem
+                                    ? Icon(
+                                      Icons.check_circle,
+                                      color:
+                                          Theme.of(context).colorScheme.primary,
+                                      size: 20,
+                                    )
+                                    : Checkbox(
+                                      value: isSelected,
+                                      activeColor:
+                                          Theme.of(context).colorScheme.primary,
+                                      onChanged: (bool? value) {
+                                        if (value != null) {
+                                          setStateDialog(() {
+                                            if (value) {
+                                              tempSelected.add(id);
+                                            } else {
+                                              tempSelected.remove(id);
+                                            }
+                                          });
+                                        }
+                                      },
+                                    ),
+                            enabled: !isMandatoryItem,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text(
+                        'Cancel',
+                        style: TextStyle(
+                          color:
+                              Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.grey[400]
+                                  : Colors.grey[700],
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        onConfirm(tempSelected);
+                        Navigator.pop(context);
+                      },
+                      child: Text(
+                        'Confirm',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        );
+      },
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 56),
+        child: InputDecorator(
+          decoration: _getInputDecoration(label),
+          baseStyle: TextStyle(
+            fontSize: 16,
+            color: Theme.of(context).textTheme.bodyLarge!.color,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  selectedValues.isEmpty
+                      ? 'Select $label'
+                      : items
+                          .where(
+                            (item) =>
+                                selectedValues.contains(item['id'].toString()),
+                          )
+                          .map((item) => item['name'].toString())
+                          .join(', '),
+                  style: TextStyle(
+                    fontSize: 16,
+                    color:
+                        selectedValues.isEmpty
+                            ? Theme.of(context).brightness == Brightness.dark
+                                ? Colors.grey[400]
+                                : Colors.grey[700]
+                            : Theme.of(context).textTheme.bodyLarge!.color,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Icon(
+                Icons.arrow_drop_down,
+                color:
+                    Theme.of(context).brightness == Brightness.dark
+                        ? Colors.grey[400]
+                        : Colors.grey[700],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppConstants.customAppBar(
-        context: context,
-        title: 'Add Member',
+      backgroundColor:
+          Theme.of(context).brightness == Brightness.dark
+              ? Design.darkBackground
+              : Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
+        backgroundColor:
+            Theme.of(context).brightness == Brightness.dark
+                ? Design.darkBackground
+                : Theme.of(context).scaffoldBackgroundColor,
+        elevation: 0,
+        leading: IconButton(
+          icon: Image.asset('assets/back_updated.png', height: 40, width: 34),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Text(
+          'Add Member',
+          style: TextStyle(
+            color: Theme.of(context).textTheme.titleLarge!.color,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
       body: Stack(
         children: [
@@ -292,24 +559,48 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
                   child: Stack(
                     clipBehavior: Clip.none,
                     children: [
-                      CircleAvatar(
-                        radius: 50,
-                        backgroundColor: Theme.of(context).colorScheme.surface,
-                        backgroundImage: _pickedImage != null ? FileImage(_pickedImage!) : null,
-                        child: _pickedImage == null
-                            ? Icon(
-                                Icons.person,
-                                size: 60,
-                                color: Theme.of(context).iconTheme.color,
-                              )
-                            : null,
+                      Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? Design.darkBorder
+                                    : Colors.grey.withOpacity(0.2),
+                            width: 2,
+                          ),
+                        ),
+                        child: CircleAvatar(
+                          radius: 50,
+                          backgroundColor:
+                              Theme.of(context).brightness == Brightness.dark
+                                  ? Design.darkSurface
+                                  : Theme.of(context).colorScheme.surface,
+                          backgroundImage:
+                              _pickedImage != null
+                                  ? FileImage(_pickedImage!)
+                                  : null,
+                          child:
+                              _pickedImage == null
+                                  ? Icon(
+                                    Icons.person,
+                                    size: 60,
+                                    color:
+                                        Theme.of(context).brightness ==
+                                                Brightness.dark
+                                            ? Colors.white70
+                                            : Theme.of(context).iconTheme.color,
+                                  )
+                                  : null,
+                        ),
                       ),
                       Positioned(
                         bottom: -10,
                         right: -10,
                         child: CircleAvatar(
                           radius: 18,
-                          backgroundColor: Theme.of(context).colorScheme.primary,
+                          backgroundColor:
+                              Theme.of(context).colorScheme.primary,
                           child: IconButton(
                             icon: Icon(
                               Icons.camera_alt,
@@ -325,175 +616,137 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
                   ),
                 ),
                 const SizedBox(height: 30),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          AppConstants.firstNameField(
-                            controller: _firstNameController,
-                          ),
-                          if (_firstNameError != null)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 4, left: 12),
-                              child: Text(
-                                _firstNameError!,
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: Colors.red,
-                                    ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          AppConstants.lastNameField(
-                            controller: _lastNameController,
-                          ),
-                          if (_lastNameError != null)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 4, left: 12),
-                              child: Text(
-                                _lastNameError!,
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: Colors.red,
-                                    ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ],
+                TextField(
+                  controller: _firstNameController,
+                  decoration: _getInputDecoration(
+                    'First Name',
+                  ).copyWith(errorText: _firstNameError),
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Theme.of(context).textTheme.bodyLarge!.color,
+                  ),
                 ),
                 const SizedBox(height: 15),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    AppConstants.emailField(controller: _emailController),
-                    if (_emailError != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4, left: 12),
-                        child: Text(
-                          _emailError!,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Colors.red,
-                              ),
-                        ),
-                      ),
-                  ],
+                TextField(
+                  controller: _lastNameController,
+                  decoration: _getInputDecoration(
+                    'Last Name',
+                  ).copyWith(errorText: _lastNameError),
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Theme.of(context).textTheme.bodyLarge!.color,
+                  ),
                 ),
                 const SizedBox(height: 15),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    AppConstants.phoneField(controller: _phoneController),
-                    if (_phoneError != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4, left: 12),
-                        child: Text(
-                          _phoneError!,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Colors.red,
-                              ),
-                        ),
-                      ),
-                  ],
+                TextField(
+                  controller: _emailController,
+                  decoration: _getInputDecoration(
+                    'Email',
+                  ).copyWith(errorText: _emailError),
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Theme.of(context).textTheme.bodyLarge!.color,
+                  ),
                 ),
                 const SizedBox(height: 15),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    AppConstants.passwordField(
-                      controller: _passwordController,
-                      obscureText: _obscurePassword,
-                      toggleObscure: () {
+                TextField(
+                  controller: _phoneController,
+                  decoration: _getInputDecoration(
+                    'Phone',
+                  ).copyWith(errorText: _phoneError),
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Theme.of(context).textTheme.bodyLarge!.color,
+                  ),
+                ),
+                const SizedBox(height: 15),
+                TextField(
+                  controller: _passwordController,
+                  decoration: _getInputDecoration('Password').copyWith(
+                    errorText: _passwordError,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                        color: Theme.of(context).iconTheme.color,
+                      ),
+                      onPressed: () {
                         setState(() {
                           _obscurePassword = !_obscurePassword;
                         });
                       },
                     ),
-                    if (_passwordError != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4, left: 12),
-                        child: Text(
-                          _passwordError!,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Colors.red,
-                              ),
-                        ),
-                      ),
-                  ],
+                  ),
+                  obscureText: _obscurePassword,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Theme.of(context).textTheme.bodyLarge!.color,
+                  ),
                 ),
                 const SizedBox(height: 15),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    AppConstants.assignVenuesDropdown(
-                      venueList: _venueList,
-                      selectedVenues: _selectedVenues,
-                      onConfirm: (values) {
-                        setState(() {
-                          _selectedVenues = values.cast<String>();
-                          _venuesError = null;
-                        });
-                      },
-                    ),
-                    if (_venuesError != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4, left: 12),
-                        child: Text(
-                          _venuesError!,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Colors.red,
-                              ),
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 15),
-                AppConstants.assignPermissionsDropdown(
-                  permissionList: _permissionList,
-                  selectedPermissions: _selectedPermissions,
-                  mandatoryPermissionId: '2',
+                _buildDropdownField(
+                  label: 'Venues',
+                  items: _venueList,
+                  selectedValues: _selectedVenues,
                   onConfirm: (values) {
                     setState(() {
-                      _selectedPermissions = values.cast<String>();
+                      _selectedVenues = values;
+                      _venuesError = null;
+                    });
+                  },
+                ),
+                if (_venuesError != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4, left: 12),
+                    child: Text(
+                      _venuesError!,
+                      style: const TextStyle(color: Colors.red, fontSize: 12),
+                    ),
+                  ),
+                const SizedBox(height: 15),
+                _buildDropdownField(
+                  label: 'Permissions',
+                  items: _permissionList,
+                  selectedValues: _selectedPermissions,
+                  onConfirm: (values) {
+                    setState(() {
+                      _selectedPermissions = values;
                       if (!_selectedPermissions.contains('2')) {
                         _selectedPermissions.add('2');
                       }
                     });
                   },
-                  context: context,
+                  isMandatory: true,
+                  mandatoryId: '2',
                 ),
                 const SizedBox(height: 40),
                 _isLoading
                     ? Center(
-                        child: CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            Theme.of(context).colorScheme.primary,
-                          ),
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Theme.of(context).colorScheme.primary,
                         ),
-                      )
-                    : AppConstants.fullWidthButton(
-                        text: "Submit",
-                        onPressed: _submitForm,
                       ),
+                    )
+                    : AppConstants.fullWidthButton(
+                      text: "Submit",
+                      onPressed: _submitForm,
+                    ),
               ],
             ),
           ),
           if (_isLoading)
             Container(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+              color:
+                  Theme.of(context).brightness == Brightness.dark
+                      ? Colors.black.withOpacity(0.7)
+                      : Colors.white.withOpacity(0.7),
               child: Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    Theme.of(context).colorScheme.primary,
-                  ),
+                child: Image.asset(
+                  'assets/Bird_Full_Eye_Blinking.gif',
+                  width: 100,
+                  height: 100,
                 ),
               ),
             ),

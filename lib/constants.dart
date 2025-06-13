@@ -82,7 +82,7 @@ class AppConstants {
   }
 
   // Custom AppBar method.
-   static PreferredSizeWidget customAppBar({
+  static PreferredSizeWidget customAppBar({
     required BuildContext context,
     required String title,
     String backIconAsset = 'assets/back_updated.png',
@@ -93,15 +93,16 @@ class AppConstants {
     final screenWidth = MediaQuery.of(context).size.width;
     return AppBar(
       leading: SizedBox(
-        width: screenWidth * 0.24, // Scaled from 94/390 (assuming 390px screen width)
+        width:
+            screenWidth *
+            0.24, // Scaled from 94/390 (assuming 390px screen width)
         height: screenWidth * 0.19, // Scaled from 74/390
         child: IconButton(
           icon: Image.asset(
             backIconAsset,
-            width: screenWidth * 0.24,
-            height: screenWidth * 0.19,
+            width: 34,
+            height: 40,
             fit: BoxFit.contain,
-            // color: Theme.of(context).colorScheme.onSurface,
           ),
           onPressed: () {
             Navigator.pushNamed(context, '/dashboard');
@@ -110,23 +111,34 @@ class AppConstants {
       ),
       title: Text(
         title,
-        style: titleTextStyle ??
+        style:
+            titleTextStyle ??
             Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface,
-                  fontFamily: 'YourRegularFont',
-                  fontSize: 20,
-                  fontWeight: FontWeight.w500,
-                ),
+              color:
+                  Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white
+                      : Colors.black87,
+              fontFamily: 'YourRegularFont',
+              fontSize: 20,
+              fontWeight: FontWeight.w500,
+            ),
       ),
       centerTitle: true,
-      backgroundColor: backgroundColor ?? Theme.of(context).colorScheme.surface,
-      elevation: elevation,
-      shadowColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
+      backgroundColor:
+          backgroundColor ??
+          (Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFF1A1A1A) // Professional dark black
+              : Theme.of(context).colorScheme.surface),
+      elevation: Theme.of(context).brightness == Brightness.dark ? 2 : 0,
+      shadowColor:
+          Theme.of(context).brightness == Brightness.dark
+              ? Colors.black.withOpacity(0.3)
+              : Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
     );
   }
 
   // Reusable InputDecoration for TextFields
-  
+
   static final InputDecoration textFieldDecoration = InputDecoration(
     hintText: 'Enter Email Address',
     hintStyle: TextStyle(
@@ -455,7 +467,6 @@ class AppConstants {
   }
 
   static Widget assignVenuesDropdown({
-    
     required List<dynamic> venueList,
     required List<String> selectedVenues,
     required ValueChanged<List<String>> onConfirm,
@@ -497,7 +508,8 @@ class AppConstants {
       ),
     );
   }
-static Widget assignPermissionsDropdown({
+
+  static Widget assignPermissionsDropdown({
     required BuildContext context, // Added context parameter
     required List<dynamic> permissionList,
     required List<String> selectedPermissions,
@@ -506,7 +518,8 @@ static Widget assignPermissionsDropdown({
   }) {
     // Ensure mandatoryPermissionId is included in initial selection
     List<String> initialSelection = List.from(selectedPermissions);
-    if (mandatoryPermissionId != null && !initialSelection.contains(mandatoryPermissionId)) {
+    if (mandatoryPermissionId != null &&
+        !initialSelection.contains(mandatoryPermissionId)) {
       initialSelection.add(mandatoryPermissionId);
     }
 
@@ -532,7 +545,8 @@ static Widget assignPermissionsDropdown({
             onConfirm: (values) {
               // Ensure mandatoryPermissionId is included in the confirmed list
               List<String> confirmedValues = List.from(values);
-              if (mandatoryPermissionId != null && !confirmedValues.contains(mandatoryPermissionId)) {
+              if (mandatoryPermissionId != null &&
+                  !confirmedValues.contains(mandatoryPermissionId)) {
                 confirmedValues.add(mandatoryPermissionId);
               }
               onConfirm(confirmedValues);
@@ -561,13 +575,17 @@ static Widget assignPermissionsDropdown({
               ),
             ),
             MultiSelectChipDisplay<String>(
-              items: initialSelection.map((id) {
-                final permission = permissionList.firstWhere(
-                  (p) => p['id'].toString() == id,
-                  orElse: () => {'id': id, 'name': 'Unknown'},
-                );
-                return MultiSelectItem<String>(id, permission['name'].toString());
-              }).toList(),
+              items:
+                  initialSelection.map((id) {
+                    final permission = permissionList.firstWhere(
+                      (p) => p['id'].toString() == id,
+                      orElse: () => {'id': id, 'name': 'Unknown'},
+                    );
+                    return MultiSelectItem<String>(
+                      id,
+                      permission['name'].toString(),
+                    );
+                  }).toList(),
               chipColor: const Color.fromRGBO(255, 130, 16, 1),
               textStyle: const TextStyle(color: Colors.white),
               onTap: (value) {
@@ -591,7 +609,9 @@ static Widget assignPermissionsDropdown({
     String? mandatoryPermissionId,
   }) {
     List<String> tempSelected = List.from(selectedPermissions);
-    bool selectAll = permissionList.every((p) => tempSelected.contains(p['id'].toString()));
+    bool selectAll = permissionList.every(
+      (p) => tempSelected.contains(p['id'].toString()),
+    );
 
     showDialog(
       context: context,
@@ -599,7 +619,9 @@ static Widget assignPermissionsDropdown({
         return StatefulBuilder(
           builder: (context, setState) {
             void updateSelectAll() {
-              selectAll = permissionList.every((p) => tempSelected.contains(p['id'].toString()));
+              selectAll = permissionList.every(
+                (p) => tempSelected.contains(p['id'].toString()),
+              );
               setState(() {});
             }
 
@@ -620,11 +642,15 @@ static Widget assignPermissionsDropdown({
                       onChanged: (value) {
                         setState(() {
                           if (value == true) {
-                            tempSelected = permissionList.map((p) => p['id'].toString()).toList();
+                            tempSelected =
+                                permissionList
+                                    .map((p) => p['id'].toString())
+                                    .toList();
                           } else {
-                            tempSelected = mandatoryPermissionId != null
-                                ? [mandatoryPermissionId]
-                                : [];
+                            tempSelected =
+                                mandatoryPermissionId != null
+                                    ? [mandatoryPermissionId]
+                                    : [];
                           }
                           selectAll = value ?? false;
                         });
@@ -638,26 +664,32 @@ static Widget assignPermissionsDropdown({
                         itemBuilder: (context, index) {
                           final permission = permissionList[index];
                           final permissionId = permission['id'].toString();
-                          final isMandatory = permissionId == mandatoryPermissionId;
+                          final isMandatory =
+                              permissionId == mandatoryPermissionId;
 
                           return CheckboxListTile(
-                            title: Text(permission['name'] ?? 'Permission $permissionId'),
+                            title: Text(
+                              permission['name'] ?? 'Permission $permissionId',
+                            ),
                             value: tempSelected.contains(permissionId),
                             activeColor: const Color.fromRGBO(255, 130, 16, 1),
-                            onChanged: isMandatory
-                                ? null // Disable checkbox for mandatory permission
-                                : (value) {
-                                    setState(() {
-                                      if (value == true) {
-                                        if (!tempSelected.contains(permissionId)) {
-                                          tempSelected.add(permissionId);
+                            onChanged:
+                                isMandatory
+                                    ? null // Disable checkbox for mandatory permission
+                                    : (value) {
+                                      setState(() {
+                                        if (value == true) {
+                                          if (!tempSelected.contains(
+                                            permissionId,
+                                          )) {
+                                            tempSelected.add(permissionId);
+                                          }
+                                        } else {
+                                          tempSelected.remove(permissionId);
                                         }
-                                      } else {
-                                        tempSelected.remove(permissionId);
-                                      }
-                                      updateSelectAll();
-                                    });
-                                  },
+                                        updateSelectAll();
+                                      });
+                                    },
                             enabled: !isMandatory,
                           );
                         },
@@ -689,9 +721,9 @@ static Widget assignPermissionsDropdown({
       },
     );
   }
-  
+
   // Reusable "Enter Venue Name" field
- static Widget customTextField({
+  static Widget customTextField({
     required TextEditingController controller,
     required String hintText,
     required TextInputAction textInputAction,
@@ -708,7 +740,8 @@ static Widget assignPermissionsDropdown({
           fontSize: 14.0,
           fontFamily: 'YourFontFamily',
         ),
-        decoration: decoration?.copyWith(hintText: hintText) ??
+        decoration:
+            decoration?.copyWith(hintText: hintText) ??
             textFieldDecoration.copyWith(hintText: hintText),
         textInputAction: textInputAction,
         validator: validator,
@@ -716,6 +749,7 @@ static Widget assignPermissionsDropdown({
       ),
     );
   }
+
   // Reusable "Enter Category" field
   // (If you need a dropdown, you can adapt this or wrap it in an InkWell.)
   static Widget categoryField({required TextEditingController controller}) {
@@ -751,12 +785,12 @@ static Widget assignPermissionsDropdown({
           fontSize: 14.0,
           fontFamily: 'YourFontFamily',
         ),
-        decoration: decoration?.copyWith(hintText: "Enter Suburb") ??
+        decoration:
+            decoration?.copyWith(hintText: "Enter Suburb") ??
             textFieldDecoration.copyWith(hintText: "Enter Suburb"),
       ),
     );
   }
-
 
   // Reusable "Enter Notice" field
   static Widget noticeField({
@@ -772,7 +806,8 @@ static Widget assignPermissionsDropdown({
           fontSize: 14.0,
           fontFamily: 'YourFontFamily',
         ),
-        decoration: decoration?.copyWith(hintText: "Important Notice") ??
+        decoration:
+            decoration?.copyWith(hintText: "Important Notice") ??
             textFieldDecoration.copyWith(hintText: "Important Notice"),
       ),
     );
@@ -804,5 +839,4 @@ static Widget assignPermissionsDropdown({
       ),
     );
   }
-
 }

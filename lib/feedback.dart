@@ -5,6 +5,19 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flock/app_colors.dart';
 
+// Add Design class for dark mode colors
+class Design {
+  static const Color darkBackground = Color(
+    0xFF1A1A1A,
+  ); // Professional dark black
+  static const Color darkSurface = Color(
+    0xFF242424,
+  ); // Slightly lighter surface
+  static const Color darkCard = Color(0xFF2A2A2A); // Card background
+  static const Color darkBorder = Color(0xFF2C2C2C); // Subtle border color
+  static const Color darkDivider = Color(0xFF383838); // Divider color
+}
+
 void main() {
   runApp(const MyApp());
 }
@@ -39,19 +52,38 @@ class MyApp extends StatelessWidget {
         primaryColor: AppColors.primary,
         colorScheme: ColorScheme.dark(
           primary: AppColors.primary,
-          surface: Colors.grey[850]!,
+          surface: Design.darkSurface,
           onSurface: Colors.white,
           onPrimary: Colors.white,
+          background: Design.darkBackground,
         ),
-        scaffoldBackgroundColor: Colors.grey[850],
+        scaffoldBackgroundColor: Design.darkBackground,
         textTheme: const TextTheme(
-          titleLarge: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-          titleMedium: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-          bodyMedium: TextStyle(fontSize: 14),
-          bodySmall: TextStyle(fontSize: 12),
-          labelLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+          titleLarge: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
+          titleMedium: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            color: Colors.white,
+          ),
+          bodyMedium: TextStyle(fontSize: 14, color: Colors.white),
+          bodySmall: TextStyle(fontSize: 12, color: Colors.white),
+          labelLarge: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            color: Colors.white,
+          ),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            elevation: 4,
+          ),
+        ),
       ),
       themeMode: ThemeMode.system,
       home: const ReportScreen(),
@@ -114,14 +146,15 @@ class _ReportScreenState extends State<ReportScreen> {
         if (data['status'] == 'success' && data['data'] != null) {
           final List<dynamic> venueData = data['data'];
           setState(() {
-            _venues = venueData
-                .map(
-                  (venue) => {
-                    'id': venue['id'],
-                    'name': venue['name']?.toString() ?? 'Unnamed Venue',
-                  },
-                )
-                .toList();
+            _venues =
+                venueData
+                    .map(
+                      (venue) => {
+                        'id': venue['id'],
+                        'name': venue['name']?.toString() ?? 'Unnamed Venue',
+                      },
+                    )
+                    .toList();
           });
         } else {
           setState(() {
@@ -163,10 +196,13 @@ class _ReportScreenState extends State<ReportScreen> {
         print("Report types API response: ${response.body}");
         final data = json.decode(response.body);
 
-        if (data is Map && data['status'] == 'success' && data['data'] != null) {
+        if (data is Map &&
+            data['status'] == 'success' &&
+            data['data'] != null) {
           final List<dynamic> reportTypeData = data['data'];
           setState(() {
-            _reportTypes = reportTypeData.map((rt) => rt['label'].toString()).toList();
+            _reportTypes =
+                reportTypeData.map((rt) => rt['label'].toString()).toList();
           });
         } else if (data is List) {
           setState(() {
@@ -240,15 +276,16 @@ class _ReportScreenState extends State<ReportScreen> {
               content: Text(
                 responseData['message'] ?? 'Report submitted!',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onPrimary,
-                    ),
+                  color: Theme.of(context).colorScheme.onPrimary,
+                ),
               ),
             ),
           );
           Navigator.pop(context);
         } else {
           setState(() {
-            _errorMessage = responseData['message'] ?? 'Failed to submit report.';
+            _errorMessage =
+                responseData['message'] ?? 'Failed to submit report.';
           });
         }
       } else {
@@ -267,11 +304,23 @@ class _ReportScreenState extends State<ReportScreen> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8.0),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color:
+            Theme.of(context).brightness == Brightness.dark
+                ? Design.darkCard
+                : Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(5),
+        border: Border.all(
+          color:
+              Theme.of(context).brightness == Brightness.dark
+                  ? Design.darkBorder
+                  : Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
+        ),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
+            color:
+                Theme.of(context).brightness == Brightness.dark
+                    ? Colors.black.withOpacity(0.2)
+                    : Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
             spreadRadius: 1,
             blurRadius: 5,
             offset: const Offset(0, 2),
@@ -290,7 +339,10 @@ class _ReportScreenState extends State<ReportScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
+                color:
+                    Theme.of(context).brightness == Brightness.dark
+                        ? Design.darkCard
+                        : Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(5),
               ),
               child: Row(
@@ -300,11 +352,17 @@ class _ReportScreenState extends State<ReportScreen> {
                     _selectedVenue == null
                         ? "Select Venue"
                         : _selectedVenue!['name'] ?? "Select Venue",
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 15),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(fontSize: 15),
                   ),
                   Icon(
-                    _showVenueDropdown ? Icons.arrow_drop_up : Icons.arrow_drop_down,
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                    _showVenueDropdown
+                        ? Icons.arrow_drop_up
+                        : Icons.arrow_drop_down,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.7),
                   ),
                 ],
               ),
@@ -314,10 +372,21 @@ class _ReportScreenState extends State<ReportScreen> {
             Container(
               constraints: const BoxConstraints(maxHeight: 200),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
+                color:
+                    Theme.of(context).brightness == Brightness.dark
+                        ? Design.darkCard
+                        : Theme.of(context).colorScheme.surface,
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(5),
                   bottomRight: Radius.circular(5),
+                ),
+                border: Border.all(
+                  color:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? Design.darkBorder
+                          : Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.2),
                 ),
               ),
               child: Column(
@@ -332,8 +401,10 @@ class _ReportScreenState extends State<ReportScreen> {
                         itemCount: _venues.length,
                         itemBuilder: (context, index) {
                           final venue = _venues[index];
-                          final isSelected = _selectedVenue != null &&
-                              _selectedVenue!['id'].toString() == venue['id'].toString();
+                          final isSelected =
+                              _selectedVenue != null &&
+                              _selectedVenue!['id'].toString() ==
+                                  venue['id'].toString();
                           return InkWell(
                             onTap: () {
                               setState(() {
@@ -346,12 +417,20 @@ class _ReportScreenState extends State<ReportScreen> {
                                 horizontal: 20,
                                 vertical: 6,
                               ),
-                              color: isSelected
-                                  ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
-                                  : Colors.transparent,
+                              color:
+                                  isSelected
+                                      ? Theme.of(context).brightness ==
+                                              Brightness.dark
+                                          ? AppColors.primary.withOpacity(0.2)
+                                          : Theme.of(
+                                            context,
+                                          ).colorScheme.primary.withOpacity(0.1)
+                                      : Colors.transparent,
                               child: Text(
                                 venue['name'] ?? '',
-                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 15),
+                                style: Theme.of(
+                                  context,
+                                ).textTheme.bodyMedium?.copyWith(fontSize: 15),
                               ),
                             ),
                           );
@@ -361,9 +440,7 @@ class _ReportScreenState extends State<ReportScreen> {
                   ),
                   Padding(
                     padding: const EdgeInsets.all(6.0),
-                    child: SizedBox(
-                      width: double.infinity,
-                    ),
+                    child: SizedBox(width: double.infinity),
                   ),
                 ],
               ),
@@ -377,11 +454,23 @@ class _ReportScreenState extends State<ReportScreen> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8.0),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color:
+            Theme.of(context).brightness == Brightness.dark
+                ? Design.darkCard
+                : Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(5),
+        border: Border.all(
+          color:
+              Theme.of(context).brightness == Brightness.dark
+                  ? Design.darkBorder
+                  : Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
+        ),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
+            color:
+                Theme.of(context).brightness == Brightness.dark
+                    ? Colors.black.withOpacity(0.2)
+                    : Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
             spreadRadius: 1,
             blurRadius: 5,
             offset: const Offset(0, 2),
@@ -400,19 +489,30 @@ class _ReportScreenState extends State<ReportScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
+                color:
+                    Theme.of(context).brightness == Brightness.dark
+                        ? Design.darkCard
+                        : Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(5),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    _selectedReportType == null ? "Select Report Type" : _selectedReportType!,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 15),
+                    _selectedReportType == null
+                        ? "Select Report Type"
+                        : _selectedReportType!,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(fontSize: 15),
                   ),
                   Icon(
-                    _showReportTypeDropdown ? Icons.arrow_drop_up : Icons.arrow_drop_down,
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                    _showReportTypeDropdown
+                        ? Icons.arrow_drop_up
+                        : Icons.arrow_drop_down,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.7),
                   ),
                 ],
               ),
@@ -422,10 +522,21 @@ class _ReportScreenState extends State<ReportScreen> {
             Container(
               constraints: const BoxConstraints(maxHeight: 200),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
+                color:
+                    Theme.of(context).brightness == Brightness.dark
+                        ? Design.darkCard
+                        : Theme.of(context).colorScheme.surface,
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(5),
                   bottomRight: Radius.circular(5),
+                ),
+                border: Border.all(
+                  color:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? Design.darkBorder
+                          : Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.2),
                 ),
               ),
               child: Column(
@@ -440,7 +551,9 @@ class _ReportScreenState extends State<ReportScreen> {
                         itemCount: _reportTypes.length,
                         itemBuilder: (context, index) {
                           final rt = _reportTypes[index];
-                          final isSelected = _selectedReportType != null && _selectedReportType == rt;
+                          final isSelected =
+                              _selectedReportType != null &&
+                              _selectedReportType == rt;
                           return InkWell(
                             onTap: () {
                               setState(() {
@@ -453,12 +566,20 @@ class _ReportScreenState extends State<ReportScreen> {
                                 horizontal: 20,
                                 vertical: 6,
                               ),
-                              color: isSelected
-                                  ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
-                                  : Colors.transparent,
+                              color:
+                                  isSelected
+                                      ? Theme.of(context).brightness ==
+                                              Brightness.dark
+                                          ? AppColors.primary.withOpacity(0.2)
+                                          : Theme.of(
+                                            context,
+                                          ).colorScheme.primary.withOpacity(0.1)
+                                      : Colors.transparent,
                               child: Text(
                                 rt,
-                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 15),
+                                style: Theme.of(
+                                  context,
+                                ).textTheme.bodyMedium?.copyWith(fontSize: 15),
                               ),
                             ),
                           );
@@ -468,9 +589,7 @@ class _ReportScreenState extends State<ReportScreen> {
                   ),
                   Padding(
                     padding: const EdgeInsets.all(6.0),
-                    child: SizedBox(
-                      width: double.infinity,
-                    ),
+                    child: SizedBox(width: double.infinity),
                   ),
                 ],
               ),
@@ -483,138 +602,199 @@ class _ReportScreenState extends State<ReportScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor:
+          Theme.of(context).brightness == Brightness.dark
+              ? Design
+                  .darkBackground // Professional dark black
+              : Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                     InkWell(
-  onTap: () => Navigator.of(context).pop(),
-  child: Image.asset(
-    'assets/back_updated.png',
-    height: 40,
-    width: 34,
-    // fit: BoxFit.contain,
-    // color: Theme.of(context).colorScheme.primary, // Orange tint
-  ),
-),
-                    Expanded(
-                      child: Center(
-                        child: Text(
-                          "Report",
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+        child: Container(
+          color:
+              Theme.of(context).brightness == Brightness.dark
+                  ? Design
+                      .darkBackground // Professional dark black
+                  : Theme.of(context).scaffoldBackgroundColor,
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    color:
+                        Theme.of(context).brightness == Brightness.dark
+                            ? Design
+                                .darkBackground // Professional dark black
+                            : Theme.of(context).scaffoldBackgroundColor,
+                    child: Row(
+                      children: [
+                        InkWell(
+                          onTap: () => Navigator.of(context).pop(),
+                          child: Image.asset(
+                            'assets/back_updated.png',
+                            height: 40,
+                            width: 34,
+                          ),
+                        ),
+                        Expanded(
+                          child: Center(
+                            child: Text(
+                              "Report",
+                              style: Theme.of(
+                                context,
+                              ).textTheme.titleLarge?.copyWith(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w600,
-                                color: Theme.of(context).colorScheme.onSurface,
+                                color:
+                                    Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? Colors.white
+                                        : Theme.of(
+                                          context,
+                                        ).colorScheme.onSurface,
                               ),
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(width: 24),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  "Choose venue",
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontSize: 14,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
-                ),
-                const SizedBox(height: 8),
-                customVenueDropdown(),
-                const SizedBox(height: 16),
-                Text(
-                  "Choose report type",
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontSize: 14,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
-                ),
-                const SizedBox(height: 8),
-                customReportTypeDropdown(),
-                const SizedBox(height: 16),
-                Text(
-                  "Description",
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 14),
-                ),
-                const SizedBox(height: 8),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      boxShadow: [
-                        BoxShadow(
-                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
-                          spreadRadius: 2,
-                          blurRadius: 5,
-                          offset: const Offset(0, 3),
-                        ),
+                        const SizedBox(width: 24),
                       ],
                     ),
-                    child: TextField(
-                      controller: _descriptionController,
-                      maxLines: 5,
-                      decoration: InputDecoration(
-                        hintText: "Enter description",
-                        fillColor: Theme.of(context).colorScheme.surface,
-                        filled: true,
-                        contentPadding: const EdgeInsets.all(16),
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
-                          ),
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                      ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    "Choose venue",
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontSize: 14,
+                      color:
+                          Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white.withOpacity(0.87)
+                              : Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
-                ),
-                const SizedBox(height: 24),
-                if (_errorMessage.isNotEmpty)
+                  const SizedBox(height: 8),
+                  customVenueDropdown(),
+                  const SizedBox(height: 16),
+                  Text(
+                    "Choose report type",
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontSize: 14,
+                      color:
+                          Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white.withOpacity(0.87)
+                              : Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  customReportTypeDropdown(),
+                  const SizedBox(height: 16),
+                  Text(
+                    "Description",
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontSize: 14,
+                      color:
+                          Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white.withOpacity(0.87)
+                              : Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Text(
-                      _errorMessage,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Colors.red,
-                            fontSize: 14,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        boxShadow: [
+                          BoxShadow(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withOpacity(0.2),
+                            spreadRadius: 2,
+                            blurRadius: 5,
+                            offset: const Offset(0, 3),
                           ),
-                    ),
-                  ),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton(
-                    onPressed: _submitReport,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        ],
+                      ),
+                      child: TextField(
+                        controller: _descriptionController,
+                        maxLines: 5,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: "Enter description",
+                          hintStyle: TextStyle(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withOpacity(0.5),
+                          ),
+                          fillColor:
+                              Theme.of(context).brightness == Brightness.dark
+                                  ? Design.darkCard
+                                  : Theme.of(context).colorScheme.surface,
+                          filled: true,
+                          contentPadding: const EdgeInsets.all(16),
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color:
+                                  Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Design.darkBorder
+                                      : Theme.of(
+                                        context,
+                                      ).colorScheme.onSurface.withOpacity(0.3),
+                            ),
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: Theme.of(context).colorScheme.primary,
+                              width: 2,
+                            ),
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                        ),
                       ),
                     ),
-                    child: Text(
-                      "Submit",
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                            color: Theme.of(context).colorScheme.onPrimary,
-                            fontSize: 16,
-                          ),
+                  ),
+                  const SizedBox(height: 24),
+                  if (_errorMessage.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Text(
+                        _errorMessage,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Colors.red,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: _submitReport,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).colorScheme.primary,
+                        elevation:
+                            Theme.of(context).brightness == Brightness.dark
+                                ? 4
+                                : 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: Text(
+                        "Submit",
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: Theme.of(context).colorScheme.onPrimary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 20),
-              ],
+                  const SizedBox(height: 20),
+                ],
+              ),
             ),
           ),
         ),

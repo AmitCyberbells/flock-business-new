@@ -140,19 +140,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
           await showDialog(
             context: context,
-            builder: (_) => AlertDialog(
-              title: const Text('Success'),
-              content: const Text('OTP sent successfully.'),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    debugPrint("Dialog OK button pressed");
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('OK'),
+            builder:
+                (_) => AlertDialog(
+                  title: const Text('Success'),
+                  content: const Text('OTP sent successfully.'),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        debugPrint("Dialog OK button pressed");
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text('OK'),
+                    ),
+                  ],
                 ),
-              ],
-            ),
           );
 
           // Navigate to OTP verification with replacement to clear stack
@@ -160,11 +161,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (context) => OtpVerificationScreen(
-                  email: email,
-                  firstName: firstName,
-                  lastName: lastName,
-                ),
+                builder:
+                    (context) => OtpVerificationScreen(
+                      email: email,
+                      firstName: firstName,
+                      lastName: lastName,
+                    ),
               ),
             );
           }
@@ -185,16 +187,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void _showError(String message) {
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Error'),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
+      builder:
+          (_) => AlertDialog(
+            title: const Text('Error'),
+            content: Text(message),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -228,87 +231,81 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
     }
   }
+
   Widget _buildTextField({
-  required TextEditingController controller,
-  required String hintText,
-  String? errorText,
-  bool obscureText = false,
-  Widget? suffixIcon,
-  VoidCallback? onTap,
-  bool readOnly = false,
-  TextInputType keyboardType = TextInputType.text, // ✅ add this
-}) {
-  return Container(
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(10),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.1),
-          blurRadius: 5.0,
-          offset: const Offset(0, 3),
+    required TextEditingController controller,
+    required String hintText,
+    String? errorText,
+    bool obscureText = false,
+    Widget? suffixIcon,
+    VoidCallback? onTap,
+    bool readOnly = false,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      decoration: BoxDecoration(
+        color:
+            isDarkMode
+                ? Theme.of(context).colorScheme.surface.withOpacity(0.1)
+                : Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
         ),
-      ],
-    ),
-    child: TextField(
-      controller: controller,
-      obscureText: obscureText,
-      readOnly: readOnly,
-      onTap: onTap,
-      keyboardType: keyboardType, // ✅ apply it here
-      style: const TextStyle(color: Colors.black, fontSize: 14.0),
-      decoration: AppConstants.textFieldDecoration.copyWith(
-        hintText: hintText,
-        errorText: errorText,
-        suffixIcon: suffixIcon,
       ),
-    ),
-  );
-}
- Widget _buildTextField1({
-  required TextEditingController controller,
-  required String hintText,
-  String? errorText,
-  bool obscureText = false,
-  Widget? suffixIcon,
-  VoidCallback? onTap,
-  bool readOnly = false,
-  TextInputType keyboardType = TextInputType.number, // ✅ add this
-}) {
-  return Container(
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(10),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.1),
-          blurRadius: 5.0,
-          offset: const Offset(0, 3),
+      child: TextField(
+        controller: controller,
+        obscureText: obscureText,
+        readOnly: readOnly,
+        onTap: onTap,
+        keyboardType: keyboardType,
+        style: TextStyle(
+          color: Theme.of(context).colorScheme.onBackground,
+          fontSize: 14.0,
         ),
-      ],
-    ),
-    child: TextField(
-      controller: controller,
-      obscureText: obscureText,
-      readOnly: readOnly,
-      onTap: onTap,
-      keyboardType: keyboardType, // ✅ apply it here
-      style: const TextStyle(color: Colors.black, fontSize: 14.0),
-      decoration: AppConstants.textFieldDecoration.copyWith(
-        hintText: hintText,
-        errorText: errorText,
-        suffixIcon: suffixIcon,
+        decoration: InputDecoration(
+          hintText: hintText,
+          errorText: errorText,
+          hintStyle: TextStyle(
+            color: Theme.of(context).colorScheme.onBackground.withOpacity(0.5),
+            fontSize: 14.0,
+          ),
+          filled: true,
+          fillColor: Colors.transparent,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 15,
+            vertical: 15,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10.0),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10.0),
+            borderSide: BorderSide(
+              color: Theme.of(context).colorScheme.primary,
+            ),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10.0),
+            borderSide: BorderSide(color: Theme.of(context).colorScheme.error),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10.0),
+            borderSide: BorderSide(color: Theme.of(context).colorScheme.error),
+          ),
+          suffixIcon: suffixIcon,
+        ),
       ),
-    ),
-  );
-}
-
-
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -316,9 +313,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         leading: Padding(
           padding: const EdgeInsets.only(left: 10.0),
           child: IconButton(
-            icon: const Icon(
+            icon: Icon(
               Icons.arrow_back_ios,
-              color: Colors.black,
+              color: Theme.of(context).colorScheme.onBackground,
               size: 20,
             ),
             onPressed: () {
@@ -331,9 +328,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: Image.asset( Theme.of(context).brightness == Brightness.dark
-                  ? 'assets/Background.jpg'
-                  : 'assets/login_back.jpg', fit: BoxFit.cover),
+            child: Image.asset(
+              isDarkMode ? 'assets/Background.jpg' : 'assets/login_back.jpg',
+              fit: BoxFit.cover,
+              color: Theme.of(
+                context,
+              ).colorScheme.background.withOpacity(isDarkMode ? 0.1 : 0.2),
+              colorBlendMode: BlendMode.darken,
+            ),
           ),
           SafeArea(
             child: SingleChildScrollView(
@@ -348,17 +350,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     height: 120,
                   ),
                   const SizedBox(height: 30),
-                  const Text('Register', style: TextStyle(fontSize: 24)),
-                Text(
-  'Create your account',
-  style: TextStyle(
-    fontSize: 16,
-    color: Theme.of(context).brightness == Brightness.dark
-        ? Colors.white
-        : Colors.black54,
-  ),
-),
-
+                  Text(
+                    'Register',
+                    style: TextStyle(
+                      fontSize: 24,
+                      color: Theme.of(context).colorScheme.onBackground,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    'Create your account',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onBackground.withOpacity(0.7),
+                    ),
+                  ),
                   const SizedBox(height: 20),
                   Row(
                     children: [
@@ -384,49 +392,51 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     controller: _emailController,
                     hintText: 'Enter Email Address',
                     errorText: _emailError,
+                    keyboardType: TextInputType.emailAddress,
                   ),
                   const SizedBox(height: 25),
-                  _buildTextField1(
+                  _buildTextField(
                     controller: _phoneController,
                     hintText: 'Enter phone number (optional)',
                     errorText: _phoneError,
+                    keyboardType: TextInputType.phone,
                   ),
                   const SizedBox(height: 25),
-              _buildTextField(
-  controller: _dobController,
-  hintText: 'Date of Birth (optional)',
-  errorText: _dobError,
-  readOnly: true,
-  suffixIcon: IconButton(
-    icon: Icon(Icons.calendar_today, color: Colors.grey),
-    onPressed: () async {
-      final DateTime today = DateTime.now();
-      final DateTime eighteenYearsAgo = DateTime(
-        today.year - 18,
-        today.month,
-        today.day,
-      );
+                  _buildTextField(
+                    controller: _dobController,
+                    hintText: 'Date of Birth (optional)',
+                    errorText: _dobError,
+                    readOnly: true,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        Icons.calendar_today,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onBackground.withOpacity(0.5),
+                      ),
+                      onPressed: () async {
+                        final DateTime today = DateTime.now();
+                        final DateTime eighteenYearsAgo = DateTime(
+                          today.year - 18,
+                          today.month,
+                          today.day,
+                        );
 
-      DateTime? pickedDate = await showDatePicker(
-        context: context,
-        initialDate: DateTime(2000),
-        firstDate: DateTime(1900),
-        lastDate: eighteenYearsAgo,
-      );
+                        DateTime? pickedDate = await showDatePicker(
+                          context: context,
+                          initialDate: DateTime(2000),
+                          firstDate: DateTime(1900),
+                          lastDate: eighteenYearsAgo,
+                        );
 
-      if (pickedDate != null) {
-        String formattedDate =
-            "${pickedDate.day}-${pickedDate.month}-${pickedDate.year}";
-        _dobController.text = formattedDate;
-      }
-    },
-  ),
-  onTap: () async {
-    // Optional: you can trigger the same date picker here too,
-    // or leave it empty since the icon already handles it.
-  },
-),
-
+                        if (pickedDate != null) {
+                          String formattedDate =
+                              "${pickedDate.day.toString().padLeft(2, '0')}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.year}";
+                          _dobController.text = formattedDate;
+                        }
+                      },
+                    ),
+                  ),
                   const SizedBox(height: 25),
                   _buildTextField(
                     controller: _locationController,
@@ -440,8 +450,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       );
                       if (selectedLocation != null) {
                         setState(() {
-                          _locationController.text = selectedLocation['address'] ?? '';
-
+                          _locationController.text =
+                              selectedLocation['address'] ?? '';
                         });
                       }
                     },
@@ -455,7 +465,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscureText ? Icons.visibility : Icons.visibility_off,
-                        color: Colors.grey,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onBackground.withOpacity(0.5),
                       ),
                       onPressed: () {
                         setState(() {
@@ -473,9 +485,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         children: [
                           Container(
                             decoration: BoxDecoration(
-                              border: _termsError != null
-                                  ? Border.all(color: Colors.red, width: 1)
-                                  : null,
+                              border:
+                                  _termsError != null
+                                      ? Border.all(
+                                        color:
+                                            Theme.of(context).colorScheme.error,
+                                        width: 1,
+                                      )
+                                      : null,
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: SizedBox(
@@ -483,12 +500,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               height: 24,
                               child: Checkbox(
                                 value: isChecked,
-                                activeColor: const Color.fromRGBO(
-                                  255,
-                                  130,
-                                  16,
-                                  1,
-                                ),
+                                activeColor:
+                                    Theme.of(context).colorScheme.primary,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(4),
                                 ),
@@ -504,56 +517,64 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text.rich(
-                             TextSpan(
-  text:
-      'I confirm that I am of legal age in my jurisdiction and agree to the ',
-  style: TextStyle(
-    color: Theme.of(context).brightness == Brightness.dark
-        ? Colors.white
-        : Colors.black87,
-  ),
-  children: [
-    TextSpan(
-      text: 'Terms of Service',
-      style: const TextStyle(
-        color: Color.fromRGBO(255, 130, 16, 1),
-      ),
-      recognizer: TapGestureRecognizer()
-        ..onTap = () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const TermsAndConditionsPage(),
-            ),
-          );
-        },
-    ),
-    TextSpan(
-      text: ' as set out by the ',
-      style: TextStyle(
-        color: Theme.of(context).brightness == Brightness.dark
-            ? Colors.white
-            : Colors.black87,
-      ),
-    ),
-    TextSpan(
-      text: 'and Privacy Policy.',
-      style: const TextStyle(
-        color: Color.fromRGBO(255, 130, 16, 1),
-      ),
-      recognizer: TapGestureRecognizer()
-        ..onTap = () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const TermsAndConditionsPage(),
-            ),
-          );
-        },
-    ),
-  ],
-),
-
+                              TextSpan(
+                                text: 'I agree to the ',
+                                style: TextStyle(
+                                  color:
+                                      Theme.of(
+                                        context,
+                                      ).colorScheme.onBackground,
+                                ),
+                                children: [
+                                  TextSpan(
+                                    text: 'Terms and Conditions ',
+                                    style: TextStyle(
+                                      color:
+                                          Theme.of(context).colorScheme.primary,
+                                    ),
+                                    recognizer:
+                                        TapGestureRecognizer()
+                                          ..onTap = () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder:
+                                                    (context) =>
+                                                        const TermsAndConditionsPage(),
+                                              ),
+                                            );
+                                          },
+                                  ),
+                                  TextSpan(
+                                    text: 'and ',
+                                    style: TextStyle(
+                                      color:
+                                          Theme.of(
+                                            context,
+                                          ).colorScheme.onBackground,
+                                    ),
+                                  ),
+                                  TextSpan(
+                                    text: 'Privacy Policy',
+                                    style: TextStyle(
+                                      color:
+                                          Theme.of(context).colorScheme.primary,
+                                    ),
+                                    recognizer:
+                                        TapGestureRecognizer()
+                                          ..onTap = () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder:
+                                                    (context) =>
+                                                        const TermsAndConditionsPage(),
+                                              ),
+                                            );
+                                          },
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ],
@@ -563,8 +584,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           padding: const EdgeInsets.only(left: 34.0, top: 4),
                           child: Text(
                             _termsError!,
-                            style: const TextStyle(
-                              color: Colors.red,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.error,
                               fontSize: 12,
                             ),
                           ),

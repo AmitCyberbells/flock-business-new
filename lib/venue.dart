@@ -29,6 +29,33 @@ class Design {
 
   static Color get lightxious => AppColors.primary.withOpacity(0.2);
   static Color get blue => Colors.blue;
+
+  // Dark mode colors
+  static const Color darkBackground = Color(0xFF1E1E1E);
+  static const Color darkSurface = Color(0xFF242424);
+  static const Color darkBorder = Color(0xFF3E3E3E);
+
+  static Color getBackgroundColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? darkBackground
+        : white;
+  }
+
+  static Color getSurfaceColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? darkSurface
+        : white;
+  }
+
+  static Color getTextColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark ? white : black;
+  }
+
+  static Color getBorderColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? darkBorder
+        : Colors.grey.withOpacity(0.3);
+  }
 }
 
 // Global images
@@ -374,43 +401,78 @@ class _TabEggScreenState extends State<TabEggScreen> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          title: Text(
-            "QR Code",
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontSize: Design.font12,
+        return Dialog(
+          backgroundColor:
+              Theme.of(context).brightness == Brightness.dark
+                  ? Design.darkSurface
+                  : Theme.of(context).colorScheme.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+            side: BorderSide(
               color:
-                  Theme.of(context)
-                      .colorScheme
-                      .onSurface, // Use onSurface for white in dark mode
-              decoration: TextDecoration.underline,
+                  Theme.of(context).brightness == Brightness.dark
+                      ? Design.darkBorder
+                      : Colors.grey.withOpacity(0.2),
+              width: 1,
             ),
           ),
-          content: SizedBox(
-            width: 200,
-            height: 200,
-            child: Align(
-              alignment: Alignment.center,
-              child: QrImageView(
-                data: qrData,
-                version: QrVersions.auto,
-                size: 200.0,
-                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                "Close",
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.primary,
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "QR Code",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color:
+                            Theme.of(context).brightness == Brightness.dark
+                                ? Colors.white
+                                : Colors.black,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: Icon(
+                        Icons.close,
+                        color:
+                            Theme.of(context).brightness == Brightness.dark
+                                ? Colors.white70
+                                : Colors.black54,
+                        size: 20,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
+                const SizedBox(height: 20),
+                Container(
+                  padding: const EdgeInsets.all(15),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color:
+                          Theme.of(context).brightness == Brightness.dark
+                              ? Design.darkBorder
+                              : Colors.grey.withOpacity(0.2),
+                    ),
+                  ),
+                  child: QrImageView(
+                    data: qrData,
+                    version: QrVersions.auto,
+                    size: 200.0,
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
             ),
-          ],
+          ),
         );
       },
     );
@@ -508,21 +570,31 @@ class _TabEggScreenState extends State<TabEggScreen> {
                             width: iconSize,
                             height: iconSize,
                             child: Image.network(
-  item['icon'] ?? 'https://picsum.photos/50',
-  fit: BoxFit.cover,
-  color: Theme.of(context).brightness == Brightness.dark ? const Color.fromRGBO(255, 130, 16, 1) : null,
-  errorBuilder: (context, error, stackTrace) => IconTheme.merge(
-    data: IconThemeData(
-      color: Theme.of(context).brightness == Brightness.dark
-          ? Colors.orange
-          : Theme.of(context).iconTheme.color,
-    ),
-    child: Icon(
-      Icons.error,
-      size: iconSize * 0.8,
-    ),
-  ),
-),
+                              item['icon'] ?? 'https://picsum.photos/50',
+                              fit: BoxFit.cover,
+                              color:
+                                  Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? const Color.fromRGBO(255, 130, 16, 1)
+                                      : null,
+                              errorBuilder:
+                                  (context, error, stackTrace) =>
+                                      IconTheme.merge(
+                                        data: IconThemeData(
+                                          color:
+                                              Theme.of(context).brightness ==
+                                                      Brightness.dark
+                                                  ? Colors.orange
+                                                  : Theme.of(
+                                                    context,
+                                                  ).iconTheme.color,
+                                        ),
+                                        child: Icon(
+                                          Icons.error,
+                                          size: iconSize * 0.8,
+                                        ),
+                                      ),
+                            ),
                           ),
                         ),
                       ),
@@ -555,140 +627,169 @@ class _TabEggScreenState extends State<TabEggScreen> {
       color: Theme.of(context).colorScheme.surface,
       child: Padding(
         padding: const EdgeInsets.all(10.0),
-        child: IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Image.network(
-                  item['images'] != null && item['images'].isNotEmpty
-                      ? item['images'].last['medium_image']
-                      : 'https://picsum.photos/90',
-                  width: 90,
-                  height: 90,
-                  fit: BoxFit.cover,
-                  errorBuilder:
-                      (context, error, stackTrace) => Container(
-                        width: 90,
-                        height: 90,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withOpacity(0.1),
-                        child: Icon(
-                          Icons.image_not_supported,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.network(
+                item['images'] != null && item['images'].isNotEmpty
+                    ? item['images'].last['medium_image']
+                    : 'https://picsum.photos/90',
+                width: 90,
+                height: 90,
+                fit: BoxFit.cover,
+                errorBuilder:
+                    (context, error, stackTrace) => Container(
+                      width: 90,
+                      height: 90,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.1),
+                      child: Icon(
+                        Icons.image_not_supported,
+                        color: Theme.of(context).iconTheme.color,
+                      ),
+                    ),
+              ),
+            ),
+            const SizedBox(width: 15),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          item['name'] ?? 'No Name',
+                          style: Theme.of(
+                            context,
+                          ).textTheme.titleMedium?.copyWith(
+                            fontSize: Design.font17,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      if (item['approval'] == '0')
+                        Text(
+                          '(In Review)',
+                          style: Theme.of(
+                            context,
+                          ).textTheme.bodyMedium?.copyWith(
+                            fontSize: Design.font13,
+                            color: Design.darkPink,
+                          ),
+                        )
+                      else
+                        InkWell(
+                          onTap: () => qrCodeBtn(item),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color:
+                                  Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Design.darkSurface
+                                      : Colors.blue.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(
+                                color:
+                                    Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? Design.darkBorder
+                                        : Colors.blue.withOpacity(0.3),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.qr_code,
+                                  size: 16,
+                                  color:
+                                      Theme.of(context).brightness ==
+                                              Brightness.dark
+                                          ? Colors.white
+                                          : Colors.blue,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'QR Code',
+                                  style: TextStyle(
+                                    fontSize: Design.font12,
+                                    color:
+                                        Theme.of(context).brightness ==
+                                                Brightness.dark
+                                            ? Colors.white
+                                            : Colors.blue,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Image.asset(
+                          GlobalImages.location,
+                          width: 14,
+                          height: 14,
                           color: Theme.of(context).iconTheme.color,
                         ),
                       ),
-                ),
-              ),
-              const SizedBox(width: 15),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: InkWell(
+                          onTap:
+                              () => locationBtn(
+                                item['lat']?.toString() ?? '0.0',
+                                item['lon']?.toString() ?? '0.0',
+                                item['location'] ?? 'Unknown',
+                              ),
                           child: Text(
-                            item['name'] ?? 'No Name',
+                            item['location'] ?? 'No location',
                             style: Theme.of(
                               context,
-                            ).textTheme.titleMedium?.copyWith(
-                              fontSize: Design.font17,
-                              fontWeight: FontWeight.w500,
+                            ).textTheme.bodyMedium?.copyWith(
+                              fontSize: Design.font12,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withOpacity(0.7),
                             ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        if (item['approval'] == '0')
-                          Text(
-                            '(In Review)',
-                            style: Theme.of(
-                              context,
-                            ).textTheme.bodyMedium?.copyWith(
-                              fontSize: Design.font13,
-                              color: Design.darkPink,
-                            ),
-                          )
-                        else
-                          InkWell(
-                            onTap: () => qrCodeBtn(item),
-                            child: Padding(
-                              padding: const EdgeInsets.all(4.0),
-                              child: Text(
-                                'QR Code',
-                                style: Theme.of(
-                                  context,
-                                ).textTheme.bodyMedium?.copyWith(
-                                  fontSize:
-                                      12, // Replaced Design.font12 with a constant
-                                  color:
-                                      Theme.of(
-                                                context,
-                                              ).colorScheme.brightness ==
-                                              Brightness.dark
-                                          ? Colors.white
-                                          : Colors.blue,
-                                  decoration: TextDecoration.underline,
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(top: 5),
-                          child: Image.asset(
-                            GlobalImages.location,
-                            width: 12,
-                            height: 10,
-                            color: Theme.of(context).iconTheme.color,
-                          ),
-                        ),
-                        const SizedBox(width: 1),
-                        Expanded(
-                          child: InkWell(
-                            onTap:
-                                () => locationBtn(
-                                  item['lat']?.toString() ?? '0.0',
-                                  item['lon']?.toString() ?? '0.0',
-                                  item['location'] ?? 'Unknown',
-                                ),
-                            child: Text(
-                              item['location'] ?? 'No location',
-                              style: Theme.of(
-                                context,
-                              ).textTheme.bodyMedium?.copyWith(
-                                fontSize: Design.font12,
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurface.withOpacity(0.7),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Image.asset(
-                          'assets/date_time.png',
-                          width: 16,
-                          height: 16,
-                          color: Theme.of(context).iconTheme.color,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Image.asset(
+                        'assets/date_time.png',
+                        width: 14,
+                        height: 14,
+                        color: Theme.of(context).iconTheme.color,
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
                           item['posted_at'] ?? '',
                           style: Theme.of(
                             context,
@@ -698,135 +799,136 @@ class _TabEggScreenState extends State<TabEggScreen> {
                               context,
                             ).colorScheme.onSurface.withOpacity(0.7),
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Container(
-                          decoration: BoxDecoration(
-                            boxShadow: [
-                              BoxShadow(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurface.withOpacity(0.2),
-                                blurRadius: 5,
-                                offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Container(
+                        height: 32,
+                        decoration: BoxDecoration(
+                          boxShadow: [
+                            BoxShadow(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withOpacity(0.2),
+                              blurRadius: 5,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: cardWrapper(
+                          borderRadius: 5,
+                          elevation: 2,
+                          color: Colors.red,
+                          child: InkWell(
+                            onTap: () {
+                              if (!UserPermissions.hasPermission(
+                                'remove_venue',
+                              )) {
+                                Fluttertoast.showToast(
+                                  msg: "You don't have access to this feature!",
+                                );
+                                return;
+                              }
+                              setState(() {
+                                removeVenueId = item['id'].toString();
+                                dialogAlert = true;
+                              });
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
                               ),
-                            ],
-                          ),
-                          child: cardWrapper(
-                            borderRadius: 5,
-                            elevation: 2,
-                            color: Colors.red,
-                            child: InkWell(
-                              onTap: () {
-                                if (!UserPermissions.hasPermission(
-                                  'remove_venue',
-                                )) {
-                                  Fluttertoast.showToast(
-                                    msg:
-                                        "You don't have access to this feature!",
-                                  );
-                                  return;
-                                }
-                                setState(() {
-                                  removeVenueId = item['id'].toString();
-                                  dialogAlert = true;
-                                });
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 4,
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.delete,
-                                      size: 16,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.delete,
+                                    size: 16,
+                                    color: Colors.white,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Delete',
+                                    style: TextStyle(
+                                      fontSize: Design.font13,
                                       color: Colors.white,
                                     ),
-                                    SizedBox(width: 4),
-                                    Text(
-                                      'Delete',
-                                      style: TextStyle(
-                                        fontSize: Design.font13,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
                         ),
-                        const SizedBox(width: 15),
-                        Container(
-                          decoration: BoxDecoration(
-                            boxShadow: [
-                              BoxShadow(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurface.withOpacity(0.2),
-                                blurRadius: 6,
-                                offset: const Offset(0, 2),
+                      ),
+                      const SizedBox(width: 15),
+                      Container(
+                        height: 32,
+                        decoration: BoxDecoration(
+                          boxShadow: [
+                            BoxShadow(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withOpacity(0.2),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: cardWrapper(
+                          borderRadius: 5,
+                          elevation: 2,
+                          color: Theme.of(context).colorScheme.primary,
+                          child: InkWell(
+                            onTap: () => editVenue(item),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
                               ),
-                            ],
-                          ),
-                          child: cardWrapper(
-                            borderRadius: 5,
-                            elevation: 2,
-                            color: Theme.of(context).colorScheme.primary,
-                            child: InkWell(
-                              onTap: () => editVenue(item),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Image.asset(
-                                      'assets/edit.png',
-                                      width: 16,
-                                      height: 16,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Image.asset(
+                                    'assets/edit.png',
+                                    width: 16,
+                                    height: 16,
+                                    color:
+                                        Theme.of(context).colorScheme.onPrimary,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Edit Info',
+                                    textAlign: TextAlign.center,
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodyMedium?.copyWith(
+                                      fontSize: Design.font13,
                                       color:
                                           Theme.of(
                                             context,
                                           ).colorScheme.onPrimary,
                                     ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      'Edit Info',
-                                      textAlign: TextAlign.center,
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.bodyMedium?.copyWith(
-                                        fontSize: Design.font13,
-                                        color:
-                                            Theme.of(
-                                              context,
-                                            ).colorScheme.onPrimary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
                         ),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -844,7 +946,7 @@ class _TabEggScreenState extends State<TabEggScreen> {
                 cardWrapper(
                   borderRadius: 10,
                   elevation: 5,
-                  color: Theme.of(context).colorScheme.surface,
+                  color: Design.getSurfaceColor(context),
                   child: Column(
                     children: [
                       Padding(
@@ -863,32 +965,25 @@ class _TabEggScreenState extends State<TabEggScreen> {
                                   ),
                                 );
                               },
-                              child: Container(
-                                // color:
-                                //     Theme.of(context).scaffoldBackgroundColor,
-                                child: Image.asset(
-                                  'assets/back_updated.png',
-                                  height: 40,
-                                  width: 34,
-                                  fit: BoxFit.contain,
-                                  // color: Theme.of(context).iconTheme.color,
-                                ),
+                              child: Image.asset(
+                                'assets/back_updated.png',
+                                height: 40,
+                                width: 34,
                               ),
                             ),
                             Expanded(
                               child: Center(
                                 child: Text(
                                   "All Venues",
-                                  style: Theme.of(
-                                    context,
-                                  ).textTheme.titleLarge?.copyWith(
+                                  style: TextStyle(
                                     fontSize: 20,
                                     fontWeight: FontWeight.w600,
+                                    color: Design.getTextColor(context),
                                   ),
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 24),
+                            const SizedBox(width: 40),
                           ],
                         ),
                       ),
@@ -906,20 +1001,18 @@ class _TabEggScreenState extends State<TabEggScreen> {
                                       children: [
                                         TextSpan(
                                           text: '$greeting, ',
-                                          style: Theme.of(
-                                            context,
-                                          ).textTheme.bodyLarge?.copyWith(
+                                          style: TextStyle(
                                             fontSize: Design.font15,
                                             fontWeight: FontWeight.w400,
+                                            color: Design.getTextColor(context),
                                           ),
                                         ),
                                         TextSpan(
                                           text: '$firstName $lastName',
-                                          style: Theme.of(
-                                            context,
-                                          ).textTheme.bodyLarge?.copyWith(
+                                          style: TextStyle(
                                             fontSize: Design.font15,
                                             fontWeight: FontWeight.bold,
+                                            color: Design.getTextColor(context),
                                           ),
                                         ),
                                       ],
@@ -934,7 +1027,7 @@ class _TabEggScreenState extends State<TabEggScreen> {
                       ),
                       Container(
                         margin: const EdgeInsets.only(top: 8),
-                        height: 130,
+                        height: 140,
                         child:
                             categoryList.isEmpty
                                 ? const Center()
@@ -959,18 +1052,13 @@ class _TabEggScreenState extends State<TabEggScreen> {
                           ? Stack(
                             children: [
                               Container(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurface.withOpacity(0.1),
+                                color: Design.getBackgroundColor(context),
                               ),
-                              Container(
-                                color: Colors.transparent,
-                                child: Center(
-                                  child: Image.asset(
-                                    'assets/Bird_Full_Eye_Blinking.gif',
-                                    width: 100,
-                                    height: 100,
-                                  ),
+                              Center(
+                                child: Image.asset(
+                                  'assets/Bird_Full_Eye_Blinking.gif',
+                                  width: 100,
+                                  height: 100,
                                 ),
                               ),
                             ],
@@ -979,13 +1067,11 @@ class _TabEggScreenState extends State<TabEggScreen> {
                           ? Center(
                             child: Text(
                               'No Venues Found in ${categoryList.isNotEmpty ? categoryList[cardPosition]['name'] : 'Selected Category'}',
-                              style: Theme.of(
-                                context,
-                              ).textTheme.bodyLarge?.copyWith(
+                              style: TextStyle(
                                 fontSize: Design.font20,
-                                color: Theme.of(
+                                color: Design.getTextColor(
                                   context,
-                                ).colorScheme.onSurface.withOpacity(0.7),
+                                ).withOpacity(0.7),
                               ),
                             ),
                           )
@@ -1003,25 +1089,19 @@ class _TabEggScreenState extends State<TabEggScreen> {
                                     children: [
                                       TextSpan(
                                         text: 'Venues in ',
-                                        style: Theme.of(
-                                          context,
-                                        ).textTheme.titleMedium?.copyWith(
+                                        style: TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.w500,
+                                          color: Design.getTextColor(context),
                                         ),
                                       ),
                                       TextSpan(
                                         text:
                                             categoryList[cardPosition]['name'],
-                                        style: Theme.of(
-                                          context,
-                                        ).textTheme.titleMedium?.copyWith(
+                                        style: TextStyle(
                                           fontSize: 20,
                                           fontWeight: FontWeight.bold,
-                                          color:
-                                              Theme.of(
-                                                context,
-                                              ).colorScheme.primary,
+                                          color: Design.primaryColorOrange,
                                         ),
                                       ),
                                     ],
@@ -1030,9 +1110,12 @@ class _TabEggScreenState extends State<TabEggScreen> {
                               ),
                               Expanded(
                                 child: ListView.builder(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 8,
+                                  padding: const EdgeInsets.only(
+                                    left: 8,
+                                    right: 8,
+                                    top: 8,
+                                    bottom:
+                                        90, // Add bottom padding to prevent overflow
                                   ),
                                   itemCount: allData.length,
                                   itemBuilder: (context, index) {
@@ -1056,9 +1139,9 @@ class _TabEggScreenState extends State<TabEggScreen> {
                 children: [
                   Positioned.fill(
                     child: Container(
-                      color: Theme.of(
+                      color: Design.getBackgroundColor(
                         context,
-                      ).colorScheme.onSurface.withOpacity(0.4),
+                      ).withOpacity(0.9),
                     ),
                   ),
                   Center(
@@ -1066,8 +1149,11 @@ class _TabEggScreenState extends State<TabEggScreen> {
                       width: MediaQuery.of(context).size.width * 0.8,
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surface,
+                        color: Design.getSurfaceColor(context),
                         borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: Design.getBorderColor(context),
+                        ),
                       ),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -1075,22 +1161,20 @@ class _TabEggScreenState extends State<TabEggScreen> {
                         children: [
                           Text(
                             'Confirm Deletion',
-                            style: Theme.of(
-                              context,
-                            ).textTheme.titleLarge?.copyWith(
+                            style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
+                              color: Design.getTextColor(context),
                             ),
                           ),
                           const SizedBox(height: 10),
                           Text(
                             'Are you sure you want to remove venue?',
                             textAlign: TextAlign.left,
-                            style: Theme.of(
-                              context,
-                            ).textTheme.bodyLarge?.copyWith(
+                            style: TextStyle(
                               fontSize: Design.font15,
                               fontWeight: FontWeight.w500,
+                              color: Design.getTextColor(context),
                             ),
                           ),
                           const SizedBox(height: 20),
@@ -1100,29 +1184,23 @@ class _TabEggScreenState extends State<TabEggScreen> {
                                 child: OutlinedButton(
                                   onPressed:
                                       () => setState(() => dialogAlert = false),
-                                  style: Theme.of(
-                                    context,
-                                  ).outlinedButtonTheme.style?.copyWith(
-                                    foregroundColor: MaterialStateProperty.all(
-                                      Theme.of(
-                                        context,
-                                      ).colorScheme.onSurface.withOpacity(0.7),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: Design.getTextColor(
+                                      context,
+                                    ).withOpacity(0.7),
+                                    side: BorderSide(
+                                      color: Design.getBorderColor(context),
                                     ),
-                                    side: MaterialStateProperty.all(
-                                      BorderSide(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurface
-                                            .withOpacity(0.7),
-                                      ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
                                     ),
                                   ),
                                   child: Text(
                                     'Cancel',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyMedium
-                                        ?.copyWith(fontWeight: FontWeight.w500),
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                      color: Design.getTextColor(context),
+                                    ),
                                   ),
                                 ),
                               ),
@@ -1130,23 +1208,19 @@ class _TabEggScreenState extends State<TabEggScreen> {
                               Expanded(
                                 child: ElevatedButton(
                                   onPressed: removeVenueBtn,
-                                  style: Theme.of(
-                                    context,
-                                  ).elevatedButtonTheme.style?.copyWith(
-                                    backgroundColor: MaterialStateProperty.all(
-                                      Theme.of(context).colorScheme.primary,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Design.primaryColorOrange,
+                                    foregroundColor: Design.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
                                     ),
+                                    elevation: 2,
                                   ),
                                   child: Text(
                                     'OK',
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.bodyMedium?.copyWith(
+                                    style: TextStyle(
                                       fontWeight: FontWeight.w500,
-                                      color:
-                                          Theme.of(
-                                            context,
-                                          ).colorScheme.onPrimary,
+                                      color: Design.white,
                                     ),
                                   ),
                                 ),

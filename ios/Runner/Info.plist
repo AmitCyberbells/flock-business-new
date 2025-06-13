@@ -33,7 +33,9 @@
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
-		<false/>
+		<true/>
+		<key>NSAllowsArbitraryLoadsInWebContent</key>
+		<true/>
 	</dict>
 	<key>LSApplicationCategoryType</key>
 	<string></string>
@@ -68,9 +70,25 @@
 	<true/>
 	<key>UIBackgroundModes</key>
 	<array>
+		<string>fetch</string>
+		<string>processing</string>
 		<string>remote-notification</string>
 	</array>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.flock.business.app.refresh</string>
+		<string>com.flock.business.app.processing</string>
+	</array>
 	<key>FirebaseAppDelegateProxyEnabled</key>
-	<false/>
+	<true/>
+	<key>aps-environment</key>
+	<string>development</string>
+	<key>NSRemoteNotificationUsageDescription</key>
+	<string>We need to send you push notifications to keep you updated with latest information.</string>
+	<key>UIRequiredDeviceCapabilities</key>
+	<array>
+		<string>arm64</string>
+		
+	</array>
 </dict>
 </plist>

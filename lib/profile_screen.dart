@@ -5,6 +5,41 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'custom_scaffold.dart';
 
+class Design {
+  static const Color primaryColorOrange = Color.fromRGBO(255, 152, 0, 1);
+  static const Color black = Colors.black;
+  static const Color white = Colors.white;
+  static const Color lightPurple = Color(0xFFF0F0F5);
+  static const Color errorRed = Colors.red;
+
+  // Dark mode colors
+  static const Color darkBackground = Color(0xFF1E1E1E);
+  static const Color darkSurface = Color(0xFF242424);
+  static const Color darkBorder = Color(0xFF3E3E3E);
+
+  static Color getBackgroundColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? darkBackground
+        : white;
+  }
+
+  static Color getSurfaceColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? darkSurface
+        : white;
+  }
+
+  static Color getTextColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark ? white : black;
+  }
+
+  static Color getBorderColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? darkBorder
+        : Colors.grey.withOpacity(0.3);
+  }
+}
+
 class TabProfile extends StatefulWidget {
   const TabProfile({Key? key}) : super(key: key);
 
@@ -98,14 +133,18 @@ class _TabProfileState extends State<TabProfile> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: Design.getSurfaceColor(context),
         borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Design.getBorderColor(context)),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
-            blurRadius: 4,
-            spreadRadius: 2,
-            offset: const Offset(0, 2),
+            color:
+                Theme.of(context).brightness == Brightness.dark
+                    ? Colors.black.withOpacity(0.3)
+                    : Colors.black.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 6,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -117,15 +156,15 @@ class _TabProfileState extends State<TabProfile> {
         title: Text(
           title,
           style: TextStyle(
-            fontSize: 13,
+            fontSize: 14,
             fontWeight: FontWeight.w500,
-            color: Theme.of(context).textTheme.bodyLarge!.color,
+            color: Design.getTextColor(context),
           ),
         ),
         trailing: Icon(
           Icons.arrow_forward_ios,
           size: 14,
-          color: Theme.of(context).iconTheme.color,
+          color: Design.getTextColor(context).withOpacity(0.5),
         ),
         onTap: onTap,
       ),
@@ -134,12 +173,10 @@ class _TabProfileState extends State<TabProfile> {
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-
     return CustomScaffold(
       currentIndex: 4,
       body: Container(
-        color: Theme.of(context).colorScheme.surface,
+        color: Design.getBackgroundColor(context),
         child: Stack(
           children: [
             SingleChildScrollView(
@@ -155,89 +192,95 @@ class _TabProfileState extends State<TabProfile> {
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w600,
-                          color: Theme.of(context).textTheme.titleLarge!.color,
+                          color: Design.getTextColor(context),
                         ),
                       ),
                     ),
                     const SizedBox(height: 10),
-                    CircleAvatar(
-                      radius: 60,
-                      backgroundColor:
-                          Theme.of(context).colorScheme.surfaceContainer,
-                      child:
-                          profilePic.isEmpty
-                              ? Image.asset(
-                                'assets/profile.png',
-                                width: 120,
-                                height: 120,
-                                fit: BoxFit.cover,
-                              )
-                              : ClipOval(
-                                child: Image.network(
-                                  profilePic,
+                    Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.black.withOpacity(0.3)
+                                    : Colors.black.withOpacity(0.1),
+                            spreadRadius: 1,
+                            blurRadius: 6,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: CircleAvatar(
+                        radius: 60,
+                        backgroundColor: Design.getSurfaceColor(context),
+                        child:
+                            profilePic.isEmpty
+                                ? Image.asset(
+                                  'assets/profile.png',
                                   width: 120,
                                   height: 120,
                                   fit: BoxFit.cover,
-                                  loadingBuilder: (
-                                    context,
-                                    child,
-                                    loadingProgress,
-                                  ) {
-                                    if (loadingProgress == null) {
-                                      // Image is fully loaded
-                                      return child;
-                                    }
-                                    return Container(
-                                      width: 120,
-                                      height: 120,
-                                      color:
-                                          Theme.of(
-                                            context,
-                                          ).colorScheme.surfaceContainer,
-                                      child: Center(
-                                        child: Image.asset(
-                                          'assets/Bird_Full_Eye_Blinking.gif',
-                                          width:
-                                              60, // Smaller size for profile loader
-                                          height: 60,
+                                )
+                                : ClipOval(
+                                  child: Image.network(
+                                    profilePic,
+                                    width: 120,
+                                    height: 120,
+                                    fit: BoxFit.cover,
+                                    loadingBuilder: (
+                                      context,
+                                      child,
+                                      loadingProgress,
+                                    ) {
+                                      if (loadingProgress == null) return child;
+                                      return Container(
+                                        width: 120,
+                                        height: 120,
+                                        color: Design.getSurfaceColor(context),
+                                        child: Center(
+                                          child: Image.asset(
+                                            'assets/Bird_Full_Eye_Blinking.gif',
+                                            width: 60,
+                                            height: 60,
+                                          ),
                                         ),
-                                      ),
-                                    );
-                                  },
-                                  errorBuilder: (context, error, stackTrace) {
-                                    print(
-                                      "Error loading profile image",
-                                    );
-                                    return Image.asset(
-                                      'assets/profile.png',
-                                      width: 120,
-                                      height: 120,
-                                      fit: BoxFit.cover,
-                                    );
-                                  },
+                                      );
+                                    },
+                                    errorBuilder: (context, error, stackTrace) {
+                                      print("Error loading profile image");
+                                      return Image.asset(
+                                        'assets/profile.png',
+                                        width: 120,
+                                        height: 120,
+                                        fit: BoxFit.cover,
+                                      );
+                                    },
+                                  ),
                                 ),
-                              ),
+                      ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 16),
                     Text(
                       (firstName.isEmpty && lastName.isEmpty)
                           ? 'User Name'
                           : "$firstName $lastName".trim(),
                       style: TextStyle(
                         fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).textTheme.titleLarge!.color,
+                        fontWeight: FontWeight.w600,
+                        color: Design.getTextColor(context),
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 8),
                     Text(
                       email.isEmpty ? 'Email not available' : email,
                       style: TextStyle(
-                        fontSize: 16,
-                        color: Theme.of(context).textTheme.bodyMedium!.color,
+                        fontSize: 14,
+                        color: Design.getTextColor(context).withOpacity(0.7),
                       ),
                     ),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 24),
                     Column(
                       children: [
                         _buildProfileOption(
@@ -274,7 +317,7 @@ class _TabProfileState extends State<TabProfile> {
                               ),
                         ),
                         _buildProfileOption(
-                          title: " Transaction History",
+                          title: "Transaction History",
                           onTap:
                               () => Navigator.pushNamed(
                                 context,
@@ -319,19 +362,18 @@ class _TabProfileState extends State<TabProfile> {
                             130,
                             16,
                             1,
-                          ), // Keep constant
-                          foregroundColor:
-                              Theme.of(context).colorScheme.onPrimary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
                           ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          elevation: 2,
                         ),
-                        child: Text(
+                        child: const Text(
                           "Log Out",
                           style: TextStyle(
-                            color: Theme.of(context).colorScheme.onPrimary,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                            color: Design.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ),
@@ -347,9 +389,9 @@ class _TabProfileState extends State<TabProfile> {
                 right: 0,
                 child: LinearProgressIndicator(
                   minHeight: 2,
-                  backgroundColor: Theme.of(context).colorScheme.surface,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    Theme.of(context).colorScheme.primary,
+                  backgroundColor: Design.getSurfaceColor(context),
+                  valueColor: const AlwaysStoppedAnimation<Color>(
+                    Design.primaryColorOrange,
                   ),
                 ),
               ),

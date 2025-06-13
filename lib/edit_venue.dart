@@ -322,7 +322,7 @@ class _EditVenueScreenState extends State<EditVenueScreen> {
             (_) => Scaffold(
               backgroundColor: Theme.of(context).textTheme.bodyLarge!.color,
               appBar: AppBar(
-                backgroundColor:Theme.of(context).textTheme.bodyLarge!.color,
+                backgroundColor: Theme.of(context).textTheme.bodyLarge!.color,
                 iconTheme: const IconThemeData(color: Colors.white),
               ),
               body: Center(
@@ -482,721 +482,593 @@ class _EditVenueScreenState extends State<EditVenueScreen> {
 
   /// Custom Category Dropdown Widget
   Widget _buildCategoryDropdown() {
-  final selectedCategory = _allCategories.firstWhere(
-    (cat) => cat['id'].toString() == _selectedCategoryId,
-    orElse: () => {'name': 'Select Category'},
-  );
-  final selectedCategoryName = selectedCategory['name'].toString();
+    final selectedCategory = _allCategories.firstWhere(
+      (cat) => cat['id'].toString() == _selectedCategoryId,
+      orElse: () => {'name': 'Select Category'},
+    );
+    final selectedCategoryName = selectedCategory['name'].toString();
 
-  return InkWell(
-    onTap: _showCategorySelectionDialog,
-    child: InputDecorator(
-      decoration: InputDecoration(
-        labelText: 'Category',
-        labelStyle: TextStyle(color: Theme.of(context).textTheme.bodyMedium!.color),
-        border: OutlineInputBorder(
-          borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: Theme.of(context).colorScheme.onSurface),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(
-            color: Theme.of(context).colorScheme.primary,
-            width: 2.0,
-          ),
-        ),
-        errorBorder: const OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.red, width: 2.0),
+    return InkWell(
+      onTap: _showCategorySelectionDialog,
+      child: InputDecorator(
+        decoration: _getInputDecoration('Category'),
+        child: Text(
+          selectedCategoryName,
+          style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color),
         ),
       ),
-      child: Text(
-        selectedCategoryName,
-        style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color),
-      ),
-    ),
-  );
-}
+    );
+  }
+
   /// Dialog to select a category with search functionality.
- void _showCategorySelectionDialog() {
-  String localSearchText = '';
-  List filteredCategories = _allCategories;
-  showDialog(
-    context: context,
-    builder: (context) {
-      return StatefulBuilder(
-        builder: (context, setStateDialog) {
-          return AlertDialog(
-            backgroundColor: Theme.of(context).colorScheme.surface,
-            title: Text(
-              "Select Category",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Theme.of(context).textTheme.titleLarge!.color,
+  void _showCategorySelectionDialog() {
+    String localSearchText = '';
+    List filteredCategories = _allCategories;
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              backgroundColor:
+                  Theme.of(context).brightness == Brightness.dark
+                      ? Design.darkSurface
+                      : Theme.of(context).colorScheme.surface,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+                side: BorderSide(
+                  color:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? Design.darkBorder
+                          : Colors.grey.withOpacity(0.2),
+                ),
               ),
-            ),
-            content: SizedBox(
-              width: double.maxFinite,
-              height: 220,
-              child: Column(
-                children: [
-                  TextField(
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Theme.of(context).textTheme.bodyLarge!.color,
-                    ),
-                    decoration: InputDecoration(
-                      labelText: 'Search Categories',
-                      labelStyle: TextStyle(
-                        fontSize: 14,
-                        color: Theme.of(context).textTheme.bodyMedium!.color,
+              title: Text(
+                "Select Category",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).textTheme.titleLarge!.color,
+                ),
+              ),
+              content: SizedBox(
+                width: double.maxFinite,
+                height: 220,
+                child: Column(
+                  children: [
+                    TextField(
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).textTheme.bodyLarge!.color,
                       ),
-                      isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(
-                        vertical: 8,
-                        horizontal: 10,
-                      ),
-                      border: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: Theme.of(context).colorScheme.primary,
+                      decoration: InputDecoration(
+                        labelText: 'Search Categories',
+                        labelStyle: TextStyle(
+                          fontSize: 14,
+                          color: Theme.of(context).textTheme.bodyMedium!.color,
                         ),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: Theme.of(context).colorScheme.onSurface,
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 8,
+                          horizontal: 10,
                         ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: Theme.of(context).colorScheme.primary,
-                          width: 2.0,
-                        ),
-                      ),
-                      errorBorder: const OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: Colors.red,
-                          width: 2.0,
-                        ),
-                      ),
-                    ),
-                    onChanged: (value) {
-                      setStateDialog(() {
-                        localSearchText = value;
-                        filteredCategories = _allCategories
-                            .where(
-                              (cat) => cat['name']
-                                  .toString()
-                                  .toLowerCase()
-                                  .contains(value.toLowerCase()),
-                            )
-                            .toList();
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 10),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: filteredCategories.length,
-                      itemBuilder: (context, index) {
-                        final category = filteredCategories[index];
-                        final catId = category['id'].toString();
-                        final catName = category['name'].toString();
-                        final isSelected = _selectedCategoryId == catId;
-                        return InkWell(
-                          onTap: () {
-                            setState(() {
-                              _selectedCategoryId = catId;
-                            });
-                            Navigator.of(context).pop();
-                          },
-                          child: Container(
-                            color: isSelected
-                                ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
-                                : Colors.transparent,
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 10,
-                              horizontal: 8,
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    catName,
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Theme.of(context).textTheme.bodyLarge!.color,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                if (isSelected)
-                                  Icon(
-                                    Icons.check,
-                                    color: Theme.of(context).colorScheme.primary,
-                                    size: 18,
-                                  ),
-                              ],
-                            ),
+                        border: OutlineInputBorder(
+                          borderSide: BorderSide(
+                            color: Theme.of(context).colorScheme.primary,
                           ),
-                        );
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(
+                            color: Theme.of(context).colorScheme.primary,
+                            width: 2.0,
+                          ),
+                        ),
+                        errorBorder: const OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.red, width: 2.0),
+                        ),
+                      ),
+                      onChanged: (value) {
+                        setStateDialog(() {
+                          localSearchText = value;
+                          filteredCategories =
+                              _allCategories
+                                  .where(
+                                    (cat) => cat['name']
+                                        .toString()
+                                        .toLowerCase()
+                                        .contains(value.toLowerCase()),
+                                  )
+                                  .toList();
+                        });
                       },
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 10),
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: filteredCategories.length,
+                        itemBuilder: (context, index) {
+                          final category = filteredCategories[index];
+                          final catId = category['id'].toString();
+                          final catName = category['name'].toString();
+                          final isSelected = _selectedCategoryId == catId;
+                          return InkWell(
+                            onTap: () {
+                              setState(() {
+                                _selectedCategoryId = catId;
+                              });
+                              Navigator.of(context).pop();
+                            },
+                            child: Container(
+                              color:
+                                  isSelected
+                                      ? Theme.of(
+                                        context,
+                                      ).colorScheme.primary.withOpacity(0.1)
+                                      : Colors.transparent,
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 10,
+                                horizontal: 8,
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      catName,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color:
+                                            Theme.of(
+                                              context,
+                                            ).textTheme.bodyLarge!.color,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  if (isSelected)
+                                    Icon(
+                                      Icons.check,
+                                      color:
+                                          Theme.of(context).colorScheme.primary,
+                                      size: 18,
+                                    ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          );
-        },
-      );
-    },
-  );
-}
-Widget _buildTagsDropdown() {
-  final selectedTagNames = _allTags
-      .where((tag) => _selectedTagIds.contains(tag['id']))
-      .map((tag) => tag['name'].toString())
-      .toList();
+            );
+          },
+        );
+      },
+    );
+  }
 
-  return InkWell(
-    onTap: () async {
-      await showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          String localSearchText = _tagSearchText;
-          return StatefulBuilder(
-            builder: (context, setStateDialog) {
-              final filteredTags = _allTags.where((tag) {
-                final tagName = tag['name']?.toString().toLowerCase() ?? '';
-                return tagName.contains(localSearchText.toLowerCase());
-              }).toList();
-              return AlertDialog(
-                backgroundColor: Theme.of(context).colorScheme.surface,
-                title: Text(
-                  "Select Tags",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).textTheme.titleLarge!.color,
-                  ),
-                ),
-                content: SizedBox(
-                  width: double.maxFinite,
-                  height: 200,
-                  child: Column(
-                    children: [
-                      TextField(
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Theme.of(context).textTheme.bodyLarge!.color,
-                        ),
-                        decoration: InputDecoration(
-                          labelText: 'Search Tags',
-                          labelStyle: TextStyle(
-                            fontSize: 14,
-                            color: Theme.of(context).textTheme.bodyMedium!.color,
-                          ),
-                          isDense: true,
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 8,
-                            horizontal: 10,
-                          ),
-                          border: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: Theme.of(context).colorScheme.onSurface,
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: Theme.of(context).colorScheme.primary,
-                              width: 2.0,
-                            ),
-                          ),
-                          errorBorder: const OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: Colors.red,
-                              width: 2.0,
-                            ),
-                          ),
-                        ),
-                        onChanged: (value) {
-                          setStateDialog(() {
-                            localSearchText = value;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 10),
-                      Expanded(
-                        child: ListView.builder(
-                          itemCount: filteredTags.length,
-                          itemBuilder: (context, index) {
-                            final tag = filteredTags[index];
-                            final tagId = tag['id'] as int;
-                            final tagName = tag['name'].toString();
-                            final isSelected = _selectedTagIds.contains(tagId);
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 1),
-                              child: Row(
-                                children: [
-                                  Transform.scale(
-                                    scale: 0.75,
-                                    child: Checkbox(
-                                      value: isSelected,
-                                      activeColor: Theme.of(context).colorScheme.primary,
-                                      visualDensity: const VisualDensity(
-                                        vertical: -4,
-                                        horizontal: -4,
-                                      ),
-                                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                      onChanged: (bool? value) {
-                                        setStateDialog(() {
-                                          setState(() {
-                                            if (value == true) {
-                                              _selectedTagIds.add(tagId);
-                                            } else {
-                                              _selectedTagIds.remove(tagId);
-                                            }
-                                          });
-                                        });
-                                      },
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      tagName,
-                                      style: TextStyle(
-                                        fontSize: 15,
-                                        color: Theme.of(context).textTheme.bodyLarge!.color,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      setState(() {
-                        _tagSearchText = localSearchText;
-                      });
-                      Navigator.pop(context);
-                    },
-                    child: Text(
-                      "OK",
-                      style: TextStyle(color: Theme.of(context).colorScheme.primary),
+  Widget _buildTagsDropdown() {
+    final selectedTagNames =
+        _allTags
+            .where((tag) => _selectedTagIds.contains(tag['id']))
+            .map((tag) => tag['name'].toString())
+            .toList();
+
+    return InkWell(
+      onTap: () async {
+        await showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            String localSearchText = _tagSearchText;
+            return StatefulBuilder(
+              builder: (context, setStateDialog) {
+                final filteredTags =
+                    _allTags.where((tag) {
+                      final tagName =
+                          tag['name']?.toString().toLowerCase() ?? '';
+                      return tagName.contains(localSearchText.toLowerCase());
+                    }).toList();
+                return AlertDialog(
+                  backgroundColor:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? Design.darkSurface
+                          : Theme.of(context).colorScheme.surface,
+                  title: Text(
+                    "Select Tags",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).textTheme.titleLarge!.color,
                     ),
                   ),
-                ],
-              );
-            },
-          );
-        },
-      );
-    },
-    child: InputDecorator(
-      decoration: InputDecoration(
-        labelText: "Tags",
-        labelStyle: TextStyle(color: Theme.of(context).textTheme.bodyMedium!.color),
-        border: OutlineInputBorder(
-          borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: Theme.of(context).colorScheme.onSurface),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(
-            color: Theme.of(context).colorScheme.primary,
-            width: 2.0,
-          ),
-        ),
-        errorBorder: const OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.red, width: 2.0),
+                  content: SizedBox(
+                    width: double.maxFinite,
+                    height: 200,
+                    child: Column(
+                      children: [
+                        TextField(
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Theme.of(context).textTheme.bodyLarge!.color,
+                          ),
+                          decoration: _getInputDecoration('Search Tags'),
+                          onChanged: (value) {
+                            setStateDialog(() {
+                              localSearchText = value;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 10),
+                        Expanded(
+                          child: ListView.builder(
+                            itemCount: filteredTags.length,
+                            itemBuilder: (context, index) {
+                              final tag = filteredTags[index];
+                              final tagId = tag['id'] as int;
+                              final tagName = tag['name'].toString();
+                              final isSelected = _selectedTagIds.contains(
+                                tagId,
+                              );
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 1,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Transform.scale(
+                                      scale: 0.75,
+                                      child: Checkbox(
+                                        value: isSelected,
+                                        activeColor:
+                                            Theme.of(
+                                              context,
+                                            ).colorScheme.primary,
+                                        visualDensity: const VisualDensity(
+                                          vertical: -4,
+                                          horizontal: -4,
+                                        ),
+                                        materialTapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
+                                        onChanged: (bool? value) {
+                                          setStateDialog(() {
+                                            setState(() {
+                                              if (value == true) {
+                                                _selectedTagIds.add(tagId);
+                                              } else {
+                                                _selectedTagIds.remove(tagId);
+                                              }
+                                            });
+                                          });
+                                        },
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        tagName,
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          color:
+                                              Theme.of(
+                                                context,
+                                              ).textTheme.bodyLarge!.color,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
+      child: InputDecorator(
+        decoration: _getInputDecoration('Tags'),
+        child: Text(
+          selectedTagNames.isNotEmpty
+              ? selectedTagNames.join(", ")
+              : "Select Tags",
+          style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color),
         ),
       ),
-      child: Text(
-        selectedTagNames.isNotEmpty ? selectedTagNames.join(", ") : "Select Tags",
-        style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color),
-      ),
-    ),
-  );
-}
-  // dietary dropdown
+    );
+  }
 
-  // build dietary build
   Widget _buildDietaryTagsDropdown() {
-  // Convert currently selected IDs to their names (if any)
-  final selectedDietaryNames = _allDietaryTags
-      .where((tag) => _selectedDietaryTagIds.contains(tag['id']))
-      .map((tag) => tag['name'].toString())
-      .toList();
+    final selectedDietaryNames =
+        _allDietaryTags
+            .where((tag) => _selectedDietaryTagIds.contains(tag['id']))
+            .map((tag) => tag['name'].toString())
+            .toList();
 
-  return InkWell(
-    onTap: () async {
-      await showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          String localSearchText = '';
-          return StatefulBuilder(
-            builder: (context, setStateDialog) {
-              final filteredDietary = _allDietaryTags.where((tag) {
-                final tagName = tag['name']?.toString().toLowerCase() ?? '';
-                return tagName.contains(localSearchText.toLowerCase());
-              }).toList();
-              return AlertDialog(
-                backgroundColor: Theme.of(context).colorScheme.surface,
-                title: Text(
-                  "Select Dietary Tags",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).textTheme.titleLarge!.color,
-                  ),
-                ),
-                content: SizedBox(
-                  width: double.maxFinite,
-                  height: 150,
-                  child: Column(
-                    children: [
-                      TextField(
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Theme.of(context).textTheme.bodyLarge!.color,
-                        ),
-                        decoration: InputDecoration(
-                          labelText: 'Search Dietary Tags',
-                          labelStyle: TextStyle(
-                            fontSize: 14,
-                            color: Theme.of(context).textTheme.bodyMedium!.color,
-                          ),
-                          isDense: true,
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 8,
-                            horizontal: 10,
-                          ),
-                          border: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: Theme.of(context).colorScheme.onSurface,
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: Theme.of(context).colorScheme.primary,
-                              width: 2.0,
-                            ),
-                          ),
-                          errorBorder: const OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: Colors.red,
-                              width: 2.0,
-                            ),
-                          ),
-                        ),
-                        onChanged: (value) {
-                          setStateDialog(() {
-                            localSearchText = value;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 10),
-                      Expanded(
-                        child: ListView.builder(
-                          itemCount: filteredDietary.length,
-                          itemBuilder: (context, index) {
-                            final tag = filteredDietary[index];
-                            final tagId = tag['id'] as int;
-                            final tagName = tag['name'].toString();
-                            final isSelected = _selectedDietaryTagIds.contains(tagId);
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 1),
-                              child: Row(
-                                children: [
-                                  Transform.scale(
-                                    scale: 0.75,
-                                    child: Checkbox(
-                                      value: isSelected,
-                                      activeColor: Theme.of(context).colorScheme.primary,
-                                      visualDensity: const VisualDensity(
-                                        vertical: -4,
-                                        horizontal: -4,
-                                      ),
-                                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                      onChanged: (bool? value) {
-                                        setStateDialog(() {
-                                          setState(() {
-                                            if (value == true) {
-                                              _selectedDietaryTagIds.add(tagId);
-                                            } else {
-                                              _selectedDietaryTagIds.remove(tagId);
-                                            }
-                                          });
-                                        });
-                                      },
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      tagName,
-                                      style: TextStyle(
-                                        fontSize: 15,
-                                        color: Theme.of(context).textTheme.bodyLarge!.color,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    child: Text(
-                      "Done",
-                      style: TextStyle(color: Theme.of(context).colorScheme.primary),
+    return InkWell(
+      onTap: () async {
+        await showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            String localSearchText = '';
+            return StatefulBuilder(
+              builder: (context, setStateDialog) {
+                final filteredDietary =
+                    _allDietaryTags.where((tag) {
+                      final tagName =
+                          tag['name']?.toString().toLowerCase() ?? '';
+                      return tagName.contains(localSearchText.toLowerCase());
+                    }).toList();
+                return AlertDialog(
+                  backgroundColor:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? Design.darkSurface
+                          : Theme.of(context).colorScheme.surface,
+                  title: Text(
+                    "Select Dietary Tags",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).textTheme.titleLarge!.color,
                     ),
                   ),
-                ],
-              );
-            },
-          );
-        },
-      );
-    },
-    child: InputDecorator(
-      decoration: InputDecoration(
-        labelText: "Dietary Tags",
-        labelStyle: TextStyle(color: Theme.of(context).textTheme.bodyMedium!.color),
-        border: OutlineInputBorder(
-          borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: Theme.of(context).colorScheme.onSurface),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(
-            color: Theme.of(context).colorScheme.primary,
-            width: 2.0,
-          ),
-        ),
-        errorBorder: const OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.red, width: 2.0),
+                  content: SizedBox(
+                    width: double.maxFinite,
+                    height: 150,
+                    child: Column(
+                      children: [
+                        TextField(
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Theme.of(context).textTheme.bodyLarge!.color,
+                          ),
+                          decoration: _getInputDecoration(
+                            'Search Dietary Tags',
+                          ),
+                          onChanged: (value) {
+                            setStateDialog(() {
+                              localSearchText = value;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 10),
+                        Expanded(
+                          child: ListView.builder(
+                            itemCount: filteredDietary.length,
+                            itemBuilder: (context, index) {
+                              final tag = filteredDietary[index];
+                              final tagId = tag['id'] as int;
+                              final tagName = tag['name'].toString();
+                              final isSelected = _selectedDietaryTagIds
+                                  .contains(tagId);
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 1,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Transform.scale(
+                                      scale: 0.75,
+                                      child: Checkbox(
+                                        value: isSelected,
+                                        activeColor:
+                                            Theme.of(
+                                              context,
+                                            ).colorScheme.primary,
+                                        visualDensity: const VisualDensity(
+                                          vertical: -4,
+                                          horizontal: -4,
+                                        ),
+                                        materialTapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
+                                        onChanged: (bool? value) {
+                                          setStateDialog(() {
+                                            setState(() {
+                                              if (value == true) {
+                                                _selectedDietaryTagIds.add(
+                                                  tagId,
+                                                );
+                                              } else {
+                                                _selectedDietaryTagIds.remove(
+                                                  tagId,
+                                                );
+                                              }
+                                            });
+                                          });
+                                        },
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        tagName,
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          color:
+                                              Theme.of(
+                                                context,
+                                              ).textTheme.bodyLarge!.color,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
+      child: InputDecorator(
+        decoration: _getInputDecoration('Dietary Tags'),
+        child: Text(
+          selectedDietaryNames.isNotEmpty
+              ? selectedDietaryNames.join(", ")
+              : "Select Dietary Tags",
+          style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color),
         ),
       ),
-      child: Text(
-        selectedDietaryNames.isNotEmpty ? selectedDietaryNames.join(", ") : "Select Dietary Tags",
-        style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color),
-      ),
-    ),
-  );
-}
+    );
+  }
+
   /// Updated Amenities Dropdown Widget (using a similar style as Tags)
   Widget _buildAmenitiesDropdown() {
-  final selectedAmenityNames = _allAmenities
-      .where((am) => _selectedAmenityIds.contains(am['id']))
-      .map((am) => am['name'].toString())
-      .toList();
+    final selectedAmenityNames =
+        _allAmenities
+            .where((am) => _selectedAmenityIds.contains(am['id']))
+            .map((am) => am['name'].toString())
+            .toList();
 
-  return InkWell(
-    onTap: () async {
-      await showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          String localSearchText = _amenitySearchText;
-          return StatefulBuilder(
-            builder: (context, setStateDialog) {
-              final filteredAmenities = _allAmenities.where((am) {
-                final name = am['name']?.toString().toLowerCase() ?? '';
-                return name.contains(localSearchText.toLowerCase());
-              }).toList();
-              return AlertDialog(
-                backgroundColor: Theme.of(context).colorScheme.surface,
-                title: Text(
-                  "Select Amenities",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).textTheme.titleLarge!.color,
-                  ),
-                ),
-                content: SizedBox(
-                  width: double.maxFinite,
-                  height: 200,
-                  child: Column(
-                    children: [
-                      TextField(
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Theme.of(context).textTheme.bodyLarge!.color,
-                        ),
-                        decoration: InputDecoration(
-                          labelText: 'Search Amenities',
-                          labelStyle: TextStyle(
-                            fontSize: 14,
-                            color: Theme.of(context).textTheme.bodyMedium!.color,
-                          ),
-                          isDense: true,
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 8,
-                            horizontal: 10,
-                          ),
-                          border: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: Theme.of(context).colorScheme.onSurface,
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: Theme.of(context).colorScheme.primary,
-                              width: 2.0,
-                            ),
-                          ),
-                          errorBorder: const OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: Colors.red,
-                              width: 2.0,
-                            ),
-                          ),
-                        ),
-                        onChanged: (value) {
-                          setStateDialog(() {
-                            localSearchText = value;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 10),
-                      Expanded(
-                        child: ListView.builder(
-                          itemCount: filteredAmenities.length,
-                          itemBuilder: (context, index) {
-                            final amenity = filteredAmenities[index];
-                            final amenityId = amenity['id'] as int;
-                            final amenityName = amenity['name'].toString();
-                            final isSelected = _selectedAmenityIds.contains(amenityId);
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 1),
-                              child: Row(
-                                children: [
-                                  Transform.scale(
-                                    scale: 0.75,
-                                    child: Checkbox(
-                                      value: isSelected,
-                                      activeColor: Theme.of(context).colorScheme.primary,
-                                      visualDensity: const VisualDensity(
-                                        vertical: -4,
-                                        horizontal: -4,
-                                      ),
-                                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                      onChanged: (bool? value) {
-                                        setStateDialog(() {
-                                          setState(() {
-                                            if (value == true) {
-                                              _selectedAmenityIds.add(amenityId);
-                                            } else {
-                                              _selectedAmenityIds.remove(amenityId);
-                                            }
-                                          });
-                                        });
-                                      },
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      amenityName,
-                                      style: TextStyle(
-                                        fontSize: 15,
-                                        color: Theme.of(context).textTheme.bodyLarge!.color,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      setState(() {
-                        _amenitySearchText = localSearchText;
-                      });
-                      Navigator.pop(context);
-                    },
-                    child: Text(
-                      "OK",
-                      style: TextStyle(color: Theme.of(context).colorScheme.primary),
+    return InkWell(
+      onTap: () async {
+        await showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            String localSearchText = _amenitySearchText;
+            return StatefulBuilder(
+              builder: (context, setStateDialog) {
+                final filteredAmenities =
+                    _allAmenities.where((am) {
+                      final name = am['name']?.toString().toLowerCase() ?? '';
+                      return name.contains(localSearchText.toLowerCase());
+                    }).toList();
+                return AlertDialog(
+                  backgroundColor:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? Design.darkSurface
+                          : Theme.of(context).colorScheme.surface,
+                  title: Text(
+                    "Select Amenities",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).textTheme.titleLarge!.color,
                     ),
                   ),
-                ],
-              );
-            },
-          );
-        },
-      );
-    },
-    child: InputDecorator(
-      decoration: InputDecoration(
-        labelText: "Amenities",
-        labelStyle: TextStyle(color: Theme.of(context).textTheme.bodyMedium!.color),
-        border: OutlineInputBorder(
-          borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: Theme.of(context).colorScheme.onSurface),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(
-            color: Theme.of(context).colorScheme.primary,
-            width: 2.0,
-          ),
-        ),
-        errorBorder: const OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.red, width: 2.0),
+                  content: SizedBox(
+                    width: double.maxFinite,
+                    height: 200,
+                    child: Column(
+                      children: [
+                        TextField(
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Theme.of(context).textTheme.bodyLarge!.color,
+                          ),
+                          decoration: _getInputDecoration('Search Amenities'),
+                          onChanged: (value) {
+                            setStateDialog(() {
+                              localSearchText = value;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 10),
+                        Expanded(
+                          child: ListView.builder(
+                            itemCount: filteredAmenities.length,
+                            itemBuilder: (context, index) {
+                              final amenity = filteredAmenities[index];
+                              final amenityId = amenity['id'] as int;
+                              final amenityName = amenity['name'].toString();
+                              final isSelected = _selectedAmenityIds.contains(
+                                amenityId,
+                              );
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 1,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Transform.scale(
+                                      scale: 0.75,
+                                      child: Checkbox(
+                                        value: isSelected,
+                                        activeColor:
+                                            Theme.of(
+                                              context,
+                                            ).colorScheme.primary,
+                                        visualDensity: const VisualDensity(
+                                          vertical: -4,
+                                          horizontal: -4,
+                                        ),
+                                        materialTapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
+                                        onChanged: (bool? value) {
+                                          setStateDialog(() {
+                                            setState(() {
+                                              if (value == true) {
+                                                _selectedAmenityIds.add(
+                                                  amenityId,
+                                                );
+                                              } else {
+                                                _selectedAmenityIds.remove(
+                                                  amenityId,
+                                                );
+                                              }
+                                            });
+                                          });
+                                        },
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        amenityName,
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          color:
+                                              Theme.of(
+                                                context,
+                                              ).textTheme.bodyLarge!.color,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
+      child: InputDecorator(
+        decoration: _getInputDecoration('Amenities'),
+        child: Text(
+          selectedAmenityNames.isNotEmpty
+              ? selectedAmenityNames.join(", ")
+              : "Select Amenities",
+          style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color),
         ),
       ),
-      child: Text(
-        selectedAmenityNames.isNotEmpty ? selectedAmenityNames.join(", ") : "Select Amenities",
-        style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color),
-      ),
-    ),
-  );
-}
+    );
+  }
 
   // (Optional) Use _showAmenitiesSelectionDialog if you want the grid style.
   // Currently, _buildAmenitiesDropdown uses a list style similar to tags.
@@ -1256,7 +1128,9 @@ Widget _buildTagsDropdown() {
                                 color:
                                     isSelected
                                         ? Design.primaryColorOrange
-                                        : Theme.of(context).textTheme.bodyLarge!.color,
+                                        : Theme.of(
+                                          context,
+                                        ).textTheme.bodyLarge!.color,
                               ),
                             ),
                           ),
@@ -1440,35 +1314,76 @@ Widget _buildTagsDropdown() {
     }
   }
 
+  InputDecoration _getInputDecoration(String label) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: TextStyle(
+        color:
+            Theme.of(context).brightness == Brightness.dark
+                ? Colors.grey[400]
+                : Theme.of(context).textTheme.bodyMedium!.color,
+      ),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(
+          color:
+              Theme.of(context).brightness == Brightness.dark
+                  ? Design.darkBorder
+                  : Theme.of(context).colorScheme.primary,
+        ),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(
+          color:
+              Theme.of(context).brightness == Brightness.dark
+                  ? Design.darkBorder
+                  : Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+        ),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(color: Design.primaryColorOrange, width: 2.0),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: Colors.red, width: 2.0),
+      ),
+      filled: Theme.of(context).brightness == Brightness.dark,
+      fillColor:
+          Theme.of(context).brightness == Brightness.dark
+              ? Design.darkSurface
+              : null,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final selectedImagesWidget = _buildSelectedImages();
 
     return Scaffold(
-backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor:
+          Theme.of(context).brightness == Brightness.dark
+              ? Design.darkBackground
+              : Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        backgroundColor:
+            Theme.of(context).brightness == Brightness.dark
+                ? Design.darkBackground
+                : Theme.of(context).scaffoldBackgroundColor,
         title: Text(
           'Edit Venue',
           style: TextStyle(
             color: Theme.of(context).textTheme.bodyLarge!.color,
-          ), // Optional: make title text visible on white background
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
         ),
         leading: InkWell(
           onTap: () => Navigator.pop(context),
-          child: Padding(
-            padding: const EdgeInsets.all(
-              8.0,
-            ), // Optional padding for better tap area
-            child: Image.asset(
-              'assets/back_updated.png',
-              height: 40,
-              width: 34,
-              fit: BoxFit.contain,
-            ),
-          ),
+          child: Image.asset('assets/back_updated.png', height: 20, width: 20),
         ),
-        elevation: 0, // Optional: remove AppBar shadow
+        elevation: 0,
       ),
 
       body: Stack(
@@ -1482,26 +1397,9 @@ backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                   // Venue Name
                   TextField(
                     controller: _nameController,
-                    decoration: InputDecoration(
-                      labelText: 'Venue Name',
-                       border: OutlineInputBorder(
-          borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: Theme.of(context).colorScheme.onSurface),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(
-            color: Theme.of(context).colorScheme.primary,
-            width: 2.0,
-          ),
-        ),
-                      errorBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(
-                          color: Colors.red,
-                          width: 2.0,
-                        ),
-                      ),
+                    decoration: _getInputDecoration('Venue Name'),
+                    style: TextStyle(
+                      color: Theme.of(context).textTheme.bodyLarge!.color,
                     ),
                   ),
 
@@ -1512,46 +1410,18 @@ backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                   // Suburb
                   TextField(
                     controller: _suburbController,
-                    decoration: InputDecoration(
-                      labelText: 'Suburb',
-                       border: OutlineInputBorder(
-          borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: Theme.of(context).colorScheme.onSurface),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(
-            color: Theme.of(context).colorScheme.primary,
-            width: 2.0,
-          ),
-        ),
-                      errorBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(
-                          color: Colors.red,
-                          width: 2.0,
-                        ),
-                      ),
+                    decoration: _getInputDecoration('Suburb'),
+                    style: TextStyle(
+                      color: Theme.of(context).textTheme.bodyLarge!.color,
                     ),
                   ),
                   const SizedBox(height: 16),
                   // Description
                   TextField(
                     controller: _descriptionController,
-                    decoration: InputDecoration(
-                      labelText: 'Description',
-                       border: OutlineInputBorder(
-          borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: Theme.of(context).colorScheme.onSurface),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(
-            color: Theme.of(context).colorScheme.primary,
-            width: 2.0,
-          ),
-        ),
+                    decoration: _getInputDecoration('Description'),
+                    style: TextStyle(
+                      color: Theme.of(context).textTheme.bodyLarge!.color,
                     ),
                     maxLines: 3,
                   ),
@@ -1561,6 +1431,10 @@ backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                   TextField(
                     controller: _locationController,
                     readOnly: true,
+                    decoration: _getInputDecoration('Location'),
+                    style: TextStyle(
+                      color: Theme.of(context).textTheme.bodyLarge!.color,
+                    ),
                     onTap: () async {
                       final result = await Navigator.push(
                         context,
@@ -1586,155 +1460,17 @@ backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                         });
                       }
                     },
-                    decoration: InputDecoration(
-                      labelText: 'Location',
-                       border: OutlineInputBorder(
-          borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: Theme.of(context).colorScheme.onSurface),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(
-            color: Theme.of(context).colorScheme.primary,
-            width: 2.0,
-          ),
-        ),
-                      errorBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(
-                          color: Colors.red,
-                          width: 2.0,
-                        ),
-                      ),
-                    ),
                   ),
                   const SizedBox(height: 16),
-                  // Latitude and Longitude Row
-                  //               Row(
-                  //                 children: [
-                  //                   Expanded(
-                  //                     child: TextField(
-                  //                       controller: _latController,
-                  //                       decoration: InputDecoration(
-                  //                         labelText: 'Latitude',
-                  //                         border: OutlineInputBorder(
-                  //   borderSide: BorderSide(color: Design.primaryColorOrange),
-                  // ),
-                  // enabledBorder: OutlineInputBorder(
-                  //   borderSide: BorderSide(color: Design.black),
-                  // ),
-                  // focusedBorder: OutlineInputBorder(
-                  //   borderSide: BorderSide(color: Design.primaryColorOrange, width: 2.0),
-                  // ),
-                  // errorBorder: OutlineInputBorder(
-                  //   borderSide: const BorderSide(color: Colors.red, width: 2.0),
-                  // ),
-
-                  //                       ),
-                  //                       keyboardType: TextInputType.number,
-                  //                     ),
-                  //                   ),
-                  //                   const SizedBox(width: 16),
-                  //                   Expanded(
-                  //                     child: TextField(
-                  //                       controller: _lonController,
-                  //                       decoration: InputDecoration(
-                  //                         labelText: 'Longitude',
-                  //                          border: OutlineInputBorder(
-                  //   borderSide: BorderSide(color: Design.primaryColorOrange),
-                  // ),
-                  // enabledBorder: OutlineInputBorder(
-                  //   borderSide: BorderSide(color: Design.black),
-                  // ),
-                  // focusedBorder: OutlineInputBorder(
-                  //   borderSide: BorderSide(color: Design.primaryColorOrange, width: 2.0),
-                  // ),
-                  // errorBorder: OutlineInputBorder(
-                  //   borderSide: const BorderSide(color: Colors.red, width: 2.0),
-                  // ),
-
-                  //                       ),
-                  //                       keyboardType: TextInputType.number,
-                  //                     ),
-                  //                   ),
-                  //                 ],
-                  //               ),
-                  //               const SizedBox(height: 16),
                   // Notice
                   TextField(
                     controller: _noticeController,
-                    decoration: InputDecoration(
-                      labelText: 'Notice',
-                       border: OutlineInputBorder(
-          borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: Theme.of(context).colorScheme.onSurface),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(
-            color: Theme.of(context).colorScheme.primary,
-            width: 2.0,
-          ),
-        ),
-                      errorBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(
-                          color: Colors.red,
-                          width: 2.0,
-                        ),
-                      ),
+                    decoration: _getInputDecoration('Notice'),
+                    style: TextStyle(
+                      color: Theme.of(context).textTheme.bodyLarge!.color,
                     ),
                   ),
                   const SizedBox(height: 16),
-                  // Feather Points and Venue Points Row
-                  //               Row(
-                  //                 children: [
-                  //                   Expanded(
-                  //                     child: TextField(
-                  //                       controller: _featherPointsController,
-                  //                       decoration: InputDecoration(
-                  //                         labelText: 'Feather Points',
-                  //                         border: OutlineInputBorder(
-                  //   borderSide: BorderSide(color: Design.primaryColorOrange),
-                  // ),
-                  // enabledBorder: OutlineInputBorder(
-                  //   borderSide: BorderSide(color: Design.black),
-                  // ),
-                  // focusedBorder: OutlineInputBorder(
-                  //   borderSide: BorderSide(color: Design.primaryColorOrange, width: 2.0),
-                  // ),
-                  // errorBorder: OutlineInputBorder(
-                  //   borderSide: const BorderSide(color: Colors.red, width: 2.0),
-                  // ),
-                  //                       ),
-                  //                       keyboardType: TextInputType.number,
-                  //                     ),
-                  //                   ),
-                  //                   const SizedBox(width: 16),
-                  //                   Expanded(
-                  //                     child: TextField(
-                  //                       controller: _venuePointsController,
-                  //                       decoration: InputDecoration(
-                  //                         labelText: 'Venue Points',
-                  //                         border: OutlineInputBorder(
-                  //   borderSide: BorderSide(color: Design.primaryColorOrange),
-                  // ),
-                  // enabledBorder: OutlineInputBorder(
-                  //   borderSide: BorderSide(color: Design.black),
-                  // ),
-                  // focusedBorder: OutlineInputBorder(
-                  //   borderSide: BorderSide(color: Design.primaryColorOrange, width: 2.0),
-                  // ),
-                  // errorBorder: OutlineInputBorder(
-                  //   borderSide: const BorderSide(color: Colors.red, width: 2.0),
-                  // ),
-                  //                       ),
-                  //                       keyboardType: TextInputType.number,
-                  //                     ),
-                  //                   ),
-                  //                 ],
-                  //               ),
-                  // const SizedBox(height: 16),
                   // Tags Dropdown
                   _buildTagsDropdown(),
                   const SizedBox(height: 16),
@@ -1788,11 +1524,14 @@ backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                                     child: Column(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                      Text(
+                                        Text(
                                           'Add Image(s)',
                                           style: TextStyle(
                                             fontSize: 11,
-                                            color: Theme.of(context).textTheme.titleLarge!.color,
+                                            color:
+                                                Theme.of(
+                                                  context,
+                                                ).textTheme.titleLarge!.color,
                                             fontWeight: FontWeight.w500,
                                           ),
                                         ),
@@ -1837,12 +1576,17 @@ backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
+                        elevation:
+                            Theme.of(context).brightness == Brightness.dark
+                                ? 8
+                                : 2,
                       ),
                       child: const Text(
                         'Save Changes',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: Design.font17,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ),
@@ -1854,20 +1598,17 @@ backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           if (_isLoading)
             Stack(
               children: [
-                // Semi-transparent dark overlay
                 Container(
-                  color: Theme.of(context).textTheme.bodyLarge!.color // Dark overlay
+                  color:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? Colors.black.withOpacity(0.7)
+                          : Colors.white.withOpacity(0.7),
                 ),
-
-                // Your original container with white tint and loader
-                Container(
-                  color: Colors.white10,
-                  child: Center(
-                    child: Image.asset(
-                      'assets/Bird_Full_Eye_Blinking.gif',
-                      width: 100, // Adjust size as needed
-                      height: 100,
-                    ),
+                Center(
+                  child: Image.asset(
+                    'assets/Bird_Full_Eye_Blinking.gif',
+                    width: 100,
+                    height: 100,
                   ),
                 ),
               ],

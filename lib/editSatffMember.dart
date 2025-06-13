@@ -10,10 +10,17 @@ import 'constants.dart';
 class EditStaffMemberScreen extends StatefulWidget {
   final String staffId;
 
-  const EditStaffMemberScreen({Key? key, required this.staffId}) : super(key: key);
+  const EditStaffMemberScreen({Key? key, required this.staffId})
+    : super(key: key);
 
   @override
   State<EditStaffMemberScreen> createState() => _EditStaffMemberScreenState();
+}
+
+class Design {
+  static const Color darkBackground = Color(0xFF1E1E1E);
+  static const Color darkSurface = Color(0xFF242424);
+  static const Color darkBorder = Color(0xFF3E3E3E);
 }
 
 class _EditStaffMemberScreenState extends State<EditStaffMemberScreen> {
@@ -64,11 +71,13 @@ class _EditStaffMemberScreenState extends State<EditStaffMemberScreen> {
         _phoneController.text = data["contact"] ?? '';
         _currentImageUrl = data["image"];
 
-        _selectedVenues = (data["assigned_venues"] as List<dynamic>?)
+        _selectedVenues =
+            (data["assigned_venues"] as List<dynamic>?)
                 ?.map((venue) => venue["id"].toString())
                 .toList() ??
             [];
-        _selectedPermissions = (data["permissions"] as List<dynamic>?)
+        _selectedPermissions =
+            (data["permissions"] as List<dynamic>?)
                 ?.map((permission) => permission["id"].toString())
                 .toList() ??
             [];
@@ -119,54 +128,55 @@ class _EditStaffMemberScreenState extends State<EditStaffMemberScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (_) => SafeArea(
-        child: Wrap(
-          children: [
-            ListTile(
-              leading: Icon(
-                Icons.photo_camera,
-                color: Theme.of(context).iconTheme.color,
-              ),
-              title: Text(
-                'Take a Photo',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              onTap: () async {
-                Navigator.pop(context);
-                final pickedFile = await ImagePicker().pickImage(
-                  source: ImageSource.camera,
-                );
-                if (pickedFile != null) {
-                  setState(() {
-                    _pickedImage = File(pickedFile.path);
-                  });
-                }
-              },
+      builder:
+          (_) => SafeArea(
+            child: Wrap(
+              children: [
+                ListTile(
+                  leading: Icon(
+                    Icons.photo_camera,
+                    color: Theme.of(context).iconTheme.color,
+                  ),
+                  title: Text(
+                    'Take a Photo',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final pickedFile = await ImagePicker().pickImage(
+                      source: ImageSource.camera,
+                    );
+                    if (pickedFile != null) {
+                      setState(() {
+                        _pickedImage = File(pickedFile.path);
+                      });
+                    }
+                  },
+                ),
+                ListTile(
+                  leading: Icon(
+                    Icons.photo_library,
+                    color: Theme.of(context).iconTheme.color,
+                  ),
+                  title: Text(
+                    'Choose from Gallery',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final pickedFile = await ImagePicker().pickImage(
+                      source: ImageSource.gallery,
+                    );
+                    if (pickedFile != null) {
+                      setState(() {
+                        _pickedImage = File(pickedFile.path);
+                      });
+                    }
+                  },
+                ),
+              ],
             ),
-            ListTile(
-              leading: Icon(
-                Icons.photo_library,
-                color: Theme.of(context).iconTheme.color,
-              ),
-              title: Text(
-                'Choose from Gallery',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              onTap: () async {
-                Navigator.pop(context);
-                final pickedFile = await ImagePicker().pickImage(
-                  source: ImageSource.gallery,
-                );
-                if (pickedFile != null) {
-                  setState(() {
-                    _pickedImage = File(pickedFile.path);
-                  });
-                }
-              },
-            ),
-          ],
-        ),
-      ),
+          ),
     );
   }
 
@@ -231,15 +241,16 @@ class _EditStaffMemberScreenState extends State<EditStaffMemberScreen> {
             content: Text(
               "Member updated successfully!",
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onPrimary,
-                  ),
+                color: Theme.of(context).colorScheme.onPrimary,
+              ),
             ),
           ),
         );
         Navigator.pop(context, true);
       } else {
         final errorMessage = response.data['message'] ?? 'Unknown error';
-        final errors = response.data['errors']?.toString() ?? 'No details provided';
+        final errors =
+            response.data['errors']?.toString() ?? 'No details provided';
         _showError('Failed to update member: $errorMessage\nDetails: $errors');
       }
     } catch (e) {
@@ -257,8 +268,8 @@ class _EditStaffMemberScreenState extends State<EditStaffMemberScreen> {
         content: Text(
           message,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onError,
-              ),
+            color: Theme.of(context).colorScheme.onError,
+          ),
         ),
       ),
     );
@@ -267,135 +278,451 @@ class _EditStaffMemberScreenState extends State<EditStaffMemberScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppConstants.customAppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        context: context,
-        title: 'Edit Member',
+      backgroundColor:
+          Theme.of(context).brightness == Brightness.dark
+              ? Design.darkBackground
+              : Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
+        backgroundColor:
+            Theme.of(context).brightness == Brightness.dark
+                ? Design.darkBackground
+                : Theme.of(context).scaffoldBackgroundColor,
+        elevation: 0,
+        leading: IconButton(
+          icon: Image.asset('assets/back_updated.png', height: 40, width: 34),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Text(
+          'Edit Member',
+          style: TextStyle(
+            color: Theme.of(context).textTheme.titleLarge!.color,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
-      body: _isLoading
-          ? Stack(
-              children: [
-                Container(
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.14),
-                ),
-                Container(
-                  color: Theme.of(context).colorScheme.surface.withOpacity(0.1),
-                  child: Center(
+      body:
+          _isLoading
+              ? Stack(
+                children: [
+                  Container(
+                    color:
+                        Theme.of(context).brightness == Brightness.dark
+                            ? Colors.black.withOpacity(0.7)
+                            : Colors.white.withOpacity(0.7),
+                  ),
+                  Center(
                     child: Image.asset(
                       'assets/Bird_Full_Eye_Blinking.gif',
                       width: 100,
                       height: 100,
                     ),
                   ),
-                ),
-              ],
-            )
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Center(
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        CircleAvatar(
-                          radius: 50,
-                          backgroundColor:
-                              Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
-                          backgroundImage: _pickedImage != null
-                              ? FileImage(_pickedImage!)
-                              : (_currentImageUrl != null
-                                  ? NetworkImage(_currentImageUrl!) as ImageProvider
-                                  : null),
-                          child: (_pickedImage == null && _currentImageUrl == null)
-                              ? Icon(
-                                  Icons.person,
-                                  size: 60,
-                                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                                )
-                              : null,
-                        ),
-                        Positioned(
-                          bottom: -4,
-                          right: -7,
-                          child: CircleAvatar(
-                            radius: 18,
-                            backgroundColor: AppColors.primary,
-                            child: IconButton(
-                              icon: Icon(
-                                Icons.camera_alt,
-                                color: Theme.of(context).colorScheme.onPrimary,
-                                size: 18,
+                ],
+              )
+              : SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Center(
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color:
+                                    Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? Design.darkBorder
+                                        : Colors.grey.withOpacity(0.2),
+                                width: 2,
                               ),
-                              onPressed: _pickImage,
-                              padding: EdgeInsets.zero,
+                            ),
+                            child: CircleAvatar(
+                              radius: 50,
+                              backgroundColor:
+                                  Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Design.darkSurface
+                                      : Theme.of(context).colorScheme.surface,
+                              backgroundImage:
+                                  _pickedImage != null
+                                      ? FileImage(_pickedImage!)
+                                      : (_currentImageUrl != null
+                                          ? NetworkImage(_currentImageUrl!)
+                                              as ImageProvider
+                                          : null),
+                              child:
+                                  (_pickedImage == null &&
+                                          _currentImageUrl == null)
+                                      ? Icon(
+                                        Icons.person,
+                                        size: 60,
+                                        color:
+                                            Theme.of(context).brightness ==
+                                                    Brightness.dark
+                                                ? Colors.white70
+                                                : Theme.of(
+                                                  context,
+                                                ).iconTheme.color,
+                                      )
+                                      : null,
+                            ),
+                          ),
+                          Positioned(
+                            bottom: -4,
+                            right: -7,
+                            child: CircleAvatar(
+                              radius: 18,
+                              backgroundColor:
+                                  Theme.of(context).colorScheme.primary,
+                              child: IconButton(
+                                icon: Icon(
+                                  Icons.camera_alt,
+                                  color:
+                                      Theme.of(context).colorScheme.onPrimary,
+                                  size: 18,
+                                ),
+                                onPressed: _pickImage,
+                                padding: EdgeInsets.zero,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _firstNameController,
+                            decoration: _getInputDecoration('First Name'),
+                            style: TextStyle(
+                              fontSize: 16,
+                              color:
+                                  Theme.of(context).textTheme.bodyLarge!.color,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: TextField(
+                            controller: _lastNameController,
+                            decoration: _getInputDecoration('Last Name'),
+                            style: TextStyle(
+                              fontSize: 16,
+                              color:
+                                  Theme.of(context).textTheme.bodyLarge!.color,
                             ),
                           ),
                         ),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: 30),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: AppConstants.firstNameField(
-                          controller: _firstNameController,
+                    const SizedBox(height: 15),
+                    TextField(
+                      controller: _emailController,
+                      decoration: _getInputDecoration('Email'),
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Theme.of(context).textTheme.bodyLarge!.color,
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+                    TextField(
+                      controller: _phoneController,
+                      decoration: _getInputDecoration('Phone'),
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Theme.of(context).textTheme.bodyLarge!.color,
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+                    TextField(
+                      controller: _passwordController,
+                      decoration: _getInputDecoration('Password').copyWith(
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility
+                                : Icons.visibility_off,
+                            color: Theme.of(context).iconTheme.color,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
                         ),
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: AppConstants.lastNameField(
-                          controller: _lastNameController,
+                      obscureText: _obscurePassword,
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Theme.of(context).textTheme.bodyLarge!.color,
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+                    _buildDropdownField(
+                      label: 'Venues',
+                      items: _venueList,
+                      selectedValues: _selectedVenues,
+                      onConfirm: (values) {
+                        setState(() {
+                          _selectedVenues = values;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 15),
+                    _buildDropdownField(
+                      label: 'Permissions',
+                      items: _permissionList,
+                      selectedValues: _selectedPermissions,
+                      onConfirm: (values) {
+                        setState(() {
+                          _selectedPermissions = values;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 40),
+                    ElevatedButton(
+                      onPressed: _submitForm,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).colorScheme.primary,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 15),
-                  AppConstants.emailField(controller: _emailController),
-                  const SizedBox(height: 15),
-                  AppConstants.phoneField(controller: _phoneController),
-                  const SizedBox(height: 15),
-                  AppConstants.passwordField(
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    toggleObscure: () {
-                      setState(() {
-                        _obscurePassword = !_obscurePassword;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 15),
-                  AppConstants.assignVenuesDropdown(
-                    venueList: _venueList,
-                    selectedVenues: _selectedVenues,
-                    onConfirm: (values) {
-                      setState(() {
-                        _selectedVenues = values.cast<String>();
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 15),
-                  AppConstants.assignPermissionsDropdown(
-                    permissionList: _permissionList,
-                    selectedPermissions: _selectedPermissions,
-                    onConfirm: (values) {
-                      setState(() {
-                        _selectedPermissions = values.cast<String>();
-                      });
-                    },
-                    context: context,
-                  ),
-                  const SizedBox(height: 40),
-                  AppConstants.fullWidthButton(
-                    text: "Update",
-                    onPressed: _submitForm,
-                  ),
-                ],
+                      child: Text(
+                        'Update',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onPrimary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
+    );
+  }
+
+  InputDecoration _getInputDecoration(String label) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: TextStyle(
+        color:
+            Theme.of(context).brightness == Brightness.dark
+                ? Colors.grey[400]
+                : Theme.of(context).textTheme.bodyMedium!.color,
+      ),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(
+          color:
+              Theme.of(context).brightness == Brightness.dark
+                  ? Design.darkBorder
+                  : Theme.of(context).colorScheme.primary,
+        ),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(
+          color:
+              Theme.of(context).brightness == Brightness.dark
+                  ? Design.darkBorder
+                  : Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+        ),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(
+          color: Theme.of(context).colorScheme.primary,
+          width: 2.0,
+        ),
+      ),
+      filled: Theme.of(context).brightness == Brightness.dark,
+      fillColor:
+          Theme.of(context).brightness == Brightness.dark
+              ? Design.darkSurface
+              : null,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      isDense: true,
+    );
+  }
+
+  Widget _buildDropdownField({
+    required String label,
+    required List<dynamic> items,
+    required List<String> selectedValues,
+    required Function(List<String>) onConfirm,
+  }) {
+    return InkWell(
+      onTap: () async {
+        await showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            List<String> tempSelected = List.from(selectedValues);
+            return StatefulBuilder(
+              builder: (context, setStateDialog) {
+                return AlertDialog(
+                  backgroundColor:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? Design.darkSurface
+                          : Theme.of(context).colorScheme.surface,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    side: BorderSide(
+                      color:
+                          Theme.of(context).brightness == Brightness.dark
+                              ? Design.darkBorder
+                              : Colors.grey.withOpacity(0.2),
+                    ),
+                  ),
+                  title: Text(
+                    "Select $label",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).textTheme.titleLarge!.color,
+                    ),
+                  ),
+                  content: SizedBox(
+                    width: double.maxFinite,
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: items.length,
+                      itemBuilder: (context, index) {
+                        final item = items[index];
+                        final id = item['id'].toString();
+                        final name = item['name'].toString();
+                        final isSelected = tempSelected.contains(id);
+
+                        return Container(
+                          decoration: BoxDecoration(
+                            color:
+                                isSelected
+                                    ? Theme.of(
+                                      context,
+                                    ).colorScheme.primary.withOpacity(0.1)
+                                    : Colors.transparent,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: ListTile(
+                            dense: true,
+                            title: Text(
+                              name,
+                              style: TextStyle(
+                                color:
+                                    Theme.of(
+                                      context,
+                                    ).textTheme.bodyLarge!.color,
+                                fontSize: 15,
+                              ),
+                            ),
+                            trailing: Checkbox(
+                              value: isSelected,
+                              activeColor:
+                                  Theme.of(context).colorScheme.primary,
+                              onChanged: (bool? value) {
+                                if (value != null) {
+                                  setStateDialog(() {
+                                    if (value) {
+                                      tempSelected.add(id);
+                                    } else {
+                                      tempSelected.remove(id);
+                                    }
+                                  });
+                                }
+                              },
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text(
+                        'Cancel',
+                        style: TextStyle(
+                          color:
+                              Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.grey[400]
+                                  : Colors.grey[700],
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        onConfirm(tempSelected);
+                        Navigator.pop(context);
+                      },
+                      child: Text(
+                        'Confirm',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        );
+      },
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 56),
+        child: InputDecorator(
+          decoration: _getInputDecoration(label),
+          baseStyle: TextStyle(
+            fontSize: 16,
+            color: Theme.of(context).textTheme.bodyLarge!.color,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  selectedValues.isEmpty
+                      ? 'Select $label'
+                      : items
+                          .where(
+                            (item) =>
+                                selectedValues.contains(item['id'].toString()),
+                          )
+                          .map((item) => item['name'].toString())
+                          .join(', '),
+                  style: TextStyle(
+                    fontSize: 16,
+                    color:
+                        selectedValues.isEmpty
+                            ? Theme.of(context).brightness == Brightness.dark
+                                ? Colors.grey[400]
+                                : Colors.grey[700]
+                            : Theme.of(context).textTheme.bodyLarge!.color,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Icon(
+                Icons.arrow_drop_down,
+                color:
+                    Theme.of(context).brightness == Brightness.dark
+                        ? Colors.grey[400]
+                        : Colors.grey[700],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
