@@ -230,6 +230,7 @@ class _TabDashboardState extends State<TabDashboard>
         isVenueListLoaded = true; // API call completed
       });
       if (response.statusCode == 200) {
+        print("api vendor venue1111111");
         final responseJson = json.decode(response.body);
         if (responseJson != null && responseJson['status'] == 'success') {
           setState(() {
@@ -405,6 +406,7 @@ class _TabDashboardState extends State<TabDashboard>
     );
     final url = Uri.parse("https://api.getflock.io/api/vendor/verify-voucher");
     try {
+      print("apiverift called");
       final response = await http.post(
         url,
         headers: {
@@ -413,6 +415,7 @@ class _TabDashboardState extends State<TabDashboard>
         },
         body: json.encode({'qr_code': qrCode, 'venue_id': venueId}),
       );
+      print("response123: ${response.body}");
       setState(() => loader = false);
       if (response.statusCode == 200) {
         Fluttertoast.showToast(msg: 'Voucher verified successfully!');
@@ -423,7 +426,9 @@ class _TabDashboardState extends State<TabDashboard>
         );
       }
     } catch (e) {
+
       setState(() => loader = false);
+      print("error111: $e");
       Fluttertoast.showToast(msg: 'Error: $e');
     }
   }

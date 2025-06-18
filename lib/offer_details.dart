@@ -81,7 +81,7 @@ class _OfferDetailsState extends State<OfferDetails> {
 
     description = detail['description'] ?? 'No description available';
     redeemed_count = detail['people'] ?? detail['redeemed_count'] ?? 0;
-    expireAt = detail['expire_at'];
+    expireAt = detail['expire_at']?.toString();
     discount = detail['discount']?.toString() ?? '0';
 
     print('Parsed offer details:'); // Debug log
@@ -267,8 +267,11 @@ class _OfferDetailsState extends State<OfferDetails> {
         final data = jsonDecode(response.body);
         if (data['status'] == 'success') {
           setState(() {
-            expireAt = data['data']['expire_at'];
+            expireAt = data['data']['expire_at']?.toString();
           });
+
+          widget.allDetail['expire_at'] = expireAt;
+
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(

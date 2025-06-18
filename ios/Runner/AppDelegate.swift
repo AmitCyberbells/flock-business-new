@@ -63,6 +63,8 @@ import UserNotifications
     // Register for remote notifications
     application.registerForRemoteNotifications()
     
+    GMSServices.provideAPIKey("AIzaSyA4D0ULsoSN1GhRqCcL0JtnyUnpLPDX1Do")
+    
     GeneratedPluginRegistrant.register(with: self)
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }

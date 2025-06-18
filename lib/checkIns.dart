@@ -67,6 +67,7 @@ class _CheckInsScreenState extends State<CheckInsScreen> {
           .timeout(const Duration(seconds: 5));
 
       if (response.statusCode == 200) {
+        print("api vendor venue");
         final data = jsonDecode(response.body);
         setState(() {
           checkInData = data['data'] ?? [];

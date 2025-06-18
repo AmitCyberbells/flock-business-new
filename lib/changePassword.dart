@@ -50,6 +50,18 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       );
       return;
     }
+
+    // Validate new password
+    final passwordError = AppConstants.validatePassword(newPassword);
+    if (passwordError != null) {
+      Fluttertoast.showToast(
+        msg: passwordError,
+        backgroundColor: Colors.red,
+        textColor: Theme.of(context).colorScheme.onError,
+      );
+      return;
+    }
+
     if (newPassword != confirmPassword) {
       Fluttertoast.showToast(
         msg: "New password and confirm password do not match",
@@ -249,6 +261,21 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   fontSize: 16,
                   color: Theme.of(context).textTheme.bodyLarge!.color,
                 ),
+                onChanged: (value) {
+                  setState(() {
+                    // Validate password as user types
+                    final error = AppConstants.validatePassword(value);
+                    if (error != null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(error),
+                          backgroundColor: Colors.red,
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    }
+                  });
+                },
                 decoration: _getInputDecoration(
                   'New Password',
                   !_newPasswordVisible,
@@ -271,6 +298,19 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   () => setState(() {
                     _confirmPasswordVisible = !_confirmPasswordVisible;
                   }),
+                ),
+              ),
+              const SizedBox(height: 15),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Text(
+                  AppConstants.getPasswordRequirements(),
+                  style: TextStyle(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.7),
+                    fontSize: 12,
+                  ),
                 ),
               ),
               const Spacer(),

@@ -4,6 +4,7 @@
 <dict>
 	<key>CFBundleGetInfoString</key>
 	<string></string>
+	
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
@@ -41,10 +42,12 @@
 	<string></string>
 	<key>NSCameraUsageDescription</key>
 	<string>${PRODUCT_NAME} Needs access to the camera to scan QR codes Image</string>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>This app needs access to your location for location-based services even when not in use.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>This app needs access to your location for location-based services.</string>
+	<string>This app needs access to your location to provide location-based features.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>This app needs access to your location even when running in the background.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>This app needs access to your location at all times.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>This app needs access to the photo library to select profile images.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>

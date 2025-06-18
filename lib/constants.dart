@@ -7,34 +7,89 @@ import 'package:multi_select_flutter/util/multi_select_item.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
 
 class AppConstants {
-  // Base method for password fields.
+  // Password validation constants
+  static const int minPasswordLength = 8;
+  static const int maxPasswordLength = 32;
 
+  // Password validation methods
+  static String? validatePassword(String? password) {
+    if (password == null || password.isEmpty) {
+      return 'Password is required';
+    }
+    if (password.length < minPasswordLength) {
+      return 'Password must be at least $minPasswordLength characters';
+    }
+    if (password.length > maxPasswordLength) {
+      return 'Password must not exceed $maxPasswordLength characters';
+    }
+    if (!password.contains(RegExp(r'[A-Z]'))) {
+      return 'Password must contain at least one uppercase letter';
+    }
+    if (!password.contains(RegExp(r'[a-z]'))) {
+      return 'Password must contain at least one lowercase letter';
+    }
+    if (!password.contains(RegExp(r'[0-9]'))) {
+      return 'Password must contain at least one number';
+    }
+    if (!password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) {
+      return 'Password must contain at least one special character';
+    }
+    return null;
+  }
+
+  static String getPasswordRequirements() {
+    return 'Password must:\n'
+        '• Be $minPasswordLength-$maxPasswordLength characters long\n'
+        '• Contain at least one uppercase letter\n'
+        '• Contain at least one lowercase letter\n'
+        '• Contain at least one number\n'
+        '• Contain at least one special character';
+  }
+
+  // Base method for password fields.
   static Widget customPasswordField({
     required TextEditingController controller,
     required bool obscureText,
     required VoidCallback toggleObscure,
     required String hintText,
+    String? errorText,
+    ValueChanged<String>? onChanged,
   }) {
     return Container(
       decoration: textFieldBoxDecoration,
-      child: TextField(
-        controller: controller,
-        obscureText: obscureText,
-        style: const TextStyle(
-          color: Colors.black,
-          fontSize: 14.0,
-          fontFamily: 'YourFontFamily',
-        ),
-        decoration: textFieldDecoration.copyWith(
-          hintText: hintText,
-          suffixIcon: IconButton(
-            icon: Icon(
-              obscureText ? Icons.visibility_off : Icons.visibility,
-              color: Colors.grey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextField(
+            controller: controller,
+            obscureText: obscureText,
+            style: const TextStyle(
+              color: Colors.black,
+              fontSize: 14.0,
+              fontFamily: 'YourFontFamily',
             ),
-            onPressed: toggleObscure,
+            onChanged: onChanged,
+            decoration: textFieldDecoration.copyWith(
+              hintText: hintText,
+              errorText: errorText,
+              suffixIcon: IconButton(
+                icon: Icon(
+                  obscureText ? Icons.visibility_off : Icons.visibility,
+                  color: Colors.grey,
+                ),
+                onPressed: toggleObscure,
+              ),
+            ),
           ),
-        ),
+          if (errorText == null && controller.text.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 4, left: 12),
+              child: Text(
+                getPasswordRequirements(),
+                style: const TextStyle(color: Colors.grey, fontSize: 12),
+              ),
+            ),
+        ],
       ),
     );
   }

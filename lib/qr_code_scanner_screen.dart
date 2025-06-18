@@ -6,6 +6,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:flock/services/logger_service.dart';
 
 class QRScanScreen extends StatefulWidget {
   final String venueId;
@@ -263,6 +264,18 @@ class _QRScanScreenState extends State<QRScanScreen> {
               'Voucher verified successfully for venue ID $venueId!';
           Fluttertoast.showToast(msg: dialogMessage);
           print('API Response: $responseData');
+
+          // Log the check-in event
+          await LoggerService.log(
+            'Check-In',
+            'Customer checked in via QR at venue $venueId',
+            LogType.info,
+            data: {
+              'venue_id': venueId,
+              'redeem_id': parsedRedeemId,
+              'response': responseData,
+            },
+          );
         } else if (response.statusCode == 401) {
           dialogMessage = 'Session expired. Please log in again.';
           Fluttertoast.showToast(msg: dialogMessage);
@@ -341,207 +354,230 @@ class _QRScanScreenState extends State<QRScanScreen> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
-  return Scaffold(
-    appBar: AppBar(
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF2A4CE1),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed:
+              _isLoading
+                  ? null
+                  : () {
+                    print('AppBar back button pressed');
+                    Navigator.pop(context);
+                  },
+        ),
+        title: const Text(
+          'Scan QR Code',
+          style: TextStyle(color: Colors.white),
+        ),
+        centerTitle: true,
+        toolbarHeight: 55, // Reduced app bar height
+      ),
       backgroundColor: const Color(0xFF2A4CE1),
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back, color: Colors.white),
-        onPressed: _isLoading
-            ? null
-            : () {
-                print('AppBar back button pressed');
-                Navigator.pop(context);
-              },
-      ),
-      title: const Text(
-        'Scan QR Code',
-        style: TextStyle(color: Colors.white),
-      ),
-      centerTitle: true,
-      toolbarHeight: 55, // Reduced app bar height
-    ),
-    backgroundColor: const Color(0xFF2A4CE1),
-    body: Stack(
-      children: [
-        SizedBox.expand(
-          child: Container(
-            color: const Color(0xFF2A4CE1),
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: MediaQuery.of(context).size.height -
-                      AppBar().preferredSize.height -
-                      MediaQuery.of(context).padding.top,
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.max,
-                  mainAxisAlignment: MainAxisAlignment.start, // Changed to start
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 8.0), // Reduced vertical padding
-                      child: Text(
-                        'Please place the QR code within the frame or enter the coupon code below.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.white, fontSize: 16),
+      body: Stack(
+        children: [
+          SizedBox.expand(
+            child: Container(
+              color: const Color(0xFF2A4CE1),
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight:
+                        MediaQuery.of(context).size.height -
+                        AppBar().preferredSize.height -
+                        MediaQuery.of(context).padding.top,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.max,
+                    mainAxisAlignment:
+                        MainAxisAlignment.start, // Changed to start
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.fromLTRB(
+                          16.0,
+                          8.0,
+                          16.0,
+                          8.0,
+                        ), // Reduced vertical padding
+                        child: Text(
+                          'Please place the QR code within the frame or enter the coupon code below.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.white, fontSize: 16),
+                        ),
                       ),
-                    ),
-                    // Rest of your code remains the same...
-                    const SizedBox(height: 35), // Reduced from 20
-                    Container(
-                      width: 280,
-                      height: 320,
-                      child: Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(5),
-                            child: _isPermissionGranted
-                                ? MobileScanner(
-                                    controller: _scannerController,
-                                    onDetect: (capture) {
-                                      if (!_isScanned) {
-                                        final barcodes = capture.barcodes;
-                                        if (barcodes.isNotEmpty) {
-                                          final qrCode =
-                                              barcodes.first.rawValue ?? '';
-                                          _handleScannedQRCode(qrCode, context);
-                                        }
-                                      }
-                                    },
-                                  )
-                                : Stack(
-                                    children: [
-                                      Container(
-                                        color: Colors.black.withOpacity(0.14),
-                                      ),
-                                      Container(
-                                        color: Colors.white10,
-                                        child: Center(
-                                          child: Image.asset(
-                                            'assets/Bird_Full_Eye_Blinking.gif',
-                                            width: 100,
-                                            height: 100,
+                      // Rest of your code remains the same...
+                      const SizedBox(height: 35), // Reduced from 20
+                      Container(
+                        width: 280,
+                        height: 320,
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(5),
+                              child:
+                                  _isPermissionGranted
+                                      ? MobileScanner(
+                                        controller: _scannerController,
+                                        onDetect: (capture) {
+                                          if (!_isScanned) {
+                                            final barcodes = capture.barcodes;
+                                            if (barcodes.isNotEmpty) {
+                                              final qrCode =
+                                                  barcodes.first.rawValue ?? '';
+                                              _handleScannedQRCode(
+                                                qrCode,
+                                                context,
+                                              );
+                                            }
+                                          }
+                                        },
+                                      )
+                                      : Stack(
+                                        children: [
+                                          Container(
+                                            color: Colors.black.withOpacity(
+                                              0.14,
+                                            ),
                                           ),
-                                        ),
+                                          Container(
+                                            color: Colors.white10,
+                                            child: Center(
+                                              child: Image.asset(
+                                                'assets/Bird_Full_Eye_Blinking.gif',
+                                                width: 100,
+                                                height: 100,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                    ],
-                                  ),
-                          ),
-                          Container(
-                            width: 280,
-                            height: 320,
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.white, width: 2),
+                            ),
+                            Container(
+                              width: 280,
+                              height: 320,
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: 2,
+                                ),
+                                borderRadius: BorderRadius.circular(5),
+                              ),
+                            ),
+                            Positioned(
+                              top: -30,
+                              left: 250 / 2 - 17,
+                              child: Container(
+                                width: 60,
+                                height: 60,
+                                padding: const EdgeInsets.all(1.0),
+                                child: Image.asset(
+                                  'assets/bird.png',
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 4), // Reduced from 5
+                      const Text(
+                        'Scan QR Code',
+                        style: TextStyle(color: Colors.white, fontSize: 18),
+                      ),
+                      const SizedBox(height: 18), // Reduced from 10
+                      const Text(
+                        '----- OR ----- ',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 23), // Reduced from 10
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 48),
+                        child: TextField(
+                          controller: _couponController,
+                          style: const TextStyle(color: Colors.black),
+                          decoration: InputDecoration(
+                            hintText: 'Enter Coupon Code',
+                            hintStyle: const TextStyle(color: Colors.grey),
+                            filled: true,
+                            fillColor: Colors.white,
+                            enabledBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: Colors.black),
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: Colors.black),
                               borderRadius: BorderRadius.circular(5),
                             ),
                           ),
-                          Positioned(
-                            top: -30,
-                            left: 250 / 2 - 17,
-                            child: Container(
-                              width: 60,
-                              height: 60,
-                              padding: const EdgeInsets.all(1.0),
-                              child: Image.asset(
-                                'assets/bird.png',
-                                fit: BoxFit.contain,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 4), // Reduced from 5
-                    const Text(
-                      'Scan QR Code',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                      ),
-                    ),
-                    const SizedBox(height: 18), // Reduced from 10
-                    const Text(
-                      '----- OR ----- ',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 23), // Reduced from 10
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 48),
-                      child: TextField(
-                        controller: _couponController,
-                        style: const TextStyle(color: Colors.black),
-                        decoration: InputDecoration(
-                          hintText: 'Enter Coupon Code',
-                          hintStyle: const TextStyle(color: Colors.grey),
-                          filled: true,
-                          fillColor: Colors.white,
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(color: Colors.black),
-                            borderRadius: BorderRadius.circular(5),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(color: Colors.black),
-                            borderRadius: BorderRadius.circular(5),
-                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 16), // Reduced from 20
-                    ElevatedButton(
-                      onPressed: _isLoading
-                          ? null
-                          : () {
-                              final couponCode = _couponController.text.trim();
-                              if (couponCode.isEmpty) {
-                                Fluttertoast.showToast(
-                                  msg: 'Please enter a coupon code',
-                                );
-                                return;
-                              }
-                              _verifyCouponCode(couponCode, context);
-                            },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromRGBO(255, 130, 16, 1),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 30,
-                          vertical: 15,
+                      const SizedBox(height: 16), // Reduced from 20
+                      ElevatedButton(
+                        onPressed:
+                            _isLoading
+                                ? null
+                                : () {
+                                  final couponCode =
+                                      _couponController.text.trim();
+                                  if (couponCode.isEmpty) {
+                                    Fluttertoast.showToast(
+                                      msg: 'Please enter a coupon code',
+                                    );
+                                    return;
+                                  }
+                                  _verifyCouponCode(couponCode, context);
+                                },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color.fromRGBO(
+                            255,
+                            130,
+                            16,
+                            1,
+                          ),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 30,
+                            vertical: 15,
+                          ),
+                        ),
+                        child: const Text(
+                          'Submit',
+                          style: TextStyle(fontSize: 16),
                         ),
                       ),
-                      child: const Text('Submit', style: TextStyle(fontSize: 16)),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-        if (_isLoading)
-          Stack(
-            children: [
-              Container(color: Colors.black.withOpacity(0.14)),
-              Container(
-                color: Colors.white10,
-                child: Center(
-                  child: Image.asset(
-                    'assets/Bird_Full_Eye_Blinking.gif',
-                    width: 100,
-                    height: 100,
+          if (_isLoading)
+            Stack(
+              children: [
+                Container(color: Colors.black.withOpacity(0.14)),
+                Container(
+                  color: Colors.white10,
+                  child: Center(
+                    child: Image.asset(
+                      'assets/Bird_Full_Eye_Blinking.gif',
+                      width: 100,
+                      height: 100,
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-      ],
-    ),
-  );
-}
+              ],
+            ),
+        ],
+      ),
+    );
+  }
 }
