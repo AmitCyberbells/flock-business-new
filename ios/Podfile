@@ -48,7 +48,8 @@ post_install do |installer|
       # Enable permissions required by permission_handler plugin
       config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= [
         '$(inherited)',
-        'PERMISSION_CAMERA=1'
+        'PERMISSION_CAMERA=1',
+        'PERMISSION_LOCATION=1'
       ]
     end
   end

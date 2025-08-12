@@ -20,50 +20,50 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
     {
       "day": "Mon",
       "isOpen": false,
-      "openTime": "12:00 AM",
-      "closeTime": "12:00 AM",
+      "openTime": "",
+      "closeTime": "",
       "updated": false,
     },
     {
       "day": "Tue",
       "isOpen": false,
-      "openTime": "12:00 AM",
-      "closeTime": "12:00 AM",
+      "openTime": "",
+      "closeTime": "",
       "updated": false,
     },
     {
       "day": "Wed",
       "isOpen": false,
-      "openTime": "12:00 AM",
-      "closeTime": "12:00 AM",
+      "openTime": "",
+      "closeTime": "",
       "updated": false,
     },
     {
       "day": "Thu",
       "isOpen": false,
-      "openTime": "12:00 AM",
-      "closeTime": "12:00 AM",
+      "openTime": "",
+      "closeTime": "",
       "updated": false,
     },
     {
       "day": "Fri",
       "isOpen": false,
-      "openTime": "12:00 AM",
-      "closeTime": "12:00 AM",
+      "openTime": "",
+      "closeTime": "",
       "updated": false,
     },
     {
       "day": "Sat",
       "isOpen": false,
-      "openTime": "12:00 AM",
-      "closeTime": "12:00 AM",
+      "openTime": "",
+      "closeTime": "",
       "updated": false,
     },
     {
       "day": "Sun",
       "isOpen": false,
-      "openTime": "12:00 AM",
-      "closeTime": "12:00 AM",
+      "openTime": "",
+      "closeTime": "",
       "updated": false,
     },
   ];
@@ -195,20 +195,20 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
             final localDay = dayMap[serverDay] ?? serverDay;
             final openTime = item['start_time'] ?? '00:00';
             final closeTime = item['end_time'] ?? '00:00';
-            final status = item['status']?.toString();
-            bool isOpen = status == '1';
-            final bool isUpdated = item['updated_at'] != null;
+            final isClosed = item['closed'] == 1;
 
             final index = updatedDays.indexWhere((d) => d['day'] == localDay);
             if (index != -1) {
               updatedDays[index] = {
                 "day": localDay,
-                "isOpen": isOpen,
-                "openTime":
-                    isOpen ? _convertTo12HrFormat(openTime) : "12:00 AM",
-                "closeTime":
-                    isOpen ? _convertTo12HrFormat(closeTime) : "12:00 AM",
-                "updated": isUpdated,
+                "isOpen": !isClosed,
+                "openTime": _convertTo12HrFormat(
+                  openTime,
+                ), // Always show the API value
+                "closeTime": _convertTo12HrFormat(
+                  closeTime,
+                ), // Always show the API value
+                "updated": false,
               };
             }
           }

@@ -8,6 +8,8 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import 'package:flock/app_colors.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'dart:io';
 
 class CheckInsScreen extends StatefulWidget {
   const CheckInsScreen({Key? key}) : super(key: key);
@@ -44,6 +46,17 @@ class _CheckInsScreenState extends State<CheckInsScreen> {
   Future<void> fetchCheckIns() async {
     setState(() => loader = true);
     try {
+      // Check for internet connection before making the API call
+      final connectivityResult = await Connectivity().checkConnectivity();
+      if (connectivityResult == ConnectivityResult.none) {
+        setState(() => loader = false);
+        Fluttertoast.showToast(
+          msg: 'No internet connection',
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+        );
+        return;
+      }
       final token = await getToken();
       if (token.isEmpty) throw Exception('No authentication token');
 
@@ -62,9 +75,20 @@ class _CheckInsScreenState extends State<CheckInsScreen> {
         'https://api.getflock.io/api/vendor/venues-checkins',
       ).replace(queryParameters: queryParams);
 
-      final response = await http
-          .get(uri, headers: headers)
-          .timeout(const Duration(seconds: 5));
+      http.Response response;
+      try {
+        response = await http
+            .get(uri, headers: headers)
+            .timeout(const Duration(seconds: 5));
+      } on SocketException {
+        setState(() => loader = false);
+        Fluttertoast.showToast(
+          msg: 'No internet connection',
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+        );
+        return;
+      }
 
       if (response.statusCode == 200) {
         print("api vendor venue");
@@ -79,9 +103,12 @@ class _CheckInsScreenState extends State<CheckInsScreen> {
     } catch (e) {
       setState(() => loader = false);
       Fluttertoast.showToast(
-        msg: 'Failed to load check-ins: $e',
+        msg:
+            e is SocketException
+                ? 'No internet connection'
+                : 'Failed to load check-ins: $e',
         backgroundColor: Colors.red,
-        textColor: Theme.of(context).colorScheme.onError,
+        textColor: Colors.white,
       );
     }
   }
@@ -96,11 +123,11 @@ class _CheckInsScreenState extends State<CheckInsScreen> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: Theme.of(context).colorScheme.copyWith(
-                  primary: AppColors.primary,
-                  onPrimary: Theme.of(context).colorScheme.onPrimary,
-                  surface: Theme.of(context).colorScheme.surface,
-                  onSurface: Theme.of(context).colorScheme.onSurface,
-                ),
+              primary: AppColors.primary,
+              onPrimary: Theme.of(context).colorScheme.onPrimary,
+              surface: Theme.of(context).colorScheme.surface,
+              onSurface: Theme.of(context).colorScheme.onSurface,
+            ),
             dialogBackgroundColor: Theme.of(context).colorScheme.surface,
           ),
           child: child!,
@@ -142,15 +169,18 @@ class _CheckInsScreenState extends State<CheckInsScreen> {
                   width: 50,
                   height: 50,
                   fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    width: 50,
-                    height: 50,
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
-                    child: Icon(
-                      Icons.image_not_supported,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
+                  errorBuilder:
+                      (context, error, stackTrace) => Container(
+                        width: 50,
+                        height: 50,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.2),
+                        child: Icon(
+                          Icons.image_not_supported,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
                 ),
               ),
               const SizedBox(width: 16),
@@ -158,8 +188,8 @@ class _CheckInsScreenState extends State<CheckInsScreen> {
                 child: Text(
                   item['name'] ?? 'Unknown',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                    fontWeight: FontWeight.w600,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -187,19 +217,19 @@ class _CheckInsScreenState extends State<CheckInsScreen> {
                         children: [
                           Text(
                             "Today's Check-Ins",
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurface
-                                      .withOpacity(0.6),
-                                ),
+                            style: Theme.of(
+                              context,
+                            ).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withOpacity(0.6),
+                            ),
                             overflow: TextOverflow.ellipsis,
                           ),
                           Text(
                             item['total_checkins'].toString(),
-                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                ),
+                            style: Theme.of(context).textTheme.bodyLarge
+                                ?.copyWith(fontWeight: FontWeight.w600),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ],
@@ -230,19 +260,19 @@ class _CheckInsScreenState extends State<CheckInsScreen> {
                         children: [
                           Text(
                             "Feathers Allotted",
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurface
-                                      .withOpacity(0.6),
-                                ),
+                            style: Theme.of(
+                              context,
+                            ).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withOpacity(0.6),
+                            ),
                             overflow: TextOverflow.ellipsis,
                           ),
                           Text(
                             "${item['total_feather_points']} fts",
-                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                ),
+                            style: Theme.of(context).textTheme.bodyLarge
+                                ?.copyWith(fontWeight: FontWeight.w600),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ],
@@ -284,16 +314,13 @@ class _CheckInsScreenState extends State<CheckInsScreen> {
                             ? "Choose Date"
                             : DateFormat('MMM d, yyyy').format(selectedDate!),
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AppColors.primary,
-                              fontSize: 16,
-                            ),
+                          color: AppColors.primary,
+                          fontSize: 16,
+                        ),
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(width: 4),
-                      Icon(
-                        Icons.arrow_drop_down,
-                        color: AppColors.primary,
-                      ),
+                      Icon(Icons.arrow_drop_down, color: AppColors.primary),
                     ],
                   ),
                 ),
@@ -301,45 +328,48 @@ class _CheckInsScreenState extends State<CheckInsScreen> {
             ),
             const SizedBox(height: 8),
             Expanded(
-              child: loader
-                  ? Stack(
-                      children: [
-                        Container(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onSurface
-                              .withOpacity(0.14),
-                        ),
-                        Container(
-                          color:
-                              Theme.of(context).colorScheme.surface.withOpacity(0.1),
-                          child: Center(
-                            child: Image.asset(
-                              'assets/Bird_Full_Eye_Blinking.gif',
-                              width: 100,
-                              height: 100,
+              child:
+                  loader
+                      ? Stack(
+                        children: [
+                          Container(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withOpacity(0.14),
+                          ),
+                          Container(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.surface.withOpacity(0.1),
+                            child: Center(
+                              child: Image.asset(
+                                'assets/Bird_Full_Eye_Blinking.gif',
+                                width: 100,
+                                height: 100,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
-                    )
-                  : checkInData.isEmpty
+                        ],
+                      )
+                      : checkInData.isEmpty
                       ? Center(
-                          child: Text(
-                            'No Check-Ins Found',
-                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                  color: Theme.of(context).colorScheme.onSurface,
-                                ),
+                        child: Text(
+                          'No Check-Ins Found',
+                          style: Theme.of(
+                            context,
+                          ).textTheme.bodyLarge?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
-                        )
-                      : ListView.builder(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          itemCount: checkInData.length,
-                          itemBuilder: (context, index) {
-                            final item = checkInData[index];
-                            return buildCheckInItem(item);
-                          },
                         ),
+                      )
+                      : ListView.builder(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        itemCount: checkInData.length,
+                        itemBuilder: (context, index) {
+                          final item = checkInData[index];
+                          return buildCheckInItem(item);
+                        },
+                      ),
             ),
           ],
         ),

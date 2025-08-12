@@ -103,16 +103,18 @@ class _TutorialsScreenState extends State<TutorialsScreen> {
                   Text(
                     tutorial['name'] ?? 'No Title',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     tutorial['description'] ?? 'No description',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
-                        ),
+                      color: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.color?.withOpacity(0.6),
+                    ),
                   ),
                 ],
               ),
@@ -187,23 +189,23 @@ class _TutorialsScreenState extends State<TutorialsScreen> {
               child: Row(
                 children: [
                   InkWell(
-  onTap: () => Navigator.of(context).pop(),
-  child: Image.asset(
-    'assets/back_updated.png',
-    height: 40,
-    width: 34,
-    // fit: BoxFit.contain,
-    // color: Theme.of(context).colorScheme.primary, // Orange tint
-  ),
-),
+                    onTap: () => Navigator.of(context).pop(),
+                    child: Image.asset(
+                      'assets/back_updated.png',
+                      height: 40,
+                      width: 34,
+                      // fit: BoxFit.contain,
+                      // color: Theme.of(context).colorScheme.primary, // Orange tint
+                    ),
+                  ),
                   Expanded(
                     child: Center(
                       child: Text(
                         "Tutorials",
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w600,
-                            ),
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
@@ -213,64 +215,72 @@ class _TutorialsScreenState extends State<TutorialsScreen> {
             ),
             const SizedBox(height: 16),
             Expanded(
-              child: isLoading
-                  ? Stack(
-                      children: [
-                        Container(
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? Colors.black.withOpacity(0.4)
-                              : Colors.black.withOpacity(0.14),
-                        ),
-                        Container(
-                          color: Colors.transparent,
-                          child: Center(
-                            child: Image.asset(
-                              'assets/Bird_Full_Eye_Blinking.gif',
-                              width: 100,
-                              height: 100,
+              child:
+                  isLoading
+                      ? Stack(
+                        children: [
+                          Container(
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.black.withOpacity(0.4)
+                                    : Colors.black.withOpacity(0.14),
+                          ),
+                          Container(
+                            color: Colors.transparent,
+                            child: Center(
+                              child: Image.asset(
+                                'assets/Bird_Full_Eye_Blinking.gif',
+                                width: 100,
+                                height: 100,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
-                    )
-                  : errorMessage.isNotEmpty
+                        ],
+                      )
+                      : errorMessage.isNotEmpty
                       ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                errorMessage,
-                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                      color: Theme.of(context).brightness == Brightness.dark
-                                          ? Colors.redAccent
-                                          : Colors.red,
-                                    ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              errorMessage,
+                              style: Theme.of(
+                                context,
+                              ).textTheme.bodyLarge?.copyWith(
+                                color:
+                                    Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? Colors.redAccent
+                                        : Colors.red,
                               ),
-                              if (!errorMessage.contains('login'))
-                                const SizedBox(height: 16),
-                              if (!errorMessage.contains('login'))
-                                ElevatedButton(
-                                  onPressed: _fetchTutorials,
-                                  style: Theme.of(context).elevatedButtonTheme.style,
-                                  child: const Text('Retry'),
-                                ),
-                            ],
-                          ),
-                        )
-                      : tutorials.isEmpty
-                          ? Center(
-                              child: Text(
-                                'No tutorials available',
-                                style: Theme.of(context).textTheme.bodyLarge,
-                              ),
-                            )
-                          : ListView.builder(
-                              itemCount: tutorials.length,
-                              itemBuilder: (context, index) {
-                                final tutorial = tutorials[index] as Map<String, dynamic>;
-                                return _buildTutorialCard(tutorial);
-                              },
                             ),
+                            if (!errorMessage.contains('login'))
+                              const SizedBox(height: 16),
+                            if (!errorMessage.contains('login'))
+                              ElevatedButton(
+                                onPressed: _fetchTutorials,
+                                style:
+                                    Theme.of(context).elevatedButtonTheme.style,
+                                child: const Text('Retry'),
+                              ),
+                          ],
+                        ),
+                      )
+                      : tutorials.isEmpty
+                      ? Center(
+                        child: Text(
+                          'No tutorials available',
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                      )
+                      : ListView.builder(
+                        itemCount: tutorials.length,
+                        itemBuilder: (context, index) {
+                          final tutorial =
+                              tutorials[index] as Map<String, dynamic>;
+                          return _buildTutorialCard(tutorial);
+                        },
+                      ),
             ),
             const SizedBox(height: 16),
             Padding(
@@ -293,7 +303,10 @@ class _TutorialsScreenState extends State<TutorialsScreen> {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: const Text('Could not open the link'),
-                              backgroundColor: Theme.of(context).snackBarTheme.backgroundColor,
+                              backgroundColor:
+                                  Theme.of(
+                                    context,
+                                  ).snackBarTheme.backgroundColor,
                               // contentTextStyle: Theme.of(context).snackBarTheme.contentTextStyle,
                             ),
                           );
@@ -305,7 +318,8 @@ class _TutorialsScreenState extends State<TutorialsScreen> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text('Error launching URL: $e'),
-                            backgroundColor: Theme.of(context).snackBarTheme.backgroundColor,
+                            backgroundColor:
+                                Theme.of(context).snackBarTheme.backgroundColor,
                             // contentTextStyle: Theme.of(context).snackBarTheme.contentTextStyle,
                           ),
                         );

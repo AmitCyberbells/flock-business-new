@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.flockbusiness"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk =35
     ndkVersion = "27.0.12077973"
 
     compileOptions {
@@ -23,7 +23,7 @@ android {
     defaultConfig {
         applicationId = "com.flockbusiness"
         minSdk = 21
-        targetSdk = 34
+        targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         multiDexEnabled = true
@@ -31,7 +31,7 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file("flockbusiness-release-key.keystore")
+storeFile = file("flockbusiness-release-key.keystore")
             storePassword = "123@Business"
             keyAlias = "flockbusiness-release-key"
             keyPassword = "123@Business"

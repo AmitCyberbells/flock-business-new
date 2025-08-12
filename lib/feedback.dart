@@ -702,16 +702,16 @@ class _ReportScreenState extends State<ReportScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: Container(
                       decoration: BoxDecoration(
-                        boxShadow: [
-                          BoxShadow(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurface.withOpacity(0.2),
-                            spreadRadius: 2,
-                            blurRadius: 5,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
+                        // boxShadow: [
+                        //   BoxShadow(
+                        //     color: Theme.of(
+                        //       context,
+                        //     ).colorScheme.onSurface.withOpacity(0.2),
+                        //     // spreadRadius: 2,
+                        //     // blurRadius: 5,
+                        //     offset: const Offset(0, 3),
+                        //   ),
+                        // ],
                       ),
                       child: TextField(
                         controller: _descriptionController,

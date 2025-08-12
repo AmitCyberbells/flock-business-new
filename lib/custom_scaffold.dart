@@ -289,7 +289,7 @@ class CustomBottomBar extends StatelessWidget {
     final Color activeColor = Design.getTextColor(context);
     final Color inactiveColor =
         Theme.of(context).brightness == Brightness.dark
-            ? Design.primaryColorOrange
+            ? const Color.fromRGBO(255, 140, 16, 1)
             : color;
     final screenWidth = MediaQuery.of(context).size.width;
 

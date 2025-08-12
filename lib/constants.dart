@@ -184,7 +184,7 @@ class AppConstants {
           (Theme.of(context).brightness == Brightness.dark
               ? const Color(0xFF1A1A1A) // Professional dark black
               : Theme.of(context).colorScheme.surface),
-      elevation: Theme.of(context).brightness == Brightness.dark ? 2 : 0,
+      // elevation: Theme.of(context).brightness == Brightness.dark ? 1000 : 0,
       shadowColor:
           Theme.of(context).brightness == Brightness.dark
               ? Colors.black.withOpacity(0.3)
@@ -578,9 +578,13 @@ class AppConstants {
       initialSelection.add(mandatoryPermissionId);
     }
 
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color backgroundColor = isDark ? Color(0xFF242424) : Colors.white;
+    final Color borderColor = isDark ? Color(0xFF3E3E3E) : Colors.grey.shade300;
+
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: backgroundColor,
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
@@ -613,8 +617,9 @@ class AppConstants {
             Container(
               padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
               decoration: BoxDecoration(
+                color: backgroundColor,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.grey.shade300),
+                border: Border.all(color: borderColor),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -623,9 +628,14 @@ class AppConstants {
                     initialSelection.isEmpty
                         ? 'Assign permissions'
                         : '${initialSelection.length} selected',
-                    style: TextStyle(color: Colors.grey),
+                    style: TextStyle(
+                      color: isDark ? Colors.white : Colors.grey,
+                    ),
                   ),
-                  Icon(Icons.arrow_drop_down, color: Colors.grey),
+                  Icon(
+                    Icons.arrow_drop_down,
+                    color: isDark ? Colors.white : Colors.grey,
+                  ),
                 ],
               ),
             ),

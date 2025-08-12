@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:flock/qr_code_scanner_screen.dart';
 import 'package:flock/venue.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_branch_sdk/flutter_branch_sdk.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
@@ -12,6 +12,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:flock/custom_scaffold.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class TabDashboard extends StatefulWidget {
   @override
@@ -31,7 +32,7 @@ class _TabDashboardState extends State<TabDashboard>
 
   List<Map<String, dynamic>> venueList = [];
   Map<String, dynamic>? selectedVenue;
-  bool showVenueDropdown = false; // For custom dropdown toggle
+  bool showVenueDropdown = false;
 
   List<Map<String, dynamic>> hotelList = [
     {
@@ -58,15 +59,6 @@ class _TabDashboardState extends State<TabDashboard>
       'points': '',
       'img': 'assets/business_eggs.png',
     },
-
-    // {
-    //   'id': 4,
-    //   'slug': 'faq',
-    //   'category': 'FAQ',
-    //   'title': 'Open FAQ',
-    //   'points': '',
-    //   'img': 'assets/feather.png',
-    // },
     {
       'id': 4,
       'slug': 'faq',
@@ -83,7 +75,7 @@ class _TabDashboardState extends State<TabDashboard>
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this); // Start lifecycle observation
+    WidgetsBinding.instance.addObserver(this);
     fetchName();
     getUserId();
   }
@@ -95,13 +87,11 @@ class _TabDashboardState extends State<TabDashboard>
     super.dispose();
   }
 
-  // Called on lifecycle changes.
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) async {
     if (state == AppLifecycleState.resumed) {
       var status = await Permission.camera.status;
       print("App resumed; camera permission status: $status");
-      // Don't navigate here
     }
   }
 
@@ -119,7 +109,6 @@ class _TabDashboardState extends State<TabDashboard>
     SharedPreferences prefs = await SharedPreferences.getInstance();
     userId = prefs.getString('userid') ?? '';
     if (averageFeathers.isEmpty && venueList.isEmpty) {
-      // Only fetch if data is not already loaded
       await dashboardApi();
       await getVenueList();
     }
@@ -152,6 +141,16 @@ class _TabDashboardState extends State<TabDashboard>
     }
     final url = Uri.parse("https://api.getflock.io/api/vendor/dashboard");
     try {
+      final connectivityResult = await Connectivity().checkConnectivity();
+      if (connectivityResult == ConnectivityResult.none) {
+        if (mounted) setState(() => loader = false);
+        Fluttertoast.showToast(
+          msg: 'No internet connection',
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+        );
+        return;
+      }
       final response = await http.get(
         url,
         headers: {
@@ -183,7 +182,6 @@ class _TabDashboardState extends State<TabDashboard>
                   '${int.tryParse(data['offers_count']?.toString() ?? '0') ?? 0}';
               hotelList[2]['points'] =
                   '${int.tryParse(data['venues_count']?.toString() ?? '0') ?? 0}';
-
               hotelList[3]['points'] =
                   '${int.tryParse(data['history_number']?.toString() ?? '0') ?? 0}';
             });
@@ -194,6 +192,13 @@ class _TabDashboardState extends State<TabDashboard>
       } else {
         Fluttertoast.showToast(msg: 'Error ${response.statusCode}');
       }
+    } on SocketException {
+      if (mounted) setState(() => loader = false);
+      Fluttertoast.showToast(
+        msg: 'No internet connection',
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -212,12 +217,25 @@ class _TabDashboardState extends State<TabDashboard>
       Fluttertoast.showToast(msg: 'No token found, please login again.');
       setState(() {
         loader = false;
-        isVenueListLoaded = true; // Set flag even on failure
+        isVenueListLoaded = true;
       });
       return;
     }
     final url = Uri.parse("https://api.getflock.io/api/vendor/venues");
     try {
+      final connectivityResult = await Connectivity().checkConnectivity();
+      if (connectivityResult == ConnectivityResult.none) {
+        setState(() {
+          loader = false;
+          isVenueListLoaded = true;
+        });
+        Fluttertoast.showToast(
+          msg: 'No internet connection',
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+        );
+        return;
+      }
       final response = await http.get(
         url,
         headers: {
@@ -227,7 +245,7 @@ class _TabDashboardState extends State<TabDashboard>
       );
       setState(() {
         loader = false;
-        isVenueListLoaded = true; // API call completed
+        isVenueListLoaded = true;
       });
       if (response.statusCode == 200) {
         print("api vendor venue1111111");
@@ -249,10 +267,20 @@ class _TabDashboardState extends State<TabDashboard>
       } else {
         Fluttertoast.showToast(msg: 'Error ${response.statusCode}');
       }
+    } on SocketException {
+      setState(() {
+        loader = false;
+        isVenueListLoaded = true;
+      });
+      Fluttertoast.showToast(
+        msg: 'No internet connection',
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
     } catch (e) {
       setState(() {
         loader = false;
-        isVenueListLoaded = true; // Set flag even on error
+        isVenueListLoaded = true;
       });
       Fluttertoast.showToast(msg: 'Error: $e');
     }
@@ -302,6 +330,16 @@ class _TabDashboardState extends State<TabDashboard>
     var request = http.MultipartRequest('POST', url);
     request.fields['user_id'] = userId;
     try {
+      final connectivityResult = await Connectivity().checkConnectivity();
+      if (connectivityResult == ConnectivityResult.none) {
+        setState(() => loader = false);
+        Fluttertoast.showToast(
+          msg: 'No internet connection',
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+        );
+        return;
+      }
       var response = await request.send();
       var responseString = await response.stream.bytesToString();
       var responseJson = json.decode(responseString);
@@ -320,6 +358,13 @@ class _TabDashboardState extends State<TabDashboard>
       } else {
         Fluttertoast.showToast(msg: responseJson['message'] ?? 'Error');
       }
+    } on SocketException {
+      setState(() => loader = false);
+      Fluttertoast.showToast(
+        msg: 'No internet connection',
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
     } catch (e) {
       setState(() {
         loader = false;
@@ -333,20 +378,16 @@ class _TabDashboardState extends State<TabDashboard>
       Fluttertoast.showToast(msg: 'Permission Denied!');
       return;
     }
-
     if (selectedVenue == null) {
       Fluttertoast.showToast(msg: 'Please select a venue first!');
       return;
     }
-
     var status = await Permission.camera.status;
     print("Initial camera permission status: $status");
-
     if (status.isDenied) {
       status = await Permission.camera.request();
       print("Camera permission status after request: $status");
     }
-
     if (status.isGranted) {
       _navigateToQRScanScreen(selectedVenue!['id'].toString());
     } else if (status.isPermanentlyDenied) {
@@ -373,7 +414,6 @@ class _TabDashboardState extends State<TabDashboard>
       Fluttertoast.showToast(msg: 'No token found. Please log in.');
       return;
     }
-
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -386,19 +426,6 @@ class _TabDashboardState extends State<TabDashboard>
     });
   }
 
-  // void _handleScannedQRCode(String qrCode, String venueId) {
-  //   Fluttertoast.showToast(
-  //     msg: 'Scanned QR Code: $qrCode for Venue ID: $venueId',
-  //   );
-  // }
-
-  // void _navigateToQRScanScreen(String venueId) {
-  //   Navigator.push(
-  //     context,
-  //     MaterialPageRoute(builder: (context) => QRScanScreen(venueId: venueId)),
-  //   );
-  // }
-
   Future<void> _handleScannedQRCode(String qrCode, String venueId) async {
     startLoader();
     final token = await SharedPreferences.getInstance().then(
@@ -406,6 +433,16 @@ class _TabDashboardState extends State<TabDashboard>
     );
     final url = Uri.parse("https://api.getflock.io/api/vendor/verify-voucher");
     try {
+      final connectivityResult = await Connectivity().checkConnectivity();
+      if (connectivityResult == ConnectivityResult.none) {
+        setState(() => loader = false);
+        Fluttertoast.showToast(
+          msg: 'No internet connection',
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+        );
+        return;
+      }
       print("apiverift called");
       final response = await http.post(
         url,
@@ -420,20 +457,29 @@ class _TabDashboardState extends State<TabDashboard>
       if (response.statusCode == 200) {
         Fluttertoast.showToast(msg: 'Voucher verified successfully!');
       } else {
-        Fluttertoast.showToast(
-          // msg: 'Error verifying voucher: ${response.statusCode}',
-          msg: 'Error verifying voucher',
-        );
+        Fluttertoast.showToast(msg: 'Error verifying voucher');
       }
+    } on SocketException {
+      setState(() => loader = false);
+      Fluttertoast.showToast(
+        msg: 'No internet connection',
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
     } catch (e) {
-
       setState(() => loader = false);
       print("error111: $e");
       Fluttertoast.showToast(msg: 'Error: $e');
     }
   }
 
-  /// Custom dropdown design for selecting venue.
+  // Generate QR code link with automatic app store fallback
+  Future<String> _generateQRCodeLink(String venueId) async {
+    // For now, return the existing URL format
+    // You can implement the full Branch SDK integration later
+    return 'https://flockloyalty.app.link/?venue_id=$venueId';
+  }
+
   Widget customVenueDropdown() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8.0),
@@ -447,8 +493,8 @@ class _TabDashboardState extends State<TabDashboard>
           BoxShadow(
             color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
             spreadRadius: 1,
-            blurRadius: 5,
-            offset: const Offset(0, 2),
+            blurRadius: 2,
+            offset: const Offset(1, 1),
           ),
         ],
       ),
@@ -537,9 +583,7 @@ class _TabDashboardState extends State<TabDashboard>
                                   isSelected
                                       ? Theme.of(context).brightness ==
                                               Brightness.dark
-                                          ? Color(
-                                            0xFF2C2C2C,
-                                          ) // Slightly lighter for selected items
+                                          ? Color(0xFF2C2C2C)
                                           : Theme.of(
                                             context,
                                           ).colorScheme.primary.withOpacity(0.1)
@@ -571,14 +615,12 @@ class _TabDashboardState extends State<TabDashboard>
     );
   }
 
-  /// Updated venue list with QR Codes method (includes the custom dropdown)
-
   Widget venueListWithQRCodes() {
     if (!hasPermission('verify_voucher')) {
       return const SizedBox.shrink();
     }
     if (!isVenueListLoaded) {
-      return const SizedBox.shrink(); // Don't show anything until API call completes
+      return const SizedBox.shrink();
     }
     if (venueList.isEmpty) {
       return Padding(
@@ -607,9 +649,7 @@ class _TabDashboardState extends State<TabDashboard>
                 decoration: BoxDecoration(
                   color:
                       Theme.of(context).brightness == Brightness.dark
-                          ? Color(
-                            0xFF242424,
-                          ) // Slightly lighter than background
+                          ? Color(0xFF242424)
                           : Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
@@ -621,48 +661,59 @@ class _TabDashboardState extends State<TabDashboard>
                             ).colorScheme.outline.withOpacity(0.1),
                     width: 1,
                   ),
-                  boxShadow:
-                      Theme.of(context).brightness == Brightness.dark
-                          ? [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.5),
-                              spreadRadius: -2,
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
-                            ),
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.3),
-                              spreadRadius: 0,
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ]
-                          : [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.08),
-                              spreadRadius: 0,
-                              blurRadius: 8,
-                              offset: const Offset(0, 4),
-                            ),
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              spreadRadius: -1,
-                              blurRadius: 2,
-                              offset: const Offset(0, 1),
-                            ),
-                          ],
+                  // boxShadow:
+                  //     Theme.of(context).brightness == Brightness.dark
+                  //         ? [
+                  //           BoxShadow(
+                  //             color: Colors.black.withOpacity(0.5),
+                  //             spreadRadius: -2,
+                  //             blurRadius: 12,
+                  //             offset: const Offset(0, 4),
+                  //           ),
+                  //           BoxShadow(
+                  //             color: Colors.black.withOpacity(0.3),
+                  //             spreadRadius: 0,
+                  //             blurRadius: 4,
+                  //             offset: const Offset(0, 2),
+                  //           ),
+                  //         ]
+                  //         : [
+                  //           BoxShadow(
+                  //             color: Colors.black.withOpacity(0.08),
+                  //             spreadRadius: 0,
+                  //             blurRadius: 8,
+                  //             offset: const Offset(0, 4),
+                  //           ),
+                  //           BoxShadow(
+                  //             color: Colors.black.withOpacity(0.05),
+                  //             spreadRadius: -1,
+                  //             blurRadius: 2,
+                  //             offset: const Offset(0, 1),
+                  //           ),
+                  //         ],
                 ),
-                child: QrImageView(
-                  data: selectedVenue!['id'].toString(),
-                  version: QrVersions.auto,
-                  size: 150.0,
-                  backgroundColor:
-                      Theme.of(context).brightness == Brightness.dark
-                          ? Colors.white
-                          : Theme.of(context).colorScheme.surface,
-                  padding: const EdgeInsets.all(
-                    8.0,
-                  ), // Optional: Add padding for better appearance
+                child: FutureBuilder<String>(
+                  future: _generateQRCodeLink(selectedVenue!['id'].toString()),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    final qrData =
+                        snapshot.data ??
+                        'https://flockloyalty.app.link/?venue_id=${selectedVenue!['id']}';
+
+                    return QrImageView(
+                      data: qrData,
+                      version: QrVersions.auto,
+                      size: 150.0,
+                      backgroundColor:
+                          Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white
+                              : Theme.of(context).colorScheme.surface,
+                      padding: const EdgeInsets.all(8.0),
+                    );
+                  },
                 ),
               ),
             ),
@@ -688,7 +739,6 @@ class _TabDashboardState extends State<TabDashboard>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // "Hello" Section
                   Padding(
                     padding: EdgeInsets.only(
                       top: Platform.isIOS ? 20 : 5,
@@ -773,9 +823,7 @@ class _TabDashboardState extends State<TabDashboard>
                                       color:
                                           Theme.of(context).brightness ==
                                                   Brightness.dark
-                                              ? Color(
-                                                0xFF242424,
-                                              ) // Slightly lighter than background
+                                              ? Color(0xFF242424)
                                               : Theme.of(
                                                 context,
                                               ).colorScheme.surface,

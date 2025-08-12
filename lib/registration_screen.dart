@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:flock/TermsAndConditionsPage.dart';
 import 'package:flock/location.dart';
+import 'package:flock/login_screen.dart';
+import 'package:flock/privacy.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
@@ -256,9 +258,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 isDarkMode
                     ? Theme.of(context).colorScheme.surface.withOpacity(0.1)
                     : Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+              color:
+                  errorText != null
+                      ? Colors.red
+                      : Theme.of(context).colorScheme.outline.withOpacity(0.3),
             ),
           ),
           child: TextField(
@@ -273,11 +278,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
             decoration: InputDecoration(
               hintText: hintText,
-              errorText: errorText,
-              errorStyle: TextStyle(
-                color: Theme.of(context).colorScheme.error,
-                fontSize: 12,
-              ),
               hintStyle: TextStyle(
                 color: Theme.of(
                   context,
@@ -292,24 +292,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10.0),
-                borderSide: BorderSide.none,
+                borderSide: BorderSide(
+                  color: errorText != null ? Colors.red : Colors.transparent,
+                  width: 1,
+                ),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10.0),
                 borderSide: BorderSide(
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              ),
-              errorBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10.0),
-                borderSide: BorderSide(
-                  color: Theme.of(context).colorScheme.error,
-                ),
-              ),
-              focusedErrorBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10.0),
-                borderSide: BorderSide(
-                  color: Theme.of(context).colorScheme.error,
+                  color:
+                      errorText != null
+                          ? Colors.red
+                          : Theme.of(context).colorScheme.primary,
+                  width: 1.5,
                 ),
               ),
               suffixIcon: suffixIcon,
@@ -317,17 +312,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
             onChanged: onChanged,
           ),
         ),
-        // if (errorText != null)
-        //   Padding(
-        //     padding: const EdgeInsets.only(left: 12, top: 4),
-        //     child: Text(
-        //       errorText,
-        //       style: TextStyle(
-        //         color: Theme.of(context).colorScheme.error,
-        //         fontSize: 12,
-        //       ),
-        //     ),
-        //   ),
+        if (errorText != null)
+          Padding(
+            padding: const EdgeInsets.only(left: 12, top: 4),
+            child: Text(
+              errorText,
+              style: TextStyle(color: Colors.red, fontSize: 12),
+            ),
+          ),
       ],
     );
   }
@@ -336,26 +328,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      // backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: const Color.fromRGBO(80, 76, 76, 1),
         elevation: 0,
-        toolbarHeight: 28,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 10.0),
-          child: IconButton(
-            icon: Icon(
-              Icons.arrow_back_ios,
-              color: Theme.of(context).colorScheme.onBackground,
-              size: 20,
-            ),
-            onPressed: () {
-              Navigator.pop(context);
-            },
-          ),
+        //  toolbarHeight: 280,
+        leading: IconButton(
+          icon: Image.asset(
+            'assets/back_updated.png',
+            height: 40,
+            width: 34,
+          ), // Increased icon size
+          onPressed: () => Navigator.of(context).pop(),
         ),
         leadingWidth: 80,
       ),
+
       body: Stack(
         children: [
           Positioned.fill(
@@ -368,6 +356,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
               colorBlendMode: BlendMode.darken,
             ),
           ),
+
+          //    Positioned(
+          //   top: MediaQuery.of(context).padding.top,
+          //   left: 10,
+
+          //   child: IconButton(
+          //     icon: Image.asset('assets/back_updated.png', height: 48, width: 48),
+          //      onPressed: () => Navigator.of(context).pop(),
+          //   ),
+          // ),
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -406,6 +404,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           controller: _firstNameController,
                           hintText: 'First Name',
                           errorText: _firstNameError,
+                          onChanged: (value) {
+                            setState(() {
+                              if (value.trim().isNotEmpty) {
+                                _firstNameError = null;
+                              } else {
+                                _firstNameError = 'First name is required';
+                              }
+                            });
+                          },
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -414,6 +421,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           controller: _lastNameController,
                           hintText: 'Last Name',
                           errorText: _lastNameError,
+                          onChanged: (value) {
+                            setState(() {
+                              if (value.trim().isNotEmpty) {
+                                _lastNameError = null;
+                              } else {
+                                _lastNameError = 'Last name is required';
+                              }
+                            });
+                          },
                         ),
                       ),
                     ],
@@ -424,6 +440,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     hintText: 'Enter Email Address',
                     errorText: _emailError,
                     keyboardType: TextInputType.emailAddress,
+                    onChanged: (value) {
+                      setState(() {
+                        if (value.trim().isEmpty) {
+                          _emailError = 'Email is required';
+                        } else if (!isValidEmail(value.trim())) {
+                          _emailError = 'Please enter a valid email address';
+                        } else {
+                          _emailError = null;
+                        }
+                      });
+                    },
                   ),
                   const SizedBox(height: 25),
                   _buildTextField(
@@ -488,6 +515,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     },
                   ),
                   const SizedBox(height: 25),
+
                   _buildTextField(
                     controller: _passwordController,
                     hintText: 'Enter password',
@@ -512,6 +540,67 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       },
                     ),
                   ),
+                  const SizedBox(height: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Password must meet the following criteria:',
+                        style: TextStyle(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onBackground.withOpacity(0.7),
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        '- At least 8 characters long',
+                        style: TextStyle(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onBackground.withOpacity(0.7),
+                          fontSize: 12,
+                        ),
+                      ),
+                      Text(
+                        '- Contains at least one uppercase letter',
+                        style: TextStyle(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onBackground.withOpacity(0.7),
+                          fontSize: 12,
+                        ),
+                      ),
+                      Text(
+                        '- Contains at least one lowercase letter',
+                        style: TextStyle(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onBackground.withOpacity(0.7),
+                          fontSize: 12,
+                        ),
+                      ),
+                      Text(
+                        '- Contains at least one number',
+                        style: TextStyle(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onBackground.withOpacity(0.7),
+                          fontSize: 12,
+                        ),
+                      ),
+                      Text(
+                        '- Contains at least one special character',
+                        style: TextStyle(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onBackground.withOpacity(0.7),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 30),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -525,7 +614,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             side: BorderSide(
                               color:
                                   _termsError != null
-                                      ? Theme.of(context).colorScheme.error
+                                      ? Colors.red
                                       : Theme.of(context).colorScheme.outline,
                               width: 1.5,
                             ),
@@ -593,7 +682,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                               MaterialPageRoute(
                                                 builder:
                                                     (context) =>
-                                                        const TermsAndConditionsPage(),
+                                                        const PrivacyPage(),
                                               ),
                                             );
                                           },
@@ -609,10 +698,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           padding: const EdgeInsets.only(left: 34.0, top: 4),
                           child: Text(
                             _termsError!,
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.error,
-                              fontSize: 12,
-                            ),
+                            style: TextStyle(color: Colors.red, fontSize: 12),
                           ),
                         ),
                     ],

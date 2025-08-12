@@ -12,9 +12,9 @@ class DeleteAccountScreen extends StatefulWidget {
 }
 
 class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController();
+  String _name = '';
+  String _email = '';
+  String? _phone;
   final TextEditingController _reasonController = TextEditingController();
 
   bool _isDeleting = false;
@@ -32,9 +32,10 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
     setState(() {
       String firstName = prefs.getString('firstName') ?? '';
       String lastName = prefs.getString('lastName') ?? '';
-      _nameController.text = '$firstName $lastName'.trim(); // Combine names
-      _emailController.text = prefs.getString('email') ?? '';
-      _phoneController.text = prefs.getString('phone') ?? '';
+      _name = ('$firstName $lastName').trim();
+      _email = prefs.getString('email') ?? '';
+      String phone = prefs.getString('phone') ?? '';
+      _phone = phone.isNotEmpty ? phone : null;
     });
   }
 
@@ -46,12 +47,12 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
 
   /// Send POST request to delete account
   Future<void> _deleteAccount() async {
-    final String name = _nameController.text.trim();
-    final String email = _emailController.text.trim();
-    final String phone = _phoneController.text.trim();
+    final String name = _name.trim();
+    final String email = _email.trim();
+    final String? phone = _phone;
     final String reason = _reasonController.text.trim();
     if (name.isEmpty || email.isEmpty || reason.isEmpty) {
-      Fluttertoast.showToast(msg: 'Please fill name, email, and reason fields');
+      Fluttertoast.showToast(msg: 'Reason field is required');
       return;
     }
 
@@ -74,7 +75,8 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
     final body = {
       'name': name,
       'email': email,
-      if (phone.isNotEmpty) 'phone': phone, // Include phone only if provided
+      if (phone != null && phone.isNotEmpty)
+        'phone': phone, // Include phone only if provided
       'reason': reason,
     };
 
@@ -111,6 +113,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
       debugPrint('Delete account error: $e');
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -166,82 +169,67 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                         ),
                       ),
 
-                    // Name field (read-only)
-                    TextField(
-                      controller: _nameController,
-                      readOnly: true,
-                      decoration: InputDecoration(
-                        hintText: "Name",
-                        hintStyle: Theme.of(
-                          context,
-                        ).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(
-                            context,
-                          ).textTheme.bodyMedium?.color?.withOpacity(0.6),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 14,
-                        ),
-                        border: Theme.of(context).inputDecorationTheme.border,
-                        focusedBorder:
-                            Theme.of(
-                              context,
-                            ).inputDecorationTheme.focusedBorder,
+                    // Name (plain text)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                      child: Row(
+                        children: [
+                          Text(
+                            "Name: ",
+                            style: Theme.of(context).textTheme.bodyLarge
+                                ?.copyWith(fontWeight: FontWeight.w600),
+                          ),
+                          Expanded(
+                            child: Text(
+                              _name,
+                              style: Theme.of(context).textTheme.bodyLarge,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 15),
-
-                    // Email field (read-only)
-                    TextField(
-                      controller: _emailController,
-                      readOnly: true,
-                      decoration: InputDecoration(
-                        hintText: "Email",
-                        hintStyle: Theme.of(
-                          context,
-                        ).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(
-                            context,
-                          ).textTheme.bodyMedium?.color?.withOpacity(0.6),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 14,
-                        ),
-                        border: Theme.of(context).inputDecorationTheme.border,
-                        focusedBorder:
-                            Theme.of(
-                              context,
-                            ).inputDecorationTheme.focusedBorder,
+                    // Email (plain text)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                      child: Row(
+                        children: [
+                          Text(
+                            "Email: ",
+                            style: Theme.of(context).textTheme.bodyLarge
+                                ?.copyWith(fontWeight: FontWeight.w600),
+                          ),
+                          Expanded(
+                            child: Text(
+                              _email,
+                              style: Theme.of(context).textTheme.bodyLarge,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 15),
-
-                    // Phone field (read-only)
-                    TextField(
-                      controller: _phoneController,
-                      readOnly: true,
-                      decoration: InputDecoration(
-                        hintText: "Phone Number (Optional)",
-                        hintStyle: Theme.of(
-                          context,
-                        ).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(
-                            context,
-                          ).textTheme.bodyMedium?.color?.withOpacity(0.6),
+                    // Phone (plain text, only if present)
+                    if (_phone != null)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4.0),
+                        child: Row(
+                          children: [
+                            Text(
+                              "Phone: ",
+                              style: Theme.of(context).textTheme.bodyLarge
+                                  ?.copyWith(fontWeight: FontWeight.w600),
+                            ),
+                            Expanded(
+                              child: Text(
+                                _phone!,
+                                style: Theme.of(context).textTheme.bodyLarge,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
                         ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 14,
-                        ),
-                        border: Theme.of(context).inputDecorationTheme.border,
-                        focusedBorder:
-                            Theme.of(
-                              context,
-                            ).inputDecorationTheme.focusedBorder,
                       ),
-                    ),
                     const SizedBox(height: 15),
 
                     // Reason to delete (editable)
@@ -316,9 +304,6 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
-    _phoneController.dispose();
     _reasonController.dispose();
     super.dispose();
   }

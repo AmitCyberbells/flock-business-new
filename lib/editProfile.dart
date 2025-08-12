@@ -156,7 +156,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     } catch (e) {
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Network error: $e';
+        _errorMessage = 'Network error: No internet connection';
       });
       Fluttertoast.showToast(msg: _errorMessage);
     }
@@ -470,8 +470,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                       ),
                                       child: CircleAvatar(
                                         radius: 16,
-                                        backgroundColor:
-                                            Design.primaryColorOrange,
+                                        backgroundColor: const Color.fromRGBO(
+                                          255,
+                                          130,
+                                          16,
+                                          1,
+                                        ),
                                         child: IconButton(
                                           onPressed: _selectImage,
                                           icon: Icon(
@@ -528,7 +532,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             _buildTextField(
                               controller: phoneController,
                               hint: 'Enter phone number',
-                              readOnly: true,
+                              readOnly: false,
                               keyboardType: TextInputType.phone,
                             ),
                             const SizedBox(height: 30),
@@ -548,7 +552,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               height: 48,
                               child: ElevatedButton(
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Design.primaryColorOrange,
+                                  backgroundColor: const Color.fromRGBO(
+                                    255,
+                                    130,
+                                    16,
+                                    1,
+                                  ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10),
                                   ),

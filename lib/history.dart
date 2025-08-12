@@ -105,7 +105,9 @@ class _HistoryScreenState extends State<HistoryScreen>
           if (transaction['title'] == 'Check-In') {
             checkIns.add(transaction);
           } else {
-            redemptions.add(transaction); // Includes Offer Redeemed and Offer Refunded
+            redemptions.add(
+              transaction,
+            ); // Includes Offer Redeemed and Offer Refunded
           }
         }
 
@@ -148,9 +150,10 @@ class _HistoryScreenState extends State<HistoryScreen>
       timestamp = null;
     }
 
-    final formattedTime = timestamp != null
-        ? DateFormat('MMM dd, yyyy • hh:mm a').format(timestamp)
-        : 'Unknown time';
+    final formattedTime =
+        timestamp != null
+            ? DateFormat('MMM dd, yyyy • hh:mm a').format(timestamp)
+            : 'Unknown time';
 
     // Points sign & colour
     final featherPoints = item['feather_points'] as int? ?? 0;
@@ -160,17 +163,22 @@ class _HistoryScreenState extends State<HistoryScreen>
     final bool isOfferRedeemed = item['title'] == 'Offer Refunded';
 
     // Determine points text based on transaction type
-    final featherPointsText = isCheckIn
-        ? '- $featherPoints fts'
-        : (isOfferRedeemed ? '- $featherPoints fts' : '+ $featherPoints fts');
-    final venuePointsText = isCheckIn
-        ? '- $venuePoints pts'
-        : (isOfferRedeemed ? '- $venuePoints pts' : '+ $venuePoints pts');
+    final featherPointsText =
+        isCheckIn
+            ? '- $featherPoints fts'
+            : (isOfferRedeemed
+                ? '- $featherPoints fts'
+                : '+ $featherPoints fts');
+    final venuePointsText =
+        isCheckIn
+            ? '- $venuePoints pts'
+            : (isOfferRedeemed ? '- $venuePoints pts' : '+ $venuePoints pts');
 
     // Set points color based on transaction type
-    final pointsColor = isCheckIn || isOfferRedeemed
-        ? Colors.red.shade700
-        : Colors.green.shade700;
+    final pointsColor =
+        isCheckIn || isOfferRedeemed
+            ? Colors.red.shade700
+            : Colors.green.shade700;
 
     final IconData transactionIcon =
         isCheckIn ? Icons.login_rounded : Icons.redeem_rounded;
@@ -216,9 +224,9 @@ class _HistoryScreenState extends State<HistoryScreen>
                 Text(
                   item['title'] ?? (isCheckIn ? 'Check-In' : 'Offer Redeemed'),
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 4),
 
@@ -230,9 +238,9 @@ class _HistoryScreenState extends State<HistoryScreen>
                     child: Text(
                       item['offer_name'],
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontSize: 14,
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
+                        fontSize: 14,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
                       overflow: TextOverflow.ellipsis,
                       maxLines: 1,
                     ),
@@ -251,9 +259,9 @@ class _HistoryScreenState extends State<HistoryScreen>
                       child: Text(
                         item['venue_name'] ?? '',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
                         overflow: TextOverflow.ellipsis,
                         maxLines: 1,
                       ),
@@ -274,9 +282,11 @@ class _HistoryScreenState extends State<HistoryScreen>
                     Text(
                       formattedTime,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            fontSize: 13,
-                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                          ),
+                        fontSize: 13,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.7),
+                      ),
                     ),
                   ],
                 ),
@@ -301,11 +311,13 @@ class _HistoryScreenState extends State<HistoryScreen>
                             ),
                             child: Text(
                               featherPointsText,
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                    color: pointsColor,
-                                  ),
+                              style: Theme.of(
+                                context,
+                              ).textTheme.bodySmall?.copyWith(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: pointsColor,
+                              ),
                             ),
                           ),
                         if (venuePoints > 0)
@@ -320,11 +332,13 @@ class _HistoryScreenState extends State<HistoryScreen>
                             ),
                             child: Text(
                               venuePointsText,
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                    color: pointsColor,
-                                  ),
+                              style: Theme.of(
+                                context,
+                              ).textTheme.bodySmall?.copyWith(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: pointsColor,
+                              ),
                             ),
                           ),
                       ],
@@ -375,9 +389,9 @@ class _HistoryScreenState extends State<HistoryScreen>
                       child: Text(
                         'Transaction History',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
@@ -396,15 +410,15 @@ class _HistoryScreenState extends State<HistoryScreen>
               child: TabBar(
                 controller: _tabController,
                 labelColor: Theme.of(context).colorScheme.onPrimary,
-                unselectedLabelColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                unselectedLabelColor: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withOpacity(0.7),
                 labelStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                unselectedLabelStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.w500,
-                      fontSize: 14,
-                    ),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+                unselectedLabelStyle: Theme.of(context).textTheme.labelLarge
+                    ?.copyWith(fontWeight: FontWeight.w500, fontSize: 14),
                 indicator: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
                   color: Theme.of(context).colorScheme.primary,
@@ -469,7 +483,8 @@ class _HistoryScreenState extends State<HistoryScreen>
                       context: context,
                       builder: (BuildContext context) {
                         return AlertDialog(
-                          backgroundColor: Theme.of(context).colorScheme.surface,
+                          backgroundColor:
+                              Theme.of(context).colorScheme.surface,
                           title: Text(
                             'Select Venue',
                             style: Theme.of(context).textTheme.titleLarge,
@@ -482,7 +497,8 @@ class _HistoryScreenState extends State<HistoryScreen>
                                 ListTile(
                                   title: Text(
                                     'All venues',
-                                    style: Theme.of(context).textTheme.bodyMedium,
+                                    style:
+                                        Theme.of(context).textTheme.bodyMedium,
                                   ),
                                   onTap: () => Navigator.pop(context, null),
                                 ),
@@ -490,7 +506,10 @@ class _HistoryScreenState extends State<HistoryScreen>
                                   return ListTile(
                                     title: Text(
                                       venue,
-                                      style: Theme.of(context).textTheme.bodyMedium,
+                                      style:
+                                          Theme.of(
+                                            context,
+                                          ).textTheme.bodyMedium,
                                     ),
                                     onTap: () => Navigator.pop(context, venue),
                                   );
@@ -514,7 +533,9 @@ class _HistoryScreenState extends State<HistoryScreen>
                     ),
                     decoration: BoxDecoration(
                       border: Border.all(
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.3),
                       ),
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -523,12 +544,17 @@ class _HistoryScreenState extends State<HistoryScreen>
                       children: [
                         Text(
                           selectedVenue ?? 'All Venues',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                fontSize: 16,
-                                color: selectedVenue == null
-                                    ? Theme.of(context).colorScheme.onSurface.withOpacity(0.5)
+                          style: Theme.of(
+                            context,
+                          ).textTheme.bodyMedium?.copyWith(
+                            fontSize: 16,
+                            color:
+                                selectedVenue == null
+                                    ? Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface.withOpacity(0.5)
                                     : Theme.of(context).colorScheme.onSurface,
-                              ),
+                          ),
                         ),
                         Icon(
                           Icons.keyboard_arrow_down,
@@ -542,47 +568,52 @@ class _HistoryScreenState extends State<HistoryScreen>
 
             // ---------- LIST CONTENT ----------
             Expanded(
-              child: loader
-                  ? Container(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.14),
-                      child: Center(
-                        child: Image.asset(
-                          'assets/Bird_Full_Eye_Blinking.gif',
-                          width: 100,
-                          height: 100,
+              child:
+                  loader
+                      ? Container(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.14),
+                        child: Center(
+                          child: Image.asset(
+                            'assets/Bird_Full_Eye_Blinking.gif',
+                            width: 100,
+                            height: 100,
+                          ),
                         ),
-                      ),
-                    )
-                  : TabBarView(
-                      controller: _tabController,
-                      children: [
-                        // Check-ins tab
-                        filteredCheckInData.isEmpty
-                            ? _buildEmptyState('No check-ins found')
-                            : ListView.builder(
+                      )
+                      : TabBarView(
+                        controller: _tabController,
+                        children: [
+                          // Check-ins tab
+                          filteredCheckInData.isEmpty
+                              ? _buildEmptyState('No check-ins found')
+                              : ListView.builder(
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 8,
                                 ),
                                 itemCount: filteredCheckInData.length,
-                                itemBuilder: (context, index) => _buildHistoryItem(
-                                  filteredCheckInData[index],
-                                ),
+                                itemBuilder:
+                                    (context, index) => _buildHistoryItem(
+                                      filteredCheckInData[index],
+                                    ),
                               ),
 
-                        // Offer Redemptions tab
-                        filteredOfferRedemptionData.isEmpty
-                            ? _buildEmptyState('No redemptions found')
-                            : ListView.builder(
+                          // Offer Redemptions tab
+                          filteredOfferRedemptionData.isEmpty
+                              ? _buildEmptyState('No redemptions found')
+                              : ListView.builder(
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 8,
                                 ),
                                 itemCount: filteredOfferRedemptionData.length,
-                                itemBuilder: (context, index) => _buildHistoryItem(
-                                  filteredOfferRedemptionData[index],
-                                ),
+                                itemBuilder:
+                                    (context, index) => _buildHistoryItem(
+                                      filteredOfferRedemptionData[index],
+                                    ),
                               ),
-                      ],
-                    ),
+                        ],
+                      ),
             ),
           ],
         ),
@@ -604,9 +635,9 @@ class _HistoryScreenState extends State<HistoryScreen>
           Text(
             message,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontSize: 16,
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                ),
+              fontSize: 16,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+            ),
           ),
           if (selectedVenue != null)
             Padding(
@@ -624,8 +655,8 @@ class _HistoryScreenState extends State<HistoryScreen>
                 label: Text(
                   'Clear filter',
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
                 ),
               ),
             ),

@@ -4,8 +4,6 @@ import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path/path.dart' as p;
-import 'package:flock/app_colors.dart';
-import 'constants.dart';
 
 class EditStaffMemberScreen extends StatefulWidget {
   final String staffId;
@@ -447,8 +445,8 @@ class _EditStaffMemberScreenState extends State<EditStaffMemberScreen> {
                         suffixIcon: IconButton(
                           icon: Icon(
                             _obscurePassword
-                                ? Icons.visibility
-                                : Icons.visibility_off,
+                                ? Icons.visibility_off
+                                : Icons.visibility,
                             color: Theme.of(context).iconTheme.color,
                           ),
                           onPressed: () {
@@ -561,12 +559,18 @@ class _EditStaffMemberScreenState extends State<EditStaffMemberScreen> {
     required List<String> selectedValues,
     required Function(List<String>) onConfirm,
   }) {
+    final isPermissions = label.toLowerCase().contains('permission');
     return InkWell(
       onTap: () async {
         await showDialog(
           context: context,
           builder: (BuildContext context) {
             List<String> tempSelected = List.from(selectedValues);
+            bool selectAll =
+                items.isNotEmpty &&
+                items.every(
+                  (item) => tempSelected.contains(item['id'].toString()),
+                );
             return StatefulBuilder(
               builder: (context, setStateDialog) {
                 return AlertDialog(
@@ -593,56 +597,87 @@ class _EditStaffMemberScreenState extends State<EditStaffMemberScreen> {
                   ),
                   content: SizedBox(
                     width: double.maxFinite,
-                    child: ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: items.length,
-                      itemBuilder: (context, index) {
-                        final item = items[index];
-                        final id = item['id'].toString();
-                        final name = item['name'].toString();
-                        final isSelected = tempSelected.contains(id);
-
-                        return Container(
-                          decoration: BoxDecoration(
-                            color:
-                                isSelected
-                                    ? Theme.of(
-                                      context,
-                                    ).colorScheme.primary.withOpacity(0.1)
-                                    : Colors.transparent,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: ListTile(
-                            dense: true,
-                            title: Text(
-                              name,
-                              style: TextStyle(
-                                color:
-                                    Theme.of(
-                                      context,
-                                    ).textTheme.bodyLarge!.color,
-                                fontSize: 15,
-                              ),
-                            ),
-                            trailing: Checkbox(
-                              value: isSelected,
-                              activeColor:
-                                  Theme.of(context).colorScheme.primary,
-                              onChanged: (bool? value) {
-                                if (value != null) {
-                                  setStateDialog(() {
-                                    if (value) {
-                                      tempSelected.add(id);
-                                    } else {
-                                      tempSelected.remove(id);
-                                    }
-                                  });
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (isPermissions)
+                          CheckboxListTile(
+                            title: const Text('Select All'),
+                            value: selectAll,
+                            activeColor: Theme.of(context).colorScheme.primary,
+                            onChanged: (value) {
+                              setStateDialog(() {
+                                if (value == true) {
+                                  tempSelected =
+                                      items
+                                          .map((item) => item['id'].toString())
+                                          .toList();
+                                } else {
+                                  tempSelected.clear();
                                 }
-                              },
-                            ),
+                                selectAll = value ?? false;
+                              });
+                            },
                           ),
-                        );
-                      },
+                        if (isPermissions) const Divider(),
+                        Flexible(
+                          child: ListView.builder(
+                            shrinkWrap: true,
+                            itemCount: items.length,
+                            itemBuilder: (context, index) {
+                              final item = items[index];
+                              final id = item['id'].toString();
+                              final name = item['name'].toString();
+                              final isSelected = tempSelected.contains(id);
+                              return Container(
+                                decoration: BoxDecoration(
+                                  color:
+                                      isSelected
+                                          ? Theme.of(
+                                            context,
+                                          ).colorScheme.primary.withOpacity(0.1)
+                                          : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: ListTile(
+                                  dense: true,
+                                  title: Text(
+                                    name,
+                                    style: TextStyle(
+                                      color:
+                                          Theme.of(
+                                            context,
+                                          ).textTheme.bodyLarge!.color,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                  trailing: Checkbox(
+                                    value: isSelected,
+                                    activeColor:
+                                        Theme.of(context).colorScheme.primary,
+                                    onChanged: (bool? value) {
+                                      setStateDialog(() {
+                                        if (value == true) {
+                                          tempSelected.add(id);
+                                        } else {
+                                          tempSelected.remove(id);
+                                        }
+                                        selectAll =
+                                            items.isNotEmpty &&
+                                            items.every(
+                                              (item) => tempSelected.contains(
+                                                item['id'].toString(),
+                                              ),
+                                            );
+                                      });
+                                    },
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   actions: [

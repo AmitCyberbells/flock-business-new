@@ -31,6 +31,8 @@
 	<string>AIzaSyA4D0ULsoSN1GhRqCcL0JtnyUnpLPDX1Do</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>branch_key</key>
+	<string>key_live_gFqcDFmJSAgztETjy36nSibcsCcT9ZNm</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
@@ -91,7 +93,17 @@
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
 		<string>arm64</string>
-		
+	</array>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.flockbusiness.app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>flock</string>
+			</array>
+		</dict>
 	</array>
 </dict>
 </plist>

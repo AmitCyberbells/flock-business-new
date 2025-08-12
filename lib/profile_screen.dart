@@ -4,6 +4,8 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'custom_scaffold.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'dart:io';
 
 class Design {
   static const Color primaryColorOrange = Color.fromRGBO(255, 152, 0, 1);
@@ -76,6 +78,18 @@ class _TabProfileState extends State<TabProfile> {
     });
 
     try {
+      final connectivityResult = await Connectivity().checkConnectivity();
+      if (connectivityResult == ConnectivityResult.none) {
+        setState(() {
+          isLoading = false;
+        });
+        Fluttertoast.showToast(
+          msg: 'No internet connection',
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+        );
+        return;
+      }
       final response = await http.get(
         Uri.parse('https://api.getflock.io/api/vendor/profile'),
         headers: {
@@ -108,10 +122,18 @@ class _TabProfileState extends State<TabProfile> {
         );
         Navigator.pushReplacementNamed(context, '/login');
       }
+    } on SocketException {
+      setState(() {
+        isLoading = false;
+      });
+      Fluttertoast.showToast(
+        msg: 'No internet connection',
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
     } catch (e) {
       print("Error fetching profile: $e");
       Fluttertoast.showToast(msg: 'Something went wrong.');
-    } finally {
       setState(() {
         isLoading = false;
       });
@@ -219,8 +241,8 @@ class _TabProfileState extends State<TabProfile> {
                             profilePic.isEmpty
                                 ? Image.asset(
                                   'assets/profile.png',
-                                  width: 120,
-                                  height: 120,
+                                  width: 40,
+                                  height: 70,
                                   fit: BoxFit.cover,
                                 )
                                 : ClipOval(
@@ -236,12 +258,12 @@ class _TabProfileState extends State<TabProfile> {
                                     ) {
                                       if (loadingProgress == null) return child;
                                       return Container(
-                                        width: 120,
-                                        height: 120,
+                                        width: 100,
+                                        height: 100,
                                         color: Design.getSurfaceColor(context),
                                         child: Center(
                                           child: Image.asset(
-                                            'assets/Bird_Full_Eye_Blinking.gif',
+                                            'assets/profile.png',
                                             width: 60,
                                             height: 60,
                                           ),

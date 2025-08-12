@@ -298,7 +298,7 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
               child: Text(
                 'OK',
                 style: TextStyle(
-                  color: Design.primaryColorOrange,
+                  color: const Color.fromRGBO(255, 140, 16, 1),
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                 ),
@@ -322,20 +322,24 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: Design.getBackgroundColor(context),
     appBar: AppBar(
-      backgroundColor: Design.getSurfaceColor(context),
+      backgroundColor:
+          Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFF1E1E1E)
+              : Theme.of(context).scaffoldBackgroundColor,
+      elevation: 0,
       leading: IconButton(
-        icon: Icon(Icons.arrow_back, color: Design.getTextColor(context)),
-        onPressed: () => Navigator.pop(context),
+        icon: Image.asset('assets/back_updated.png', height: 40, width: 34),
+        onPressed: () => Navigator.of(context).pop(),
       ),
       title: Text(
         'Add New Offer',
         style: TextStyle(
-          color: Design.getTextColor(context),
+          color: Theme.of(context).textTheme.titleLarge!.color,
           fontSize: 20,
           fontWeight: FontWeight.w600,
         ),
       ),
-      elevation: 0,
+      centerTitle: true,
     ),
     resizeToAvoidBottomInset: false,
     body: Padding(
@@ -367,7 +371,8 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
                 ),
                 decoration: _inputDecoration('Title of Offer'),
                 textInputAction: TextInputAction.next,
-                validator: (v) => v == null || v.isEmpty ? '' : null,
+                validator:
+                    (v) => null, // Remove built-in error, use custom below
               ),
               if (_showValidationMessages && _nameController.text.isEmpty)
                 Padding(
@@ -377,7 +382,12 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
                     style: TextStyle(color: Design.errorRed, fontSize: 12),
                   ),
                 ),
-              const SizedBox(height: 16),
+              SizedBox(
+                height:
+                    _showValidationMessages && _nameController.text.isEmpty
+                        ? 8
+                        : 16,
+              ),
               Text(
                 'Venue',
                 style: TextStyle(
@@ -432,10 +442,14 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
                   _descriptionController.text.isEmpty)
                 Padding(
                   padding: const EdgeInsets.only(top: 4, left: 12),
-                  child: Text(
-                    'Please enter the description',
-                    style: TextStyle(color: Design.errorRed, fontSize: 12),
-                  ),
+                  // child: Text(
+                  //   'Please enter the description',
+                  //   style: TextStyle(
+                  //     color: Colors.red,
+                  //     fontSize: 12,
+                  //     fontWeight: FontWeight.w600,
+                  //   ),
+                  // ),
                 ),
               const SizedBox(height: 16),
               _buildRedemptionLimit(),
@@ -466,7 +480,7 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
                 width: double.infinity,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Design.primaryColorOrange,
+                    backgroundColor: const Color.fromRGBO(255, 140, 16, 1),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
@@ -609,6 +623,10 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
             ? Design.getTextColor(context)
             : Design.getTextColor(context).withOpacity(0.5);
 
+    final bool showError = _redeemTypeValidationError;
+    final Color checkboxColor =
+        showError ? Colors.red : Design.primaryColorOrange;
+
     return Wrap(
       spacing: 24,
       runSpacing: -15,
@@ -619,7 +637,10 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Checkbox(
-                activeColor: Design.primaryColorOrange,
+                activeColor: checkboxColor,
+                side: MaterialStateBorderSide.resolveWith(
+                  (states) => BorderSide(color: checkboxColor, width: 2),
+                ),
                 visualDensity: const VisualDensity(
                   horizontal: -2,
                   vertical: -2,
@@ -646,7 +667,10 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Checkbox(
-                activeColor: Design.primaryColorOrange,
+                activeColor: checkboxColor,
+                side: MaterialStateBorderSide.resolveWith(
+                  (states) => BorderSide(color: checkboxColor, width: 2),
+                ),
                 visualDensity: const VisualDensity(
                   horizontal: -2,
                   vertical: -2,
@@ -684,13 +708,8 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 decoration: _inputDecoration('Venue Points (min 5)'),
-                validator: (v) {
-                  if (!_useVenuePoints) return null;
-                  if (v == null || v.isEmpty) return 'Enter Venue Points';
-                  final p = int.tryParse(v);
-                  if (p == null || p < 5) return 'Min 5';
-                  return null;
-                },
+                validator:
+                    (v) => null, // Remove built-in error, use custom below
               ),
               if (_showValidationMessages &&
                   _useVenuePoints &&
@@ -723,13 +742,8 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 decoration: _inputDecoration('Feathers (min 5)'),
-                validator: (v) {
-                  if (!_useAppPoints) return null;
-                  if (v == null || v.isEmpty) return 'Enter Feathers';
-                  final p = int.tryParse(v);
-                  if (p == null || p < 5) return 'Min 5';
-                  return null;
-                },
+                validator:
+                    (v) => null, // Remove built-in error, use custom below
               ),
               if (_showValidationMessages &&
                   _useAppPoints &&
@@ -828,9 +842,21 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
           ),
           textInputAction: TextInputAction.done,
           onFieldSubmitted: (_) => FocusScope.of(context).unfocus(),
-          validator: (v) => v == null || v.isEmpty ? 'Enter description' : null,
+          validator: (v) => null, // Remove built-in error, use custom below
         ),
       ),
+      if (_showValidationMessages && _descriptionController.text.isEmpty)
+        Padding(
+          padding: const EdgeInsets.only(top: 4, left: 12),
+          child: Text(
+            'Please enter the description',
+            style: TextStyle(
+              color: Colors.red,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
     ],
   );
 
@@ -879,7 +905,7 @@ class _AddOfferScreenState extends State<AddOfferScreen> {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Text(
-        'Upload Pictures',
+        'Upload Picture',
         style: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w600,

@@ -154,6 +154,7 @@ class _AddEggScreenState extends State<AddEggScreen> {
   String userId = "";
   List<dynamic> allDietaryTags = [];
   List<String> arrOfDietaryTags = [];
+  bool _submitted = false;
 
   // Validation constants
   static const int minVenueNameLength = 3;
@@ -174,6 +175,7 @@ class _AddEggScreenState extends State<AddEggScreen> {
   String? photosError;
   String? noticeError;
   String? tagsError;
+  String? dietaryTagsError;
 
   @override
   void initState() {
@@ -184,10 +186,10 @@ class _AddEggScreenState extends State<AddEggScreen> {
     descriptionController = TextEditingController();
 
     // Add listeners for immediate validation
-    nameController.addListener(() => validateName());
-    suburbController.addListener(() => validateSuburb());
-    noticeController.addListener(() => validateNotice());
-    descriptionController.addListener(() => validateDescription());
+    // nameController.addListener(() => validateName());
+    // suburbController.addListener(() => validateSuburb());
+    // noticeController.addListener(() => validateNotice());
+    // descriptionController.addListener(() => validateDescription());
 
     if (widget.allCategory != null) {
       allCategory = widget.allCategory!;
@@ -230,6 +232,16 @@ class _AddEggScreenState extends State<AddEggScreen> {
             "Venue name must be at least $minVenueNameLength characters";
       } else {
         nameError = null;
+      }
+    });
+  }
+
+  void validateDietaryTags() {
+    setState(() {
+      if (arrOfDietaryTags.isEmpty) {
+        dietaryTagsError = "Please select at least one dietary tag";
+      } else {
+        dietaryTagsError = null;
       }
     });
   }
@@ -304,7 +316,9 @@ class _AddEggScreenState extends State<AddEggScreen> {
 
   void validateNotice() {
     setState(() {
-      if (noticeController.text.length > maxNoticeLength) {
+      if (noticeController.text.trim().isEmpty) {
+        noticeError = "Notice is required";
+      } else if (noticeController.text.length > maxNoticeLength) {
         noticeError = "Notice must be less than $maxNoticeLength characters";
       } else {
         noticeError = null;
@@ -314,7 +328,9 @@ class _AddEggScreenState extends State<AddEggScreen> {
 
   void validateTags() {
     setState(() {
-      if (selectedTags.length > maxTags) {
+      if (selectedTags.isEmpty) {
+        tagsError = "Please select at least one tag";
+      } else if (selectedTags.length > maxTags) {
         tagsError = "Maximum $maxTags tags allowed";
       } else {
         tagsError = null;
@@ -449,11 +465,11 @@ class _AddEggScreenState extends State<AddEggScreen> {
     validateSuburb();
     validateNotice();
     validateDescription();
-    validateCategory();
-    validateLocation();
-    validateAmenities();
-    validatePhotos();
-    validateTags();
+    // validateCategory();
+    // validateLocation();
+    // validateAmenities();
+    // validatePhotos();
+    // validateTags();
   }
 
   void handleTagChange(List<int?> selectedValues) {
@@ -468,7 +484,7 @@ class _AddEggScreenState extends State<AddEggScreen> {
     setState(() {
       nameofeggStatus = !nameofeggStatus;
     });
-    validateCategory();
+    //  validateCategory();
   }
 
   void selectCategory(Map<String, dynamic> item) {
@@ -477,7 +493,7 @@ class _AddEggScreenState extends State<AddEggScreen> {
       catId = item['id'].toString();
       nameofeggStatus = false;
     });
-    validateCategory();
+    // validateCategory();
   }
 
   void toggleReportStatus() {
@@ -566,10 +582,36 @@ class _AddEggScreenState extends State<AddEggScreen> {
   }
 
   void pickLocation() async {
+    // Get current location first, then open map
+    LatLng initialPosition = LatLng(lat, lng);
+
+    // If no location is set, try to get current location
+    if (lat == 0.0 && lng == 0.0) {
+      try {
+        bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+        if (serviceEnabled) {
+          LocationPermission permission = await Geolocator.checkPermission();
+          if (permission == LocationPermission.denied) {
+            permission = await Geolocator.requestPermission();
+          }
+
+          if (permission == LocationPermission.whileInUse ||
+              permission == LocationPermission.always) {
+            Position position = await Geolocator.getCurrentPosition(
+              desiredAccuracy: LocationAccuracy.high,
+            );
+            initialPosition = LatLng(position.latitude, position.longitude);
+          }
+        }
+      } catch (e) {
+        print('Error getting current location: $e');
+      }
+    }
+
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => LocationPicker(initialPosition: LatLng(lat, lng)),
+        builder: (context) => LocationPicker(initialPosition: initialPosition),
       ),
     );
     if (result != null && result is Map) {
@@ -583,35 +625,76 @@ class _AddEggScreenState extends State<AddEggScreen> {
   }
 
   Future<void> useCurrentLocation() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      Fluttertoast.showToast(msg: "Location services are disabled.");
-      return;
-    }
-
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        Fluttertoast.showToast(msg: "Location permission denied");
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (Platform.isIOS) {
+          Fluttertoast.showToast(
+            msg:
+                "Location services are disabled. Please enable them in Settings > Privacy & Security > Location Services.",
+          );
+        } else {
+          Fluttertoast.showToast(msg: "Location services are disabled.");
+        }
         return;
       }
-    }
 
-    if (permission == LocationPermission.deniedForever) {
-      Fluttertoast.showToast(msg: "Location permission permanently denied");
-      return;
-    }
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          Fluttertoast.showToast(msg: "Location permission denied");
+          return;
+        }
+      }
 
-    final position = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
-    );
-    setState(() {
-      lat = position.latitude;
-      lng = position.longitude;
-      location = "Current Location ($lat, $lng)";
-    });
-    validateLocation();
+      if (permission == LocationPermission.deniedForever) {
+        if (Platform.isIOS) {
+          Fluttertoast.showToast(
+            msg:
+                "Location permission permanently denied. Please enable it in Settings > Privacy & Security > Location Services > Flock Business.",
+          );
+        } else {
+          Fluttertoast.showToast(msg: "Location permission permanently denied");
+        }
+        return;
+      }
+
+      Fluttertoast.showToast(msg: "Getting your current location...");
+
+      // Use different accuracy settings for iOS vs Android
+      LocationAccuracy accuracy =
+          Platform.isIOS ? LocationAccuracy.best : LocationAccuracy.high;
+
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: accuracy,
+        timeLimit: const Duration(seconds: 15), // Add timeout for iOS
+      );
+
+      setState(() {
+        lat = position.latitude;
+        lng = position.longitude;
+        location = "Current Location ($lat, $lng)";
+      });
+
+      Fluttertoast.showToast(msg: "Location obtained successfully!");
+      validateLocation();
+    } catch (e) {
+      print('Error getting current location: $e');
+      String errorMessage = 'Unable to get current location';
+
+      if (e.toString().contains('timeout')) {
+        errorMessage = 'Location request timed out. Please try again.';
+      } else if (e.toString().contains('permission')) {
+        errorMessage =
+            'Location permission denied. Please check your settings.';
+      } else if (Platform.isIOS) {
+        errorMessage =
+            'Location services may be disabled. Please check Settings > Privacy & Security > Location Services.';
+      }
+
+      Fluttertoast.showToast(msg: errorMessage);
+    }
   }
 
   void showManualLocationDialog() {
@@ -695,7 +778,7 @@ class _AddEggScreenState extends State<AddEggScreen> {
               onPressed: () => Navigator.pop(context),
               child: Text(
                 "Cancel",
-                style: TextStyle(color: Design.primaryColorOrange),
+                style: TextStyle(color: const Color.fromRGBO(255, 140, 16, 1)),
               ),
             ),
             ElevatedButton(
@@ -721,7 +804,7 @@ class _AddEggScreenState extends State<AddEggScreen> {
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Design.primaryColorOrange,
+                backgroundColor: const Color.fromRGBO(255, 140, 16, 1),
               ),
               child: const Text("OK", style: TextStyle(color: Colors.white)),
             ),
@@ -741,6 +824,7 @@ class _AddEggScreenState extends State<AddEggScreen> {
     validatePhotos();
     validateNotice();
     validateTags();
+    validateDietaryTags();
 
     return nameError == null &&
         categoryError == null &&
@@ -750,10 +834,14 @@ class _AddEggScreenState extends State<AddEggScreen> {
         descriptionError == null &&
         photosError == null &&
         noticeError == null &&
-        tagsError == null;
+        tagsError == null &&
+        dietaryTagsError == null;
   }
 
   void updateBtn() {
+    setState(() {
+      _submitted = true;
+    });
     if (validateForm()) {
       addVenueApi();
     } else {
@@ -998,6 +1086,20 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                 ),
                                 child: TextField(
                                   controller: nameController,
+
+                                  onChanged: (value) {
+                                    setState(() {
+                                      if (value.trim().isEmpty) {
+                                        nameError = 'Name is required';
+                                      } else if (value.trim().length < 3) {
+                                        nameError =
+                                            'Name must be at least 3 characters';
+                                      } else {
+                                        nameError = null;
+                                      }
+                                    });
+                                  },
+
                                   style: TextStyle(
                                     color: Design.getTextColor(context),
                                     fontSize: 14.0,
@@ -1170,7 +1272,7 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                   ],
                                 ),
                               ),
-                              if (categoryError != null)
+                              if (_submitted && categoryError != null)
                                 Padding(
                                   padding: const EdgeInsets.only(
                                     top: 4,
@@ -1226,7 +1328,7 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                             Flexible(
                                               child: Text(
                                                 selectedTags.isEmpty
-                                                    ? "Select Tags"
+                                                    ? "Select Tags (up to $maxTags)"
                                                     : selectedTags
                                                         .map(
                                                           (id) =>
@@ -1402,6 +1504,11 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                                             tagId,
                                                           );
                                                         }
+                                                        // Clear error when user starts selecting
+                                                        if (selectedTags
+                                                            .isNotEmpty) {
+                                                          tagsError = null;
+                                                        }
                                                       });
                                                       validateTags();
                                                     },
@@ -1514,7 +1621,7 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                   ],
                                 ),
                               ),
-                              if (tagsError != null)
+                              if (_submitted && tagsError != null)
                                 Padding(
                                   padding: const EdgeInsets.only(
                                     top: 4,
@@ -1538,8 +1645,23 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                 decoration: getThemedContainerDecoration(
                                   suburbError != null,
                                 ),
+
                                 child: TextField(
                                   controller: suburbController,
+
+                                  onChanged: (value) {
+                                    setState(() {
+                                      if (value.trim().isEmpty) {
+                                        suburbError = 'Suburb is required';
+                                      } else if (value.trim().length < 3) {
+                                        suburbError =
+                                            'Suburb must be at least 3 characters';
+                                      } else {
+                                        suburbError = null;
+                                      }
+                                    });
+                                  },
+
                                   style: TextStyle(
                                     color: Design.getTextColor(context),
                                     fontSize: 14.0,
@@ -1664,35 +1786,38 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                           mainAxisAlignment:
                                               MainAxisAlignment.spaceBetween,
                                           children: [
-                                            Text(
-                                              arrOfAmenities.isEmpty
-                                                  ? "Select Amenities"
-                                                  : arrOfAmenities
-                                                      .map(
-                                                        (id) =>
-                                                            allAmenities.firstWhere(
-                                                              (amenity) =>
-                                                                  amenity['id']
-                                                                      .toString() ==
-                                                                  id,
-                                                              orElse:
-                                                                  () => {
-                                                                    'name':
-                                                                        'Unknown',
-                                                                  },
-                                                            )['name'],
-                                                      )
-                                                      .join(", "),
-                                              style: TextStyle(
-                                                fontSize: 14,
-                                                color:
-                                                    arrOfAmenities.isEmpty
-                                                        ? Design.getTextColor(
-                                                          context,
-                                                        ).withOpacity(0.5)
-                                                        : Design.getTextColor(
-                                                          context,
-                                                        ),
+                                            Flexible(
+                                              child: Text(
+                                                arrOfAmenities.isEmpty
+                                                    ? "Select Amenities"
+                                                    : arrOfAmenities
+                                                        .map(
+                                                          (id) =>
+                                                              allAmenities.firstWhere(
+                                                                (amenity) =>
+                                                                    amenity['id']
+                                                                        .toString() ==
+                                                                    id,
+                                                                orElse:
+                                                                    () => {
+                                                                      'name':
+                                                                          'Unknown',
+                                                                    },
+                                                              )['name'],
+                                                        )
+                                                        .join(", "),
+                                                style: TextStyle(
+                                                  fontSize: 14,
+                                                  color:
+                                                      arrOfAmenities.isEmpty
+                                                          ? Design.getTextColor(
+                                                            context,
+                                                          ).withOpacity(0.5)
+                                                          : Design.getTextColor(
+                                                            context,
+                                                          ),
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
                                               ),
                                             ),
                                             Icon(
@@ -1867,7 +1992,7 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                   ],
                                 ),
                               ),
-                              if (amenitiesError != null)
+                              if (_submitted && amenitiesError != null)
                                 Padding(
                                   padding: const EdgeInsets.only(
                                     top: 4,
@@ -1884,220 +2009,262 @@ class _AddEggScreenState extends State<AddEggScreen> {
                             ],
                           ),
                           const SizedBox(height: 18),
-                          Container(
-                            decoration: getThemedContainerDecoration(false),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                GestureDetector(
-                                  key: _dietaryFieldKey,
-                                  onTap: () {
-                                    setState(() {
-                                      showDietaryDropdown =
-                                          !showDietaryDropdown;
-                                    });
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 15,
-                                      vertical: 15,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Design.getSurfaceColor(context),
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          arrOfDietaryTags.isEmpty
-                                              ? "Select Dietary Tags"
-                                              : arrOfDietaryTags
-                                                  .map(
-                                                    (id) =>
-                                                        allDietaryTags.firstWhere(
-                                                          (diet) =>
-                                                              diet['id']
-                                                                  .toString() ==
-                                                              id,
-                                                          orElse:
-                                                              () => {
-                                                                'name':
-                                                                    'Unknown',
-                                                              },
-                                                        )['name'],
-                                                  )
-                                                  .join(", "),
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color:
-                                                arrOfDietaryTags.isEmpty
-                                                    ? Design.getTextColor(
-                                                      context,
-                                                    ).withOpacity(0.5)
-                                                    : Design.getTextColor(
-                                                      context,
-                                                    ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                decoration: getThemedContainerDecoration(
+                                  dietaryTagsError != null,
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    GestureDetector(
+                                      key: _dietaryFieldKey,
+                                      onTap: () {
+                                        setState(() {
+                                          showDietaryDropdown =
+                                              !showDietaryDropdown;
+                                        });
+                                        validateDietaryTags();
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 15,
+                                          vertical: 15,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Design.getSurfaceColor(
+                                            context,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            10,
                                           ),
                                         ),
-                                        Icon(
-                                          showDietaryDropdown
-                                              ? Icons.arrow_drop_up
-                                              : Icons.arrow_drop_down,
-                                          color: Design.getTextColor(
-                                            context,
-                                          ).withOpacity(0.5),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              arrOfDietaryTags.isEmpty
+                                                  ? "Select Dietary Tags"
+                                                  : arrOfDietaryTags
+                                                      .map(
+                                                        (id) =>
+                                                            allDietaryTags.firstWhere(
+                                                              (diet) =>
+                                                                  diet['id']
+                                                                      .toString() ==
+                                                                  id,
+                                                              orElse:
+                                                                  () => {
+                                                                    'name':
+                                                                        'Unknown',
+                                                                  },
+                                                            )['name'],
+                                                      )
+                                                      .join(", "),
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                color:
+                                                    arrOfDietaryTags.isEmpty
+                                                        ? Design.getTextColor(
+                                                          context,
+                                                        ).withOpacity(0.5)
+                                                        : Design.getTextColor(
+                                                          context,
+                                                        ),
+                                              ),
+                                            ),
+                                            Icon(
+                                              showDietaryDropdown
+                                                  ? Icons.arrow_drop_up
+                                                  : Icons.arrow_drop_down,
+                                              color: Design.getTextColor(
+                                                context,
+                                              ).withOpacity(0.5),
+                                            ),
+                                          ],
                                         ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                if (showDietaryDropdown)
-                                  Container(
-                                    constraints: const BoxConstraints(
-                                      maxHeight: 32 * 6 + 48,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Design.getSurfaceColor(context),
-                                      borderRadius: const BorderRadius.only(
-                                        bottomLeft: Radius.circular(10),
-                                        bottomRight: Radius.circular(10),
                                       ),
                                     ),
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Flexible(
-                                          child: ListView.builder(
-                                            shrinkWrap: true,
-                                            itemCount: allDietaryTags.length,
-                                            itemBuilder: (context, index) {
-                                              final dietTag =
-                                                  allDietaryTags[index];
-                                              final tagId =
-                                                  dietTag['id'].toString();
-                                              final isSelected =
-                                                  arrOfDietaryTags.contains(
-                                                    tagId,
-                                                  );
-                                              return InkWell(
-                                                onTap: () {
-                                                  setState(() {
-                                                    if (arrOfDietaryTags
-                                                        .contains(tagId)) {
-                                                      arrOfDietaryTags.remove(
-                                                        tagId,
-                                                      );
-                                                    } else {
-                                                      arrOfDietaryTags.add(
-                                                        tagId,
-                                                      );
-                                                    }
-                                                  });
-                                                },
-                                                child: Container(
-                                                  padding:
-                                                      const EdgeInsets.symmetric(
-                                                        horizontal: 20,
-                                                        vertical: 12,
-                                                      ),
-                                                  decoration: BoxDecoration(
-                                                    color:
-                                                        isSelected
-                                                            ? Design
-                                                                .primaryColorOrange
-                                                                .withOpacity(
-                                                                  0.1,
-                                                                )
-                                                            : Colors
-                                                                .transparent,
-                                                    border: Border(
-                                                      bottom: BorderSide(
-                                                        color:
-                                                            Design.getBorderColor(
-                                                              context,
-                                                            ),
-                                                        width: 0.5,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  child: Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .spaceBetween,
-                                                    children: [
-                                                      Text(
-                                                        dietTag['name'],
-                                                        style: TextStyle(
-                                                          fontSize: 14,
-                                                          color:
-                                                              isSelected
-                                                                  ? Design
-                                                                      .primaryColorOrange
-                                                                  : Design.getTextColor(
-                                                                    context,
-                                                                  ),
-                                                          fontWeight:
-                                                              isSelected
-                                                                  ? FontWeight
-                                                                      .w500
-                                                                  : FontWeight
-                                                                      .normal,
-                                                        ),
-                                                      ),
-                                                      if (isSelected)
-                                                        Icon(
-                                                          Icons.check,
-                                                          color:
-                                                              Design
-                                                                  .primaryColorOrange,
-                                                          size: 18,
-                                                        ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              );
-                                            },
+                                    if (showDietaryDropdown)
+                                      Container(
+                                        constraints: const BoxConstraints(
+                                          maxHeight: 32 * 6 + 48,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Design.getSurfaceColor(
+                                            context,
+                                          ),
+                                          borderRadius: const BorderRadius.only(
+                                            bottomLeft: Radius.circular(10),
+                                            bottomRight: Radius.circular(10),
                                           ),
                                         ),
-                                        Padding(
-                                          padding: const EdgeInsets.all(8.0),
-                                          child: SizedBox(
-                                            width: double.infinity,
-                                            child: ElevatedButton(
-                                              onPressed: () {
-                                                setState(() {
-                                                  showDietaryDropdown = false;
-                                                });
-                                              },
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor:
-                                                    Design.primaryColorOrange,
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(10),
-                                                ),
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      vertical: 12,
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Flexible(
+                                              child: ListView.builder(
+                                                shrinkWrap: true,
+                                                itemCount:
+                                                    allDietaryTags.length,
+                                                itemBuilder: (context, index) {
+                                                  final dietTag =
+                                                      allDietaryTags[index];
+                                                  final tagId =
+                                                      dietTag['id'].toString();
+                                                  final isSelected =
+                                                      arrOfDietaryTags.contains(
+                                                        tagId,
+                                                      );
+                                                  return InkWell(
+                                                    onTap: () {
+                                                      setState(() {
+                                                        if (arrOfDietaryTags
+                                                            .contains(tagId)) {
+                                                          arrOfDietaryTags
+                                                              .remove(tagId);
+                                                        } else {
+                                                          arrOfDietaryTags.add(
+                                                            tagId,
+                                                          );
+                                                        }
+                                                        // Clear error when user starts selecting
+                                                        if (arrOfDietaryTags
+                                                            .isNotEmpty) {
+                                                          dietaryTagsError =
+                                                              null;
+                                                        }
+                                                      });
+                                                      validateDietaryTags();
+                                                    },
+                                                    child: Container(
+                                                      padding:
+                                                          const EdgeInsets.symmetric(
+                                                            horizontal: 20,
+                                                            vertical: 12,
+                                                          ),
+                                                      decoration: BoxDecoration(
+                                                        color:
+                                                            isSelected
+                                                                ? Design
+                                                                    .primaryColorOrange
+                                                                    .withOpacity(
+                                                                      0.1,
+                                                                    )
+                                                                : Colors
+                                                                    .transparent,
+                                                        border: Border(
+                                                          bottom: BorderSide(
+                                                            color:
+                                                                Design.getBorderColor(
+                                                                  context,
+                                                                ),
+                                                            width: 0.5,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      child: Row(
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .spaceBetween,
+                                                        children: [
+                                                          Text(
+                                                            dietTag['name'],
+                                                            style: TextStyle(
+                                                              fontSize: 14,
+                                                              color:
+                                                                  isSelected
+                                                                      ? Design
+                                                                          .primaryColorOrange
+                                                                      : Design.getTextColor(
+                                                                        context,
+                                                                      ),
+                                                              fontWeight:
+                                                                  isSelected
+                                                                      ? FontWeight
+                                                                          .w500
+                                                                      : FontWeight
+                                                                          .normal,
+                                                            ),
+                                                          ),
+                                                          if (isSelected)
+                                                            Icon(
+                                                              Icons.check,
+                                                              color:
+                                                                  Design
+                                                                      .primaryColorOrange,
+                                                              size: 18,
+                                                            ),
+                                                        ],
+                                                      ),
                                                     ),
+                                                  );
+                                                },
                                               ),
-                                              child: const Text(
-                                                "Done",
-                                                style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 14,
+                                            ),
+                                            Padding(
+                                              padding: const EdgeInsets.all(
+                                                8.0,
+                                              ),
+                                              child: SizedBox(
+                                                width: double.infinity,
+                                                child: ElevatedButton(
+                                                  onPressed: () {
+                                                    setState(() {
+                                                      showDietaryDropdown =
+                                                          false;
+                                                    });
+                                                    validateDietaryTags();
+                                                  },
+                                                  style: ElevatedButton.styleFrom(
+                                                    backgroundColor:
+                                                        Design
+                                                            .primaryColorOrange,
+                                                    shape: RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            10,
+                                                          ),
+                                                    ),
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          vertical: 12,
+                                                        ),
+                                                  ),
+                                                  child: const Text(
+                                                    "Done",
+                                                    style: TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 14,
+                                                    ),
+                                                  ),
                                                 ),
                                               ),
                                             ),
-                                          ),
+                                          ],
                                         ),
-                                      ],
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              if (dietaryTagsError != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                    top: 4,
+                                    left: 12,
+                                  ),
+                                  child: Text(
+                                    dietaryTagsError!,
+                                    style: TextStyle(
+                                      color: Design.errorRed,
+                                      fontSize: 12,
                                     ),
                                   ),
-                              ],
-                            ),
+                                ),
+                            ],
                           ),
                           const SizedBox(height: 18),
                           Column(
@@ -2109,6 +2276,21 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                 ),
                                 child: TextField(
                                   controller: noticeController,
+
+                                  onChanged: (value) {
+                                    setState(() {
+                                      if (value.trim().isEmpty) {
+                                        noticeError = 'Notice is required';
+                                      } else if (value.length >
+                                          maxNoticeLength) {
+                                        noticeError =
+                                            'Notice must be less than $maxNoticeLength characters';
+                                      } else {
+                                        noticeError = null;
+                                      }
+                                    });
+                                  },
+
                                   style: TextStyle(
                                     color: Design.getTextColor(context),
                                     fontSize: 14.0,
@@ -2119,7 +2301,7 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                   ),
                                 ),
                               ),
-                              if (noticeError != null)
+                              if (_submitted && noticeError != null)
                                 Padding(
                                   padding: const EdgeInsets.only(
                                     top: 4,
@@ -2142,6 +2324,20 @@ class _AddEggScreenState extends State<AddEggScreen> {
                             ),
                             child: TextField(
                               controller: descriptionController,
+                              onChanged: (value) {
+                                setState(() {
+                                  if (value.trim().isEmpty) {
+                                    descriptionError =
+                                        'Description is required';
+                                  } else if (value.trim().length < 10) {
+                                    descriptionError =
+                                        'Description must be at least 10 characters';
+                                  } else {
+                                    descriptionError = null;
+                                  }
+                                });
+                              },
+
                               maxLines: 5,
                               style: TextStyle(
                                 color: Design.getTextColor(context),
@@ -2153,6 +2349,7 @@ class _AddEggScreenState extends State<AddEggScreen> {
                               ),
                             ),
                           ),
+
                           if (descriptionError != null)
                             Padding(
                               padding: const EdgeInsets.only(top: 4, left: 12),
@@ -2291,7 +2488,12 @@ class _AddEggScreenState extends State<AddEggScreen> {
                             child: ElevatedButton(
                               onPressed: updateBtn,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Design.primaryColorOrange,
+                                backgroundColor: const Color.fromRGBO(
+                                  255,
+                                  140,
+                                  16,
+                                  1,
+                                ),
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 14,
                                 ),
@@ -2391,7 +2593,9 @@ class _AddEggScreenState extends State<AddEggScreen> {
                         onPressed: () => setState(() => dialogAlert = false),
                         child: Text(
                           "Cancel",
-                          style: TextStyle(color: Design.primaryColorOrange),
+                          style: TextStyle(
+                            color: const Color.fromRGBO(255, 140, 16, 1),
+                          ),
                         ),
                       ),
                     ),
@@ -2435,7 +2639,12 @@ class _AddEggScreenState extends State<AddEggScreen> {
                         ElevatedButton(
                           onPressed: onDonePressed,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Design.primaryColorOrange,
+                            backgroundColor: const Color.fromRGBO(
+                              255,
+                              140,
+                              16,
+                              1,
+                            ),
                             padding: const EdgeInsets.symmetric(
                               horizontal: 24,
                               vertical: 12,
@@ -2538,7 +2747,7 @@ class _AddEggScreenState extends State<AddEggScreen> {
                             child: const Text(
                               "Got it!",
                               style: TextStyle(
-                                color: Design.primaryColorOrange,
+                                color: Color.fromRGBO(255, 140, 16, 1),
                                 fontSize: Design.font15,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -2594,7 +2803,10 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
         iconTheme: IconThemeData(color: Design.getTextColor(context)),
         actions: [
           IconButton(
-            icon: Icon(Icons.check, color: Design.primaryColorOrange),
+            icon: Icon(
+              Icons.check,
+              color: const Color.fromRGBO(255, 140, 16, 1),
+            ),
             onPressed: () {
               if (pickedPosition.latitude < -90 ||
                   pickedPosition.latitude > 90 ||

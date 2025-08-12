@@ -8,7 +8,6 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flock/constants.dart'; // Assumed to contain Design, Server, etc.
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class EditVenueScreen extends StatefulWidget {
@@ -652,143 +651,143 @@ class _EditVenueScreenState extends State<EditVenueScreen> {
       },
     );
   }
+Widget _buildTagsDropdown() {
+  final selectedTagNames = _allTags
+      .where((tag) => _selectedTagIds.contains(tag['id']))
+      .map((tag) => tag['name'].toString())
+      .toList();
 
-  Widget _buildTagsDropdown() {
-    final selectedTagNames =
-        _allTags
-            .where((tag) => _selectedTagIds.contains(tag['id']))
-            .map((tag) => tag['name'].toString())
-            .toList();
-
-    return InkWell(
-      onTap: () async {
-        await showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            String localSearchText = _tagSearchText;
-            return StatefulBuilder(
-              builder: (context, setStateDialog) {
-                final filteredTags =
-                    _allTags.where((tag) {
-                      final tagName =
-                          tag['name']?.toString().toLowerCase() ?? '';
-                      return tagName.contains(localSearchText.toLowerCase());
-                    }).toList();
-                return AlertDialog(
-                  backgroundColor:
-                      Theme.of(context).brightness == Brightness.dark
-                          ? Design.darkSurface
-                          : Theme.of(context).colorScheme.surface,
-                  title: Text(
-                    "Select Tags",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Theme.of(context).textTheme.titleLarge!.color,
-                    ),
+  return InkWell(
+    onTap: () async {
+      await showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          String localSearchText = _tagSearchText;
+          return StatefulBuilder(
+            builder: (context, setStateDialog) {
+              final filteredTags = _allTags.where((tag) {
+                final tagName = tag['name']?.toString().toLowerCase() ?? '';
+                return tagName.contains(localSearchText.toLowerCase());
+              }).toList();
+              return AlertDialog(
+                backgroundColor: Theme.of(context).brightness == Brightness.dark
+                    ? Design.darkSurface
+                    : Theme.of(context).colorScheme.surface,
+                title: Text(
+                  "Select Tags (Max: 5)",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).textTheme.titleLarge!.color,
                   ),
-                  content: SizedBox(
-                    width: double.maxFinite,
-                    height: 200,
-                    child: Column(
-                      children: [
-                        TextField(
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Theme.of(context).textTheme.bodyLarge!.color,
-                          ),
-                          decoration: _getInputDecoration('Search Tags'),
-                          onChanged: (value) {
-                            setStateDialog(() {
-                              localSearchText = value;
-                            });
+                ),
+                content: SizedBox(
+                  width: double.maxFinite,
+                  height: 200,
+                  child: Column(
+                    children: [
+                      TextField(
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).textTheme.bodyLarge!.color,
+                        ),
+                        decoration: _getInputDecoration('Search Tags'),
+                        onChanged: (value) {
+                          setStateDialog(() {
+                            localSearchText = value;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 10),
+                      Expanded(
+                        child: ListView.builder(
+                          itemCount: filteredTags.length,
+                          itemBuilder: (context, index) {
+                            final tag = filteredTags[index];
+                            final tagId = tag['id'] as int;
+                            final tagName = tag['name'].toString();
+                            final isSelected = _selectedTagIds.contains(tagId);
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 1),
+                              child: Row(
+                                children: [
+                                  Transform.scale(
+                                    scale: 0.75,
+                                    child: Checkbox(
+                                      value: isSelected,
+                                      activeColor: Theme.of(context)
+                                          .colorScheme
+                                          .primary,
+                                      visualDensity: const VisualDensity(
+                                        vertical: -4,
+                                        horizontal: -4,
+                                      ),
+                                      materialTapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                      onChanged: (bool? value) {
+                                        setStateDialog(() {
+                                          if (value == true) {
+                                            if (_selectedTagIds.length < 5) {
+                                              setState(() {
+                                                _selectedTagIds.add(tagId);
+                                              });
+                                            } else {
+                                              Fluttertoast.showToast(
+                                                msg:
+                                                    "You can select up to 5 tags only.",
+                                                backgroundColor: Colors.red,
+                                                textColor: Colors.white,
+                                              );
+                                            }
+                                          } else {
+                                            setState(() {
+                                              _selectedTagIds.remove(tagId);
+                                            });
+                                          }
+                                        });
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      tagName,
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge!
+                                            .color,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
                           },
                         ),
-                        const SizedBox(height: 10),
-                        Expanded(
-                          child: ListView.builder(
-                            itemCount: filteredTags.length,
-                            itemBuilder: (context, index) {
-                              final tag = filteredTags[index];
-                              final tagId = tag['id'] as int;
-                              final tagName = tag['name'].toString();
-                              final isSelected = _selectedTagIds.contains(
-                                tagId,
-                              );
-                              return Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 1,
-                                ),
-                                child: Row(
-                                  children: [
-                                    Transform.scale(
-                                      scale: 0.75,
-                                      child: Checkbox(
-                                        value: isSelected,
-                                        activeColor:
-                                            Theme.of(
-                                              context,
-                                            ).colorScheme.primary,
-                                        visualDensity: const VisualDensity(
-                                          vertical: -4,
-                                          horizontal: -4,
-                                        ),
-                                        materialTapTargetSize:
-                                            MaterialTapTargetSize.shrinkWrap,
-                                        onChanged: (bool? value) {
-                                          setStateDialog(() {
-                                            setState(() {
-                                              if (value == true) {
-                                                _selectedTagIds.add(tagId);
-                                              } else {
-                                                _selectedTagIds.remove(tagId);
-                                              }
-                                            });
-                                          });
-                                        },
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        tagName,
-                                        style: TextStyle(
-                                          fontSize: 15,
-                                          color:
-                                              Theme.of(
-                                                context,
-                                              ).textTheme.bodyLarge!.color,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                );
-              },
-            );
-          },
-        );
-      },
-      child: InputDecorator(
-        decoration: _getInputDecoration('Tags'),
-        child: Text(
-          selectedTagNames.isNotEmpty
-              ? selectedTagNames.join(", ")
-              : "Select Tags",
-          style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color),
-        ),
+                ),
+              );
+            },
+          );
+        },
+      );
+    },
+    child: InputDecorator(
+      decoration: _getInputDecoration('Tags'),
+      child: Text(
+        selectedTagNames.isNotEmpty
+            ? selectedTagNames.join(", ")
+            : "Select Tags",
+        style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color),
       ),
-    );
-  }
-
+    ),
+  );
+}
   Widget _buildDietaryTagsDropdown() {
     final selectedDietaryNames =
         _allDietaryTags
@@ -1149,6 +1148,47 @@ class _EditVenueScreenState extends State<EditVenueScreen> {
 
   // In edit_venue.dart, replace the _updateVenue method with this:
   Future<void> _updateVenue() async {
+
+ if (_nameController.text.isEmpty) {
+    Fluttertoast.showToast(
+      msg: 'Venue name is required',
+      backgroundColor: Colors.red,
+    );
+    return;
+  }
+
+  if (_suburbController.text.isEmpty) {
+    Fluttertoast.showToast(
+      msg: 'Suburb is required',
+      backgroundColor: Colors.red,
+    );
+    return;
+  }
+
+  if (_descriptionController.text.isEmpty) {
+    Fluttertoast.showToast(
+      msg: 'Description is required',
+      backgroundColor: Colors.red,
+    );
+    return;
+  }
+
+  if (_locationController.text.isEmpty) {
+    Fluttertoast.showToast(
+      msg: 'Location is required',
+      backgroundColor: Colors.red,
+    );
+    return;
+  }
+
+  if (_latController.text.isEmpty || _lonController.text.isEmpty) {
+    Fluttertoast.showToast(
+      msg: 'Latitude and Longitude are required',
+      backgroundColor: Colors.red,
+    );
+    return;
+  }
+    
     if (_nameController.text.isEmpty ||
         _descriptionController.text.isEmpty ||
         _locationController.text.isEmpty ||
@@ -1371,19 +1411,19 @@ class _EditVenueScreenState extends State<EditVenueScreen> {
             Theme.of(context).brightness == Brightness.dark
                 ? Design.darkBackground
                 : Theme.of(context).scaffoldBackgroundColor,
+        elevation: 0,
+        leading: IconButton(
+          icon: Image.asset('assets/back_updated.png', height: 40, width: 34),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: Text(
           'Edit Venue',
           style: TextStyle(
-            color: Theme.of(context).textTheme.bodyLarge!.color,
+            color: Theme.of(context).textTheme.titleLarge!.color,
             fontSize: 20,
             fontWeight: FontWeight.w600,
           ),
         ),
-        leading: InkWell(
-          onTap: () => Navigator.pop(context),
-          child: Image.asset('assets/back_updated.png', height: 20, width: 20),
-        ),
-        elevation: 0,
       ),
 
       body: Stack(

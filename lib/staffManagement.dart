@@ -214,355 +214,317 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Scaffold(
-          backgroundColor:
-              Theme.of(context).brightness == Brightness.dark
-                  ? Design.darkBackground
-                  : Theme.of(context).scaffoldBackgroundColor,
-          body: SafeArea(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                return SingleChildScrollView(
-                  padding: EdgeInsets.only(
-                    bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-                  ),
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minHeight: constraints.maxHeight,
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8.0),
-                            child: Row(
-                              children: [
-                                InkWell(
-                                  onTap: () => Navigator.of(context).pop(),
-                                  child: Image.asset(
-                                    'assets/back_updated.png',
-                                    height: 40,
-                                    width: 34,
-                                    color:
-                                        Theme.of(context).brightness ==
-                                                Brightness.dark
-                                            ? Colors.white
-                                            : null,
-                                  ),
+    return Scaffold(
+      backgroundColor:
+          Theme.of(context).brightness == Brightness.dark
+              ? Design.darkBackground
+              : Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
+        backgroundColor:
+            Theme.of(context).brightness == Brightness.dark
+                ? Design.darkBackground
+                : Theme.of(context).scaffoldBackgroundColor,
+        elevation: 0,
+        leading: IconButton(
+          icon: Image.asset('assets/back_updated.png', height: 40, width: 34),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Text(
+          'Staff Members',
+          style: TextStyle(
+            color: Theme.of(context).textTheme.titleLarge!.color,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+              ),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 16),
+                      InkWell(
+                        onTap: addMember,
+                        child: Padding(
+                          padding: const EdgeInsets.only(right: 10.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              Icon(
+                                Icons.add_circle,
+                                color:
+                                    Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? AppColors.primary
+                                        : Theme.of(context).colorScheme.primary,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                "Add Member",
+                                style: Theme.of(
+                                  context,
+                                ).textTheme.bodyMedium?.copyWith(
+                                  color:
+                                      Theme.of(context).brightness ==
+                                              Brightness.dark
+                                          ? AppColors.primary
+                                          : Theme.of(
+                                            context,
+                                          ).colorScheme.primary,
+                                  fontWeight: FontWeight.w500,
                                 ),
-                                Expanded(
-                                  child: Center(
-                                    child: Text(
-                                      "Staff Members",
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.titleLarge?.copyWith(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 24),
-                              ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      if (_isLoading)
+                        Container(
+                          color:
+                              Theme.of(context).brightness == Brightness.dark
+                                  ? Design.darkBackground.withOpacity(0.95)
+                                  : Colors.white.withOpacity(0.7),
+                          child: Center(
+                            child: Image.asset(
+                              'assets/Bird_Full_Eye_Blinking.gif',
+                              width: 100,
+                              height: 100,
                             ),
                           ),
-                          const SizedBox(height: 16),
-                          InkWell(
-                            onTap: addMember,
-                            child: Padding(
-                              padding: const EdgeInsets.only(right: 10.0),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  Icon(
-                                    Icons.add_circle,
+                        ),
+                      staffMembers.isEmpty && !_isLoading
+                          ? Padding(
+                            padding: const EdgeInsets.only(top: 16.0),
+                            child: Text(
+                              "No Member Found...",
+                              style: Theme.of(
+                                context,
+                              ).textTheme.bodyMedium?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withOpacity(
+                                  Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? 0.7
+                                      : 0.6,
+                                ),
+                                fontSize: 16,
+                              ),
+                            ),
+                          )
+                          : ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: staffMembers.length,
+                            itemBuilder: (context, index) {
+                              final member = staffMembers[index];
+                              return Card(
+                                color:
+                                    Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? Design.darkCard
+                                        : Theme.of(context).colorScheme.surface,
+                                elevation:
+                                    Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? 3
+                                        : 2,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  side: BorderSide(
                                     color:
                                         Theme.of(context).brightness ==
                                                 Brightness.dark
-                                            ? AppColors.primary
-                                            : Theme.of(
-                                              context,
-                                            ).colorScheme.primary,
+                                            ? Design.darkBorder
+                                            : Colors.grey.withOpacity(0.2),
+                                    width:
+                                        Theme.of(context).brightness ==
+                                                Brightness.dark
+                                            ? 1
+                                            : 0.5,
                                   ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    "Add Member",
+                                ),
+                                child: ListTile(
+                                  title: Text(
+                                    '${member["firstName"]} ${member["lastName"]}',
                                     style: Theme.of(
                                       context,
-                                    ).textTheme.bodyMedium?.copyWith(
+                                    ).textTheme.titleMedium?.copyWith(
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 16,
                                       color:
                                           Theme.of(context).brightness ==
                                                   Brightness.dark
-                                              ? AppColors.primary
+                                              ? Colors.white
                                               : Theme.of(
                                                 context,
-                                              ).colorScheme.primary,
-                                      fontWeight: FontWeight.w500,
+                                              ).colorScheme.onSurface,
                                     ),
                                   ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          if (_isLoading)
-                            Container(
-                              color:
-                                  Theme.of(context).brightness ==
-                                          Brightness.dark
-                                      ? Design.darkBackground.withOpacity(0.95)
-                                      : Colors.white.withOpacity(0.7),
-                              child: Center(
-                                child: Image.asset(
-                                  'assets/Bird_Full_Eye_Blinking.gif',
-                                  width: 100,
-                                  height: 100,
-                                ),
-                              ),
-                            ),
-                          staffMembers.isEmpty && !_isLoading
-                              ? Padding(
-                                padding: const EdgeInsets.only(top: 16.0),
-                                child: Text(
-                                  "No Member Found...",
-                                  style: Theme.of(
-                                    context,
-                                  ).textTheme.bodyMedium?.copyWith(
-                                    color: Theme.of(
+                                  subtitle: Text(
+                                    formatDateTime(member["createdAt"]),
+                                    style: Theme.of(
                                       context,
-                                    ).colorScheme.onSurface.withOpacity(
-                                      Theme.of(context).brightness ==
-                                              Brightness.dark
-                                          ? 0.7
-                                          : 0.6,
+                                    ).textTheme.bodySmall?.copyWith(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurface.withOpacity(
+                                        Theme.of(context).brightness ==
+                                                Brightness.dark
+                                            ? 0.7
+                                            : 0.6,
+                                      ),
+                                      fontSize: 14,
                                     ),
-                                    fontSize: 16,
                                   ),
-                                ),
-                              )
-                              : ListView.builder(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                itemCount: staffMembers.length,
-                                itemBuilder: (context, index) {
-                                  final member = staffMembers[index];
-                                  return Card(
-                                    color:
-                                        Theme.of(context).brightness ==
-                                                Brightness.dark
-                                            ? Design.darkCard
-                                            : Theme.of(
-                                              context,
-                                            ).colorScheme.surface,
-                                    elevation:
-                                        Theme.of(context).brightness ==
-                                                Brightness.dark
-                                            ? 3
-                                            : 2,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                      side: BorderSide(
-                                        color:
-                                            Theme.of(context).brightness ==
-                                                    Brightness.dark
-                                                ? Design.darkBorder
-                                                : Colors.grey.withOpacity(0.2),
-                                        width:
-                                            Theme.of(context).brightness ==
-                                                    Brightness.dark
-                                                ? 1
-                                                : 0.5,
-                                      ),
-                                    ),
-                                    child: ListTile(
-                                      title: Text(
-                                        '${member["firstName"]} ${member["lastName"]}',
-                                        style: Theme.of(
-                                          context,
-                                        ).textTheme.titleMedium?.copyWith(
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 16,
+                                  trailing: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        icon: Image.asset(
+                                          'assets/edit.png',
+                                          width: 20,
+                                          height: 20,
                                           color:
-                                              Theme.of(context).brightness ==
-                                                      Brightness.dark
-                                                  ? Colors.white
-                                                  : Theme.of(
-                                                    context,
-                                                  ).colorScheme.onSurface,
+                                              Theme.of(context).iconTheme.color,
                                         ),
+                                        onPressed: () {
+                                          final id = member["id"] ?? "";
+                                          if (id.isNotEmpty) {
+                                            editMember(id);
+                                          }
+                                        },
                                       ),
-                                      subtitle: Text(
-                                        formatDateTime(member["createdAt"]),
-                                        style: Theme.of(
-                                          context,
-                                        ).textTheme.bodySmall?.copyWith(
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.onSurface.withOpacity(
-                                            Theme.of(context).brightness ==
-                                                    Brightness.dark
-                                                ? 0.7
-                                                : 0.6,
-                                          ),
-                                          fontSize: 14,
+                                      IconButton(
+                                        icon: Image.asset(
+                                          'assets/closebtn.png',
+                                          width: 20,
+                                          height: 20,
                                         ),
-                                      ),
-                                      trailing: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          IconButton(
-                                            icon: Image.asset(
-                                              'assets/edit.png',
-                                              width: 20,
-                                              height: 20,
-                                              color:
-                                                  Theme.of(
+                                        onPressed: () {
+                                          showDialog(
+                                            context: context,
+                                            builder: (BuildContext context) {
+                                              return AlertDialog(
+                                                backgroundColor:
+                                                    Theme.of(
+                                                              context,
+                                                            ).brightness ==
+                                                            Brightness.dark
+                                                        ? Design.darkCard
+                                                        : Theme.of(
+                                                          context,
+                                                        ).colorScheme.surface,
+                                                title: Text(
+                                                  'Confirm Delete',
+                                                  style: Theme.of(
                                                     context,
-                                                  ).iconTheme.color,
-                                            ),
-                                            onPressed: () {
-                                              final id = member["id"] ?? "";
-                                              if (id.isNotEmpty) {
-                                                editMember(id);
-                                              }
-                                            },
-                                          ),
-                                          IconButton(
-                                            icon: Image.asset(
-                                              'assets/closebtn.png',
-                                              width: 20,
-                                              height: 20,
-                                            ),
-                                            onPressed: () {
-                                              showDialog(
-                                                context: context,
-                                                builder: (
-                                                  BuildContext context,
-                                                ) {
-                                                  return AlertDialog(
-                                                    backgroundColor:
+                                                  ).textTheme.titleLarge?.copyWith(
+                                                    color:
                                                         Theme.of(
                                                                   context,
                                                                 ).brightness ==
                                                                 Brightness.dark
-                                                            ? Design.darkCard
+                                                            ? Colors.white
+                                                            : null,
+                                                  ),
+                                                ),
+                                                content: Text(
+                                                  'Are you sure you want to delete this member?',
+                                                  style: Theme.of(
+                                                    context,
+                                                  ).textTheme.bodyMedium?.copyWith(
+                                                    color:
+                                                        Theme.of(
+                                                                  context,
+                                                                ).brightness ==
+                                                                Brightness.dark
+                                                            ? Colors.white
+                                                                .withOpacity(
+                                                                  0.87,
+                                                                )
                                                             : Theme.of(context)
                                                                 .colorScheme
-                                                                .surface,
-                                                    title: Text(
-                                                      'Confirm Delete',
-                                                      style: Theme.of(
+                                                                .onSurface,
+                                                  ),
+                                                ),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () {
+                                                      Navigator.of(
                                                         context,
-                                                      ).textTheme.titleLarge?.copyWith(
-                                                        color:
-                                                            Theme.of(
-                                                                      context,
-                                                                    ).brightness ==
-                                                                    Brightness
-                                                                        .dark
-                                                                ? Colors.white
-                                                                : null,
-                                                      ),
+                                                      ).pop();
+                                                    },
+                                                    child: Text(
+                                                      'CANCEL',
+                                                      style: Theme.of(context)
+                                                          .textTheme
+                                                          .labelLarge
+                                                          ?.copyWith(
+                                                            color: Theme.of(
+                                                                  context,
+                                                                )
+                                                                .colorScheme
+                                                                .onSurface
+                                                                .withOpacity(
+                                                                  0.7,
+                                                                ),
+                                                          ),
                                                     ),
-                                                    content: Text(
-                                                      'Are you sure you want to delete this member?',
-                                                      style: Theme.of(
+                                                  ),
+                                                  TextButton(
+                                                    onPressed: () {
+                                                      deleteMember(index);
+                                                      Navigator.of(
                                                         context,
-                                                      ).textTheme.bodyMedium?.copyWith(
-                                                        color:
-                                                            Theme.of(
-                                                                      context,
-                                                                    ).brightness ==
-                                                                    Brightness
-                                                                        .dark
-                                                                ? Colors.white
-                                                                    .withOpacity(
-                                                                      0.87,
-                                                                    )
-                                                                : Theme.of(
+                                                      ).pop();
+                                                    },
+                                                    child: Text(
+                                                      'OK',
+                                                      style: Theme.of(context)
+                                                          .textTheme
+                                                          .labelLarge
+                                                          ?.copyWith(
+                                                            color:
+                                                                Theme.of(
                                                                       context,
                                                                     )
                                                                     .colorScheme
-                                                                    .onSurface,
-                                                      ),
+                                                                    .primary,
+                                                          ),
                                                     ),
-                                                    actions: [
-                                                      TextButton(
-                                                        onPressed: () {
-                                                          Navigator.of(
-                                                            context,
-                                                          ).pop();
-                                                        },
-                                                        child: Text(
-                                                          'CANCEL',
-                                                          style: Theme.of(
-                                                                context,
-                                                              )
-                                                              .textTheme
-                                                              .labelLarge
-                                                              ?.copyWith(
-                                                                color: Theme.of(
-                                                                      context,
-                                                                    )
-                                                                    .colorScheme
-                                                                    .onSurface
-                                                                    .withOpacity(
-                                                                      0.7,
-                                                                    ),
-                                                              ),
-                                                        ),
-                                                      ),
-                                                      TextButton(
-                                                        onPressed: () {
-                                                          deleteMember(index);
-                                                          Navigator.of(
-                                                            context,
-                                                          ).pop();
-                                                        },
-                                                        child: Text(
-                                                          'OK',
-                                                          style: Theme.of(
-                                                                context,
-                                                              )
-                                                              .textTheme
-                                                              .labelLarge
-                                                              ?.copyWith(
-                                                                color:
-                                                                    Theme.of(
-                                                                          context,
-                                                                        )
-                                                                        .colorScheme
-                                                                        .primary,
-                                                              ),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  );
-                                                },
+                                                  ),
+                                                ],
                                               );
                                             },
-                                          ),
-                                        ],
+                                          );
+                                        },
                                       ),
-                                    ),
-                                  );
-                                },
-                              ),
-                        ],
-                      ),
-                    ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                    ],
                   ),
-                );
-              },
-            ),
-          ),
+                ),
+              ),
+            );
+          },
         ),
-      ],
+      ),
     );
   }
 }

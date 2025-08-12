@@ -2,7 +2,15 @@ import 'dart:convert';
 import 'package:flock/NewPasswordScreen.dart';
 import 'package:flock/constants.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
+
+class Design {
+  static const Color darkBackground = Color(0xFF1E1E1E);
+  static const Color darkSurface = Color(0xFF242424);
+  static const Color darkBorder = Color(0xFF3E3E3E);
+  static const Color primaryColorOrange = Color.fromRGBO(255, 152, 0, 1);
+}
 
 class OtpVerificationScreen1 extends StatefulWidget {
   final String email;
@@ -17,6 +25,48 @@ class _OtpVerificationScreen1State extends State<OtpVerificationScreen1> {
   final TextEditingController _otpController = TextEditingController();
   final String _otpUrl = 'https://api.getflock.io/api/vendor/otp-login';
 
+  // Theme-aware input decoration
+  InputDecoration _getInputDecoration(String hintText) {
+    return InputDecoration(
+      hintText: hintText,
+      hintStyle: TextStyle(
+        color:
+            Theme.of(context).brightness == Brightness.dark
+                ? Colors.grey[400]
+                : Colors.grey[600],
+        fontSize: 14.0,
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+      filled: true,
+      fillColor:
+          Theme.of(context).brightness == Brightness.dark
+              ? Design.darkSurface
+              : Colors.white,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(
+          color:
+              Theme.of(context).brightness == Brightness.dark
+                  ? Design.darkBorder
+                  : Colors.grey.withOpacity(0.3),
+        ),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(
+          color:
+              Theme.of(context).brightness == Brightness.dark
+                  ? Design.darkBorder
+                  : Colors.grey.withOpacity(0.3),
+        ),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: Design.primaryColorOrange),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _otpController.dispose();
@@ -26,7 +76,11 @@ class _OtpVerificationScreen1State extends State<OtpVerificationScreen1> {
   Future<void> _verifyOtp() async {
     final String otp = _otpController.text.trim();
     if (otp.isEmpty) {
-      _showError('Please enter the OTP.');
+      Fluttertoast.showToast(
+        msg: 'Please enter the OTP.',
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
       return;
     }
 
@@ -53,61 +107,94 @@ class _OtpVerificationScreen1State extends State<OtpVerificationScreen1> {
           );
         } else {
           // Show error if status isn't success
-          _showError(responseData['message'] ?? 'OTP verification failed.');
+          Fluttertoast.showToast(
+            msg: responseData['message'] ?? 'OTP verification failed.',
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+          );
         }
       } else {
-        _showError(
-          'OTP verification failed with status: ${response.statusCode}.',
+        Fluttertoast.showToast(
+          msg: 'OTP verification failed with status: ${response.statusCode}.',
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
         );
       }
     } catch (error) {
-      _showError('An error occurred. Please try again.');
+      Fluttertoast.showToast(
+        msg: 'An error occurred. Please try again.',
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
     }
-  }
-
-  void _showError(String message) {
-    showDialog(
-      context: context,
-      builder:
-          (_) => AlertDialog(
-            title: const Text('Error'),
-            content: Text(message),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('OK'),
-              ),
-            ],
-          ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppConstants.customAppBar(
-        context: context,
-        title: 'OTP Verification',
-        // Optionally, if you want a different back icon, you can pass:
-        // backIconAsset: 'assets/your_custom_back.png',
-      ), // 'back' is a String holding the asset path, e.g., 'assets/images/back_icon.png'
-
+      backgroundColor:
+          Theme.of(context).brightness == Brightness.dark
+              ? Design.darkBackground
+              : Colors.white,
+      appBar: AppBar(
+        backgroundColor:
+            Theme.of(context).brightness == Brightness.dark
+                ? Design.darkBackground
+                : Colors.white,
+        elevation: 0,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 10.0),
+          child: IconButton(
+            icon: Icon(
+              Icons.arrow_back_ios,
+              color:
+                  Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white
+                      : Colors.black,
+              size: 20,
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+            },
+          ),
+        ),
+        title: Text(
+          'OTP Verification',
+          style: TextStyle(
+            color:
+                Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white
+                    : Colors.black,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            const Text(
+            Text(
               'Enter the OTP sent to your email',
-              style: TextStyle(fontSize: 16),
+              style: TextStyle(
+                fontSize: 16,
+                color:
+                    Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white
+                        : Colors.black,
+              ),
             ),
             const SizedBox(height: 20),
             TextField(
               controller: _otpController,
-              decoration: const InputDecoration(
-                hintText: 'OTP',
-                border: OutlineInputBorder(),
+              style: TextStyle(
+                fontSize: 14,
+                color:
+                    Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white
+                        : Colors.black,
               ),
+              decoration: _getInputDecoration('OTP'),
             ),
             const SizedBox(height: 20),
             SizedBox(
@@ -115,7 +202,7 @@ class _OtpVerificationScreen1State extends State<OtpVerificationScreen1> {
               height: 50,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color.fromRGBO(255, 130, 16, 1),
+                  backgroundColor: Design.primaryColorOrange,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(15),
                   ),

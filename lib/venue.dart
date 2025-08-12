@@ -10,6 +10,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flock/HomeScreen.dart';
 import 'package:flock/custom_scaffold.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 // Design tokens
 class Design {
@@ -173,10 +174,30 @@ class _TabEggScreenState extends State<TabEggScreen> {
     Map<String, String>? queryParams,
   }) async {
     try {
+      // Check for internet connection before making the API call
+      final connectivityResult = await Connectivity().checkConnectivity();
+      if (connectivityResult == ConnectivityResult.none) {
+        Fluttertoast.showToast(
+          msg: 'No internet connection',
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+        );
+        throw Exception('No internet connection');
+      }
       final uri = Uri.parse(url).replace(queryParameters: queryParams);
-      final response = await http
-          .get(uri, headers: headers)
-          .timeout(const Duration(seconds: 20));
+      http.Response response;
+      try {
+        response = await http
+            .get(uri, headers: headers)
+            .timeout(const Duration(seconds: 20));
+      } on SocketException {
+        Fluttertoast.showToast(
+          msg: 'No internet connection',
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+        );
+        throw Exception('No internet connection');
+      }
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
@@ -199,6 +220,16 @@ class _TabEggScreenState extends State<TabEggScreen> {
   Future<void> getProfile(String userId) async {
     setState(() => loader = true);
     try {
+      final connectivityResult = await Connectivity().checkConnectivity();
+      if (connectivityResult == ConnectivityResult.none) {
+        setState(() => loader = false);
+        Fluttertoast.showToast(
+          msg: 'No internet connection',
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+        );
+        return;
+      }
       final token = await getToken();
       if (token.isEmpty) throw Exception('No authentication token');
 
@@ -235,6 +266,16 @@ class _TabEggScreenState extends State<TabEggScreen> {
   Future<void> getCategoryList(String userId) async {
     setState(() => loader = true);
     try {
+      final connectivityResult = await Connectivity().checkConnectivity();
+      if (connectivityResult == ConnectivityResult.none) {
+        setState(() => loader = false);
+        Fluttertoast.showToast(
+          msg: 'No internet connection',
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+        );
+        return;
+      }
       final token = await getToken();
       if (token.isEmpty) throw Exception('No authentication token');
 
@@ -266,6 +307,16 @@ class _TabEggScreenState extends State<TabEggScreen> {
   Future<void> getVenueData(String userId, String categoryId) async {
     setState(() => loader = true);
     try {
+      final connectivityResult = await Connectivity().checkConnectivity();
+      if (connectivityResult == ConnectivityResult.none) {
+        setState(() => loader = false);
+        Fluttertoast.showToast(
+          msg: 'No internet connection',
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+        );
+        return;
+      }
       final token = await getToken();
       if (token.isEmpty) throw Exception('No authentication token');
 
@@ -312,6 +363,16 @@ class _TabEggScreenState extends State<TabEggScreen> {
   Future<void> removeVenueBtn() async {
     setState(() => loader = true);
     try {
+      final connectivityResult = await Connectivity().checkConnectivity();
+      if (connectivityResult == ConnectivityResult.none) {
+        setState(() => loader = false);
+        Fluttertoast.showToast(
+          msg: 'No internet connection',
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+        );
+        return;
+      }
       final token = await getToken();
       final headers = {
         'Authorization': 'Bearer $token',

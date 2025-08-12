@@ -72,7 +72,7 @@ class _OffersScreenState extends State<OffersScreen> {
       }
     } catch (e) {
       setState(() {
-        errorMessage = 'Network error: $e';
+        errorMessage = 'Network error: No internet connection';
       });
     }
 

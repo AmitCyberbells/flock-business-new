@@ -209,7 +209,7 @@ class _QRScanScreenState extends State<QRScanScreen> {
                 (dialogContext) => AlertDialog(
                   title: const Text('Invalid QR Code'),
                   content: Text(
-                    'The QR code does not contain a valid redeem ID: $e',
+                    'Invalid QR',
                     style: const TextStyle(color: Colors.red),
                   ),
                   actions: [
@@ -359,8 +359,9 @@ class _QRScanScreenState extends State<QRScanScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFF2A4CE1),
+        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Image.asset('assets/back_updated.png', height: 40, width: 34),
           onPressed:
               _isLoading
                   ? null
@@ -369,12 +370,15 @@ class _QRScanScreenState extends State<QRScanScreen> {
                     Navigator.pop(context);
                   },
         ),
-        title: const Text(
+        title: Text(
           'Scan QR Code',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(
+            color: Theme.of(context).textTheme.titleLarge!.color,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
         ),
         centerTitle: true,
-        toolbarHeight: 55, // Reduced app bar height
       ),
       backgroundColor: const Color(0xFF2A4CE1),
       body: Stack(

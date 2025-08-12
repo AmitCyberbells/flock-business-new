@@ -113,11 +113,9 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
     }
   }
 
-  Future<void> _pickImage() async {
+  Future<void> _pickImage(ImageSource source) async {
     final ImagePicker picker = ImagePicker();
-    final XFile? pickedFile = await picker.pickImage(
-      source: ImageSource.gallery,
-    );
+    final XFile? pickedFile = await picker.pickImage(source: source);
     if (pickedFile != null) {
       setState(() {
         _pickedImage = File(pickedFile.path);
@@ -145,11 +143,9 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
       hasError = true;
     }
     if (_lastNameController.text.isEmpty) {
-      setState() {
+      setState(() {
         _lastNameError = 'Last name is required';
-      }
-
-      ;
+      });
       hasError = true;
     }
     if (_phoneController.text.isEmpty) {
@@ -266,7 +262,8 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
         final errorMessage = response.data['message'] ?? 'Unknown error';
         final errors =
             response.data['errors']?.toString() ?? 'No details provided';
-        _showError('Failed to save member, Please Check fields');
+        print('API error: ${response.data}');
+        _showError('Failed to save member: ' + errorMessage + '\n' + errors);
       }
     } catch (e) {
       setState(() => _isLoading = false);
@@ -278,26 +275,21 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          backgroundColor: Colors.red,
-          content: Text(
-            message,
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: Colors.white),
-          ),
+          backgroundColor: Colors.red, // <-- This is pure red
+          content: Text(message, style: const TextStyle(color: Colors.white)),
         ),
       );
     }
   }
 
-  InputDecoration _getInputDecoration(String label) {
+  InputDecoration _getInputDecoration(String label, {String? errorText}) {
     return InputDecoration(
       labelText: label,
       labelStyle: TextStyle(
         color:
             Theme.of(context).brightness == Brightness.dark
-                ? Colors.grey[400]
-                : Theme.of(context).textTheme.bodyMedium!.color,
+                ? Colors.white
+                : Colors.black,
       ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
@@ -328,6 +320,15 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
         borderRadius: BorderRadius.circular(10),
         borderSide: const BorderSide(color: Colors.red, width: 2.0),
       ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: Colors.red, width: 2.0),
+      ),
+      errorStyle: const TextStyle(
+        // ✅ Added this line
+        color: Colors.red,
+        fontSize: 12,
+      ),
       filled: Theme.of(context).brightness == Brightness.dark,
       fillColor:
           Theme.of(context).brightness == Brightness.dark
@@ -335,6 +336,7 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
               : null,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       isDense: true,
+      errorText: errorText,
     );
   }
 
@@ -343,8 +345,10 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
     required List<dynamic> items,
     required List<String> selectedValues,
     required Function(List<String>) onConfirm,
+    bool showChips = true,
     bool isMandatory = false,
     String? mandatoryId,
+    String? errorText,
   }) {
     return InkWell(
       onTap: () async {
@@ -376,71 +380,92 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
                       color: Theme.of(context).textTheme.titleLarge!.color,
                     ),
                   ),
-                  content: SizedBox(
-                    width: double.maxFinite,
-                    child: ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: items.length,
-                      itemBuilder: (context, index) {
-                        final item = items[index];
-                        final id = item['id'].toString();
-                        final name = item['name'].toString();
-                        final isSelected = tempSelected.contains(id);
-                        final isMandatoryItem =
-                            mandatoryId != null && id == mandatoryId;
-
-                        return Container(
-                          decoration: BoxDecoration(
-                            color:
-                                isSelected
-                                    ? Theme.of(
-                                      context,
-                                    ).colorScheme.primary.withOpacity(0.1)
-                                    : Colors.transparent,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: ListTile(
-                            dense: true,
-                            title: Text(
-                              name,
-                              style: TextStyle(
-                                color:
-                                    Theme.of(
-                                      context,
-                                    ).textTheme.bodyLarge!.color,
-                                fontSize: 15,
+                  content:
+                      items.isEmpty
+                          ? SizedBox(
+                            width: double.maxFinite,
+                            height: 60, // Shorter height
+                            child: Center(
+                              child: Text(
+                                'No venues added yet',
+                                style: TextStyle(
+                                  color: Colors.red,
+                                  fontSize: 13, // Smaller font
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ),
-                            trailing:
-                                isMandatoryItem
-                                    ? Icon(
-                                      Icons.check_circle,
-                                      color:
-                                          Theme.of(context).colorScheme.primary,
-                                      size: 20,
-                                    )
-                                    : Checkbox(
-                                      value: isSelected,
-                                      activeColor:
-                                          Theme.of(context).colorScheme.primary,
-                                      onChanged: (bool? value) {
-                                        if (value != null) {
-                                          setStateDialog(() {
-                                            if (value) {
-                                              tempSelected.add(id);
-                                            } else {
-                                              tempSelected.remove(id);
-                                            }
-                                          });
-                                        }
-                                      },
+                          )
+                          : SizedBox(
+                            width: double.maxFinite,
+                            child: ListView.builder(
+                              shrinkWrap: true,
+                              itemCount: items.length,
+                              itemBuilder: (context, index) {
+                                final item = items[index];
+                                final id = item['id'].toString();
+                                final name = item['name'].toString();
+                                final isSelected = tempSelected.contains(id);
+                                final isMandatoryItem =
+                                    mandatoryId != null && id == mandatoryId;
+
+                                return Container(
+                                  decoration: BoxDecoration(
+                                    color:
+                                        isSelected
+                                            ? Theme.of(context)
+                                                .colorScheme
+                                                .primary
+                                                .withOpacity(0.1)
+                                            : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: ListTile(
+                                    dense: true,
+                                    title: Text(
+                                      name,
+                                      style: TextStyle(
+                                        color:
+                                            Theme.of(
+                                              context,
+                                            ).textTheme.bodyLarge!.color,
+                                        fontSize: 15,
+                                      ),
                                     ),
-                            enabled: !isMandatoryItem,
+                                    trailing:
+                                        isMandatoryItem
+                                            ? Icon(
+                                              Icons.check_circle,
+                                              color:
+                                                  Theme.of(
+                                                    context,
+                                                  ).colorScheme.primary,
+                                              size: 20,
+                                            )
+                                            : Checkbox(
+                                              value: isSelected,
+                                              activeColor:
+                                                  Theme.of(
+                                                    context,
+                                                  ).colorScheme.primary,
+                                              onChanged: (bool? value) {
+                                                if (value != null) {
+                                                  setStateDialog(() {
+                                                    if (value) {
+                                                      tempSelected.add(id);
+                                                    } else {
+                                                      tempSelected.remove(id);
+                                                    }
+                                                  });
+                                                }
+                                              },
+                                            ),
+                                    enabled: !isMandatoryItem,
+                                  ),
+                                );
+                              },
+                            ),
                           ),
-                        );
-                      },
-                    ),
-                  ),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context),
@@ -454,19 +479,20 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
                         ),
                       ),
                     ),
-                    TextButton(
-                      onPressed: () {
-                        onConfirm(tempSelected);
-                        Navigator.pop(context);
-                      },
-                      child: Text(
-                        'Confirm',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.primary,
-                          fontWeight: FontWeight.w600,
+                    if (items.isNotEmpty)
+                      TextButton(
+                        onPressed: () {
+                          onConfirm(tempSelected);
+                          Navigator.pop(context);
+                        },
+                        child: Text(
+                          'Confirm',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
-                    ),
                   ],
                 );
               },
@@ -477,7 +503,7 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
       child: ConstrainedBox(
         constraints: const BoxConstraints(minHeight: 56),
         child: InputDecorator(
-          decoration: _getInputDecoration(label),
+          decoration: _getInputDecoration(label, errorText: errorText),
           baseStyle: TextStyle(
             fontSize: 16,
             color: Theme.of(context).textTheme.bodyLarge!.color,
@@ -595,8 +621,8 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
                         ),
                       ),
                       Positioned(
-                        bottom: -10,
-                        right: -10,
+                        bottom: 4,
+                        right: -5,
                         child: CircleAvatar(
                           radius: 18,
                           backgroundColor:
@@ -607,7 +633,44 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
                               color: Theme.of(context).colorScheme.onPrimary,
                               size: 18,
                             ),
-                            onPressed: _pickImage,
+                            onPressed: () {
+                              showModalBottomSheet(
+                                context: context,
+                                shape: const RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.vertical(
+                                    top: Radius.circular(20),
+                                  ),
+                                ),
+                                builder: (BuildContext context) {
+                                  return SafeArea(
+                                    child: Wrap(
+                                      children: [
+                                        ListTile(
+                                          leading: const Icon(
+                                            Icons.photo_library,
+                                          ),
+                                          title: const Text(
+                                            'Choose from Gallery',
+                                          ),
+                                          onTap: () {
+                                            Navigator.of(context).pop();
+                                            _pickImage(ImageSource.gallery);
+                                          },
+                                        ),
+                                        ListTile(
+                                          leading: const Icon(Icons.camera_alt),
+                                          title: const Text('Take a Photo'),
+                                          onTap: () {
+                                            Navigator.of(context).pop();
+                                            _pickImage(ImageSource.camera);
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              );
+                            },
                             padding: EdgeInsets.zero,
                           ),
                         ),
@@ -616,59 +679,102 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
                   ),
                 ),
                 const SizedBox(height: 30),
-                TextField(
-                  controller: _firstNameController,
-                  decoration: _getInputDecoration(
-                    'First Name',
-                  ).copyWith(errorText: _firstNameError),
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Theme.of(context).textTheme.bodyLarge!.color,
-                  ),
-                ),
-                const SizedBox(height: 15),
-                TextField(
-                  controller: _lastNameController,
-                  decoration: _getInputDecoration(
-                    'Last Name',
-                  ).copyWith(errorText: _lastNameError),
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Theme.of(context).textTheme.bodyLarge!.color,
-                  ),
+                Row(
+                  children: [
+                    Flexible(
+                      child: TextField(
+                        controller: _firstNameController,
+                        decoration: _getInputDecoration(
+                          'First Name',
+                          errorText: _firstNameError,
+                        ),
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Theme.of(context).textTheme.bodyLarge!.color,
+                        ),
+                        onChanged: (value) {
+                          if (value.isNotEmpty && _firstNameError != null) {
+                            setState(() {
+                              _firstNameError = null;
+                            });
+                          }
+                        },
+                      ),
+                    ),
+
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: TextField(
+                        controller: _lastNameController,
+                        decoration: _getInputDecoration(
+                          'Last Name',
+                          errorText: _lastNameError,
+                        ),
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Theme.of(context).textTheme.bodyLarge!.color,
+                        ),
+                        onChanged: (value) {
+                          if (value.isNotEmpty && _lastNameError != null) {
+                            setState(() {
+                              _lastNameError = null;
+                            });
+                          }
+                        },
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 15),
                 TextField(
                   controller: _emailController,
                   decoration: _getInputDecoration(
                     'Email',
-                  ).copyWith(errorText: _emailError),
+                    errorText: _emailError,
+                  ),
                   style: TextStyle(
                     fontSize: 16,
                     color: Theme.of(context).textTheme.bodyLarge!.color,
                   ),
+                  onChanged: (value) {
+                    if (value.isNotEmpty && _emailError != null) {
+                      setState(() {
+                        _emailError = null;
+                      });
+                    }
+                  },
                 ),
                 const SizedBox(height: 15),
                 TextField(
                   controller: _phoneController,
                   decoration: _getInputDecoration(
                     'Phone',
-                  ).copyWith(errorText: _phoneError),
+                    errorText: _phoneError,
+                  ),
                   style: TextStyle(
                     fontSize: 16,
                     color: Theme.of(context).textTheme.bodyLarge!.color,
                   ),
+                  onChanged: (value) {
+                    if (value.isNotEmpty && _phoneError != null) {
+                      setState(() {
+                        _phoneError = null;
+                      });
+                    }
+                  },
                 ),
                 const SizedBox(height: 15),
                 TextField(
                   controller: _passwordController,
-                  decoration: _getInputDecoration('Password').copyWith(
+                  decoration: _getInputDecoration(
+                    'Password',
                     errorText: _passwordError,
+                  ).copyWith(
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePassword
-                            ? Icons.visibility
-                            : Icons.visibility_off,
+                            ? Icons.visibility_off
+                            : Icons.visibility,
                         color: Theme.of(context).iconTheme.color,
                       ),
                       onPressed: () {
@@ -683,6 +789,13 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
                     fontSize: 16,
                     color: Theme.of(context).textTheme.bodyLarge!.color,
                   ),
+                  onChanged: (value) {
+                    if (value.isNotEmpty && _passwordError != null) {
+                      setState(() {
+                        _passwordError = null;
+                      });
+                    }
+                  },
                 ),
                 const SizedBox(height: 15),
                 _buildDropdownField(
@@ -695,16 +808,15 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
                       _venuesError = null;
                     });
                   },
+                  errorText: _venuesError,
                 ),
-                if (_venuesError != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4, left: 12),
-                    child: Text(
-                      _venuesError!,
-                      style: const TextStyle(color: Colors.red, fontSize: 12),
-                    ),
-                  ),
-                const SizedBox(height: 15),
+
+                const SizedBox(height: 8),
+                // Text(
+                //   'Permissions',
+                //   style: Theme.of(context).textTheme.titleMedium,
+                // ),
+                const SizedBox(height: 8),
                 _buildDropdownField(
                   label: 'Permissions',
                   items: _permissionList,
@@ -712,13 +824,9 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
                   onConfirm: (values) {
                     setState(() {
                       _selectedPermissions = values;
-                      if (!_selectedPermissions.contains('2')) {
-                        _selectedPermissions.add('2');
-                      }
                     });
                   },
-                  isMandatory: true,
-                  mandatoryId: '2',
+                  showChips: false,
                 ),
                 const SizedBox(height: 40),
                 _isLoading

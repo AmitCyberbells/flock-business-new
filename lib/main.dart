@@ -14,6 +14,7 @@ import 'package:flock/staffManagement.dart';
 import 'package:flock/tutorial.dart';
 import 'package:flock/venue.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_branch_sdk/flutter_branch_sdk.dart';
 import 'package:workmanager/workmanager.dart';
 import 'login_screen.dart';
 import 'checkIns.dart';
@@ -28,7 +29,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'dart:developer' as developer;
 import 'package:flock/services/fcm_service.dart';
+
 import 'screens/logs_viewer_screen.dart';
+import 'connectivity_banner.dart';
 
 // Define light and dark themes
 class AppThemes {
@@ -322,6 +325,7 @@ void callbackDispatcher() {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await FlutterBranchSdk.init();
 
   if (Platform.isIOS) {
     // Initialize Workmanager for background tasks
@@ -399,7 +403,7 @@ void main() async {
     developer.log("[Firebase] Fatal error during Firebase initialization: $e");
   }
 
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -407,7 +411,10 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final navigatorKey = GlobalKey<NavigatorState>();
+
     return MaterialApp(
+      navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
       title: 'Flock Login',
       builder: (context, child) {

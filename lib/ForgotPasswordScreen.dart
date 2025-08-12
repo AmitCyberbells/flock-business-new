@@ -6,6 +6,13 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'reset_otp.dart'; // replace with actual path
 
+class Design {
+  static const Color darkBackground = Color(0xFF1E1E1E);
+  static const Color darkSurface = Color(0xFF242424);
+  static const Color darkBorder = Color(0xFF3E3E3E);
+  static const Color primaryColorOrange = Color.fromRGBO(255, 152, 0, 1);
+}
+
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({Key? key}) : super(key: key);
 
@@ -17,10 +24,56 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final TextEditingController _emailController = TextEditingController();
   bool _isLoading = false;
 
+  // Theme-aware input decoration
+  InputDecoration _getInputDecoration(String hintText) {
+    return InputDecoration(
+      hintText: hintText,
+      hintStyle: TextStyle(
+        color:
+            Theme.of(context).brightness == Brightness.dark
+                ? Colors.grey[400]
+                : Colors.grey[600],
+        fontSize: 14.0,
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+      filled: true,
+      fillColor:
+          Theme.of(context).brightness == Brightness.dark
+              ? Design.darkSurface
+              : Colors.white,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(
+          color:
+              Theme.of(context).brightness == Brightness.dark
+                  ? Design.darkBorder
+                  : Colors.grey.withOpacity(0.3),
+        ),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(
+          color:
+              Theme.of(context).brightness == Brightness.dark
+                  ? Design.darkBorder
+                  : Colors.grey.withOpacity(0.3),
+        ),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: Design.primaryColorOrange),
+      ),
+    );
+  }
+
   Future<void> _resetPassword() async {
     final String email = _emailController.text.trim();
     if (email.isEmpty) {
-      Fluttertoast.showToast(msg: "Please enter your email address.");
+      Fluttertoast.showToast(
+        msg: "Please enter your email address.",
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
       return;
     }
     setState(() {
@@ -53,6 +106,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             )) {
           Fluttertoast.showToast(
             msg: "Reset instructions have been sent to your email.",
+            backgroundColor: Colors.green,
+            textColor: Colors.white,
           );
           Navigator.push(
             context,
@@ -63,6 +118,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         } else {
           Fluttertoast.showToast(
             msg: responseData['message'] ?? 'Reset failed.',
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
           );
         }
       } else if (response.statusCode == 422) {
@@ -72,10 +129,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           final errorMessage = errors.entries
               .map((e) => '${e.key}: ${e.value.join(', ')}')
               .join('\n');
-          Fluttertoast.showToast(msg: errorMessage);
+          Fluttertoast.showToast(
+            msg: errorMessage,
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+          );
         } else {
           Fluttertoast.showToast(
             msg: responseData['message'] ?? 'Validation failed.',
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
           );
         }
       } else {
@@ -83,6 +146,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         debugPrint("Error response: ${response.body}");
         Fluttertoast.showToast(
           msg: "Reset failed with status: ${response.statusCode}",
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
         );
       }
     } on TimeoutException catch (e) {
@@ -90,7 +155,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       setState(() {
         _isLoading = false;
       });
-      Fluttertoast.showToast(msg: "Request timed out. Please try again.");
+      Fluttertoast.showToast(
+        msg: "Request timed out. Please try again.",
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
       debugPrint("Timeout error: $e");
     } on http.ClientException catch (e) {
       // Handle network-related errors (e.g., no internet connection)
@@ -99,6 +168,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       });
       Fluttertoast.showToast(
         msg: "Network error. Please check your internet connection.",
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
       );
       debugPrint("Network error: $e");
     } catch (error) {
@@ -106,7 +177,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       setState(() {
         _isLoading = false;
       });
-      Fluttertoast.showToast(msg: "An error occurred. Please try again.");
+      Fluttertoast.showToast(
+        msg: "An error occurred. Please try again.",
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
       debugPrint("Unexpected error: $error");
     }
   }
@@ -120,56 +195,49 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor:
+          Theme.of(context).brightness == Brightness.dark
+              ? Design.darkBackground
+              : Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white, // Match the background image
-        elevation: 0, // Remove shadow
+        backgroundColor:
+            Theme.of(context).brightness == Brightness.dark
+                ? Design.darkBackground
+                : Colors.white,
+        elevation: 0,
         leading: Padding(
           padding: const EdgeInsets.only(left: 10.0),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                icon: const Icon(
-                  Icons.arrow_back_ios, // iOS-style back chevron
-                  color: Colors.black,
-                  size: 20,
-                ),
-                onPressed: () {
-                  Navigator.pop(
-                    context,
-                  ); // Navigate back to the previous screen
-                },
-              ),
-              // const Text(
-              //   'Back',
-              //   style: TextStyle(
-              //     color: Colors.black,
-              //     fontSize: 16,
-              //     fontWeight: FontWeight.w500,
-              //   ),
-              // ),
-            ],
+          child: IconButton(
+            icon: Icon(
+              Icons.arrow_back_ios,
+              color:
+                  Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white
+                      : Colors.black,
+              size: 20,
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+            },
           ),
         ),
-        leadingWidth: 80, // Adjust width to accommodate the icon and text
       ),
       body: Stack(
         children: [
           Container(
             width: double.infinity,
             height: double.infinity,
-           decoration: BoxDecoration(
-  image: DecorationImage(
-    image: AssetImage(
-      Theme.of(context).brightness == Brightness.dark
-          ? 'assets/Background.jpg'
-          : 'assets/login_back.jpg',
-    ),
-    fit: BoxFit.cover,
-    alignment: Alignment.center,
-  ),
-),
-
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage(
+                  Theme.of(context).brightness == Brightness.dark
+                      ? 'assets/Background.jpg'
+                      : 'assets/login_back.jpg',
+                ),
+                fit: BoxFit.cover,
+                alignment: Alignment.center,
+              ),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
@@ -183,15 +251,25 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   ),
                   const SizedBox(height: 40),
                   // Title
-                  const Text(
+                  Text(
                     "Reset Password",
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w600,
+                      color:
+                          Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white
+                              : Colors.black,
+                    ),
                   ),
                   const SizedBox(height: 30),
                   // Input field with shadow
                   Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color:
+                          Theme.of(context).brightness == Brightness.dark
+                              ? Design.darkSurface
+                              : Colors.white,
                       borderRadius: BorderRadius.circular(10),
                       boxShadow: [
                         BoxShadow(
@@ -203,13 +281,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     ),
                     child: TextField(
                       controller: _emailController,
-                      style: const TextStyle(fontSize: 14),
-                      decoration: AppConstants.textFieldDecoration.copyWith(
-                        hintText: "Enter Email Address", // Define hintText here
+                      style: TextStyle(
+                        fontSize: 14,
+                        color:
+                            Theme.of(context).brightness == Brightness.dark
+                                ? Colors.white
+                                : Colors.black,
                       ),
+                      decoration: _getInputDecoration("Enter Email Address"),
                     ),
                   ),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 25),
                   AppConstants.fullWidthButton(
                     text: "Continue",
                     onPressed: _resetPassword,
@@ -222,17 +304,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             Stack(
               children: [
                 // Semi-transparent dark overlay
-                Container(
-                  color: Colors.black.withOpacity(0.14), // Dark overlay
-                ),
-
-                // Your original container with white tint and loader
+                Container(color: Colors.black.withOpacity(0.14)),
+                // Loader container
                 Container(
                   color: Colors.white10,
                   child: Center(
                     child: Image.asset(
                       'assets/Bird_Full_Eye_Blinking.gif',
-                      width: 100, // Adjust size as needed
+                      width: 100,
                       height: 100,
                     ),
                   ),

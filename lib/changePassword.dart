@@ -300,7 +300,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   }),
                 ),
               ),
-              const SizedBox(height: 15),
+              // const SizedBox(height: 15),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 child: Text(
@@ -325,13 +325,13 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
                   ),
                   child: Text(
                     "Update Password",
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.onPrimary,
-                      fontSize: 16,
+                      fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
                   ),

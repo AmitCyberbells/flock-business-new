@@ -506,128 +506,186 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _buildEmailField() {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      decoration: BoxDecoration(
-        color:
-            isDarkMode
-                ? Theme.of(context).colorScheme.surface.withOpacity(0.1)
-                : Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
-        ),
-      ),
-      child: TextField(
-        controller: _emailController,
-        keyboardType: TextInputType.emailAddress,
-        style: TextStyle(
-          color: Theme.of(context).colorScheme.onBackground,
-          fontSize: 14.0,
-          fontFamily: 'YourFontFamily',
-        ),
-        decoration: InputDecoration(
-          hintText: "Enter Email Address",
-          errorText: _emailError,
-          hintStyle: TextStyle(
-            color: Theme.of(context).colorScheme.onBackground.withOpacity(0.5),
-            fontSize: 14.0,
-          ),
-          filled: true,
-          fillColor: Colors.transparent,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 15,
-            vertical: 15,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10.0),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10.0),
-            borderSide: BorderSide(
-              color: Theme.of(context).colorScheme.primary,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            color:
+                isDarkMode
+                    ? Theme.of(context).colorScheme.surface.withOpacity(0.1)
+                    : Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color:
+                  _emailError != null
+                      ? Colors.red
+                      : Theme.of(context).colorScheme.outline.withOpacity(0.3),
             ),
           ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10.0),
-            borderSide: BorderSide(color: Theme.of(context).colorScheme.error),
-          ),
-          focusedErrorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10.0),
-            borderSide: BorderSide(color: Theme.of(context).colorScheme.error),
+          child: TextField(
+            controller: _emailController,
+            keyboardType: TextInputType.emailAddress,
+            onChanged: (value) {
+              setState(() {
+                if (value.trim().isEmpty) {
+                  _emailError = 'Email is required';
+                } else if (!isValidEmail(value.trim())) {
+                  _emailError = 'Please enter a valid email address';
+                } else {
+                  _emailError = null;
+                }
+              });
+            },
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onBackground,
+              fontSize: 14.0,
+              fontFamily: 'YourFontFamily',
+            ),
+            decoration: InputDecoration(
+              hintText: "Enter Email Address",
+              hintStyle: TextStyle(
+                color: Theme.of(
+                  context,
+                ).colorScheme.onBackground.withOpacity(0.5),
+                fontSize: 14.0,
+              ),
+              filled: true,
+              fillColor: Colors.transparent,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 15,
+                vertical: 15,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10.0),
+                borderSide:
+                    _emailError != null
+                        ? const BorderSide(color: Colors.red)
+                        : BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10.0),
+                borderSide: BorderSide(
+                  color:
+                      _emailError != null
+                          ? Colors.red
+                          : Theme.of(context).colorScheme.primary,
+                ),
+              ),
+            ),
           ),
         ),
-      ),
+        if (_emailError != null)
+          Padding(
+            padding: const EdgeInsets.only(left: 12, top: 4),
+            child: Text(
+              _emailError!,
+              style: const TextStyle(
+                color: Colors.red,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+      ],
     );
   }
 
   Widget _buildPasswordField() {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      decoration: BoxDecoration(
-        color:
-            isDarkMode
-                ? Theme.of(context).colorScheme.surface.withOpacity(0.1)
-                : Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
-        ),
-      ),
-      child: TextField(
-        controller: _passwordController,
-        obscureText: _obscureText,
-        style: TextStyle(
-          color: Theme.of(context).colorScheme.onBackground,
-          fontSize: 14.0,
-          fontFamily: 'YourFontFamily',
-        ),
-        decoration: InputDecoration(
-          hintText: "Enter password",
-          errorText: _passwordError,
-          hintStyle: TextStyle(
-            color: Theme.of(context).colorScheme.onBackground.withOpacity(0.5),
-            fontSize: 14.0,
-          ),
-          filled: true,
-          fillColor: Colors.transparent,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 15,
-            vertical: 15,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10.0),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10.0),
-            borderSide: BorderSide(
-              color: Theme.of(context).colorScheme.primary,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            color:
+                isDarkMode
+                    ? Theme.of(context).colorScheme.surface.withOpacity(0.1)
+                    : Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color:
+                  _passwordError != null
+                      ? Colors.red
+                      : Theme.of(context).colorScheme.outline.withOpacity(0.3),
             ),
           ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10.0),
-            borderSide: BorderSide(color: Theme.of(context).colorScheme.error),
-          ),
-          focusedErrorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10.0),
-            borderSide: BorderSide(color: Theme.of(context).colorScheme.error),
-          ),
-          suffixIcon: IconButton(
-            icon: Icon(
-              _obscureText ? Icons.visibility_off : Icons.visibility,
-              color: Theme.of(
-                context,
-              ).colorScheme.onBackground.withOpacity(0.5),
-            ),
-            onPressed: () {
+          child: TextField(
+            controller: _passwordController,
+            obscureText: _obscureText,
+            onChanged: (value) {
               setState(() {
-                _obscureText = !_obscureText;
+                if (value.isEmpty) {
+                  _passwordError = 'Password is required';
+                } else {
+                  _passwordError = null;
+                }
               });
             },
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onBackground,
+              fontSize: 14.0,
+              fontFamily: 'YourFontFamily',
+            ),
+            decoration: InputDecoration(
+              hintText: "Enter password",
+              hintStyle: TextStyle(
+                color: Theme.of(
+                  context,
+                ).colorScheme.onBackground.withOpacity(0.5),
+                fontSize: 14.0,
+              ),
+              filled: true,
+              fillColor: Colors.transparent,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 15,
+                vertical: 15,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10.0),
+                borderSide:
+                    _passwordError != null
+                        ? const BorderSide(color: Colors.red)
+                        : BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10.0),
+                borderSide: BorderSide(
+                  color:
+                      _passwordError != null
+                          ? Colors.red
+                          : Theme.of(context).colorScheme.primary,
+                ),
+              ),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscureText ? Icons.visibility_off : Icons.visibility,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onBackground.withOpacity(0.5),
+                ),
+                onPressed: () {
+                  setState(() {
+                    _obscureText = !_obscureText;
+                  });
+                },
+              ),
+            ),
           ),
         ),
-      ),
+        if (_passwordError != null)
+          Padding(
+            padding: const EdgeInsets.only(left: 12, top: 4),
+            child: Text(
+              _passwordError!,
+              style: const TextStyle(
+                color: Colors.red,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+      ],
     );
   }
 
