@@ -28,7 +28,7 @@
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>GoogleMapsApiKey</key>
-	<string>AIzaSyA4D0ULsoSN1GhRqCcL0JtnyUnpLPDX1Do</string>
+	<string> </string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>branch_key</key>
