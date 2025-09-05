@@ -1,4 +1,5 @@
 import 'package:flock/constants.dart';
+import 'package:flock/api_config.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -41,7 +42,7 @@ class _FaqScreenState extends State<FaqScreen> {
       return;
     }
 
-    final url = Uri.parse('https://api.getflock.io/api/vendor/faqs');
+    final url = Uri.parse(ApiConfig.vendorFaqs);
 
     try {
       final response = await http.get(

@@ -290,24 +290,27 @@ class AppConstants {
 
   // Reusable full-width button.
   static final ButtonStyle elevatedButtonStyle = ElevatedButton.styleFrom(
-    backgroundColor: const Color.fromRGBO(255, 130, 16, 1),
+    backgroundColor: const Color.fromRGBO(255, 140, 16, 1),
     padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 50),
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
   );
 
-  static Widget fullWidthButton({
-    required String text,
-    required VoidCallback onPressed,
-  }) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        style: elevatedButtonStyle,
-        onPressed: onPressed,
-        child: Text(text, style: const TextStyle(color: Colors.white)),
+ static Widget fullWidthButton({
+  required String text,
+  VoidCallback? onPressed,
+}) {
+  return SizedBox(
+    width: double.infinity,
+    child: ElevatedButton(
+      style: elevatedButtonStyle,
+      onPressed: onPressed, // This can now be null
+      child: Text(
+        text,
+        style: const TextStyle(color: Colors.white),
       ),
-    );
-  }
+    ),
+  );
+}
 
   // Reusable Email Field widget.
   static Widget emailField({

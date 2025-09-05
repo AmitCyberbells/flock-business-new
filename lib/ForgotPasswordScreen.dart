@@ -10,7 +10,7 @@ class Design {
   static const Color darkBackground = Color(0xFF1E1E1E);
   static const Color darkSurface = Color(0xFF242424);
   static const Color darkBorder = Color(0xFF3E3E3E);
-  static const Color primaryColorOrange = Color.fromRGBO(255, 152, 0, 1);
+  static const Color primaryColorOrange = Color.fromRGBO(255, 140, 16, 1);
 }
 
 class ForgotPasswordScreen extends StatefulWidget {

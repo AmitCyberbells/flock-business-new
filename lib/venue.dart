@@ -11,6 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flock/HomeScreen.dart';
 import 'package:flock/custom_scaffold.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flock/api_config.dart';
 
 // Design tokens
 class Design {
@@ -66,14 +67,12 @@ class GlobalImages {
 
 // Server endpoints
 class Server {
-  static const String categoryList =
-      'https://api.getflock.io/api/vendor/categories';
-  static const String getProfile = 'https://api.getflock.io/api/vendor/profile';
-  static const String getVenueData =
-      'https://api.getflock.io/api/vendor/venues';
-  static const String removeVenue = 'https://api.getflock.io/api/vendor/venues';
-  static const String updateVenue = 'https://api.getflock.io/api/vendor/venues';
-  static const String venueList = 'https://api.getflock.io/api/vendor/venues';
+  static String get categoryList => ApiConfig.vendorCategories;
+  static String get getProfile => ApiConfig.vendorProfile;
+  static String get getVenueData => ApiConfig.vendorVenues;
+  static String get removeVenue => ApiConfig.vendorVenues;
+  static String get updateVenue => ApiConfig.vendorVenues;
+  static String get venueList => ApiConfig.vendorVenues;
 }
 
 // Permissions placeholder

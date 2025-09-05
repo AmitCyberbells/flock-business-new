@@ -107,6 +107,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return isValid;
   }
 
+
   Future<void> _register() async {
     if (!_validateInputs()) return;
 

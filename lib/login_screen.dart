@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flock/constants.dart';
+import 'package:flock/api_config.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -26,11 +27,9 @@ class _LoginScreenState extends State<LoginScreen> {
   String? _emailError;
   String? _passwordError;
 
-  final String _loginUrl = 'https://api.getflock.io/api/vendor/login';
-  final String _deviceUpdateUrl =
-      'https://api.getflock.io/api/vendor/devices/update';
-  final String _appLogsUrl =
-      'https://api.getflock.io/api/customer/app-logs/store';
+  final String _loginUrl = ApiConfig.vendorLogin;
+  final String _deviceUpdateUrl = ApiConfig.vendorDevicesUpdate;
+  final String _appLogsUrl = ApiConfig.customerAppLogs;
 
   // Add logging levels
   static const String _logPrefix = '[Flock Business]';

@@ -8,7 +8,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'dart:io';
 
 class Design {
-  static const Color primaryColorOrange = Color.fromRGBO(255, 152, 0, 1);
+  static const Color primaryColorOrange = Color.fromRGBO(255, 140, 16, 1);
   static const Color black = Colors.black;
   static const Color white = Colors.white;
   static const Color lightPurple = Color(0xFFF0F0F5);

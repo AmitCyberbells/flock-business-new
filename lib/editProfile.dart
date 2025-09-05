@@ -6,8 +6,6 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:flock/constants.dart'; // Adjust the import path as needed.
-import 'package:flock/app_colors.dart';
 
 class Design {
   static const Color primaryColorOrange = Color.fromRGBO(255, 152, 0, 1);

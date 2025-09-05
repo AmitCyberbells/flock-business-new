@@ -356,6 +356,21 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
     }
   }
 
+  // Helper method to check if this is an overnight operation
+  bool _isOvernightOperation(String openTime, String closeTime) {
+    if (openTime.isEmpty || closeTime.isEmpty) return false;
+    final openTod = _parseTimeOfDay(openTime);
+    final closeTod = _parseTimeOfDay(closeTime);
+    return _timeOfDayToMinutes(closeTod) < _timeOfDayToMinutes(openTod);
+  }
+
+  // Enhanced validation for overnight operations
+  bool _isValidTimeRange(String openTime, String closeTime) {
+    // As long as both times are not empty, they're valid
+    // This allows overnight operations (e.g., 7 PM to 2 AM)
+    return openTime.isNotEmpty && closeTime.isNotEmpty;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -584,6 +599,9 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
   }
 
   Widget _buildDayRow(Map<String, dynamic> dayInfo, int index) {
+    final isOvernight = dayInfo["isOpen"] && 
+        _isOvernightOperation(dayInfo["openTime"], dayInfo["closeTime"]);
+    
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Container(
@@ -596,98 +614,126 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
         ),
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Row(
+        child: Column(
           children: [
-            SizedBox(
-              width: 40,
-              child: Text(
-                dayInfo["day"],
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(fontSize: 16),
-              ),
-            ),
-            SizedBox(
-              width: 60,
-              child: GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _days[index]["isOpen"] = !_days[index]["isOpen"];
-                    if (!_days[index]["isOpen"]) {
-                      _days[index]["updated"] = false;
-                    }
-                  });
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color:
-                        dayInfo["isOpen"]
-                            ? (dayInfo["updated"]
-                                ? AppColors.primary
-                                : AppColors.primary)
-                            : Theme.of(
-                              context,
-                            ).colorScheme.onSurface.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
+            Row(
+              children: [
+                SizedBox(
+                  width: 40,
                   child: Text(
-                    dayInfo["isOpen"] ? "On" : "Off",
-                    style: TextStyle(
-                      color:
-                          dayInfo["isOpen"]
-                              ? Theme.of(context).colorScheme.onPrimary
-                              : Theme.of(
-                                context,
-                              ).colorScheme.onSurface.withOpacity(0.6),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    textAlign: TextAlign.center,
+                    dayInfo["day"],
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(fontSize: 16),
                   ),
                 ),
-              ),
-            ),
-            Expanded(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    dayInfo["openTime"],
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyMedium?.copyWith(fontSize: 14),
+                SizedBox(
+                  width: 60,
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _days[index]["isOpen"] = !_days[index]["isOpen"];
+                        if (!_days[index]["isOpen"]) {
+                          _days[index]["updated"] = false;
+                        }
+                      });
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color:
+                            dayInfo["isOpen"]
+                                ? (dayInfo["updated"]
+                                    ? AppColors.primary
+                                    : AppColors.primary)
+                                : Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        dayInfo["isOpen"] ? "On" : "Off",
+                        style: TextStyle(
+                          color:
+                              dayInfo["isOpen"]
+                                  ? Theme.of(context).colorScheme.onPrimary
+                                  : Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface.withOpacity(0.6),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
                   ),
-                  Text(" - ", style: Theme.of(context).textTheme.bodyMedium),
-                  Text(
-                    dayInfo["closeTime"],
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyMedium?.copyWith(fontSize: 14),
-                  ),
-                ],
-              ),
-            ),
-            IconButton(
-              icon: Icon(
-                Icons.access_time,
-                color:
-                    dayInfo["isOpen"]
-                        ? AppColors.primary
-                        : Theme.of(
+                ),
+                Expanded(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        dayInfo["openTime"],
+                        style: Theme.of(
                           context,
-                        ).colorScheme.onSurface.withOpacity(0.4),
-              ),
-              onPressed:
-                  dayInfo["isOpen"]
-                      ? () {
-                        _showDayDialog(dayInfo["day"], index);
-                      }
-                      : null,
+                        ).textTheme.bodyMedium?.copyWith(fontSize: 14),
+                      ),
+                      Text(" - ", style: Theme.of(context).textTheme.bodyMedium),
+                      Text(
+                        dayInfo["closeTime"],
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodyMedium?.copyWith(fontSize: 14),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(
+                    Icons.access_time,
+                    color:
+                        dayInfo["isOpen"]
+                            ? AppColors.primary
+                            : Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withOpacity(0.4),
+                  ),
+                  onPressed:
+                      dayInfo["isOpen"]
+                          ? () {
+                            _showDayDialog(dayInfo["day"], index);
+                          }
+                          : null,
+                ),
+              ],
             ),
+            // Show overnight indicator
+            if (isOvernight)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.nights_stay,
+                      size: 14,
+                      color: AppColors.primary.withOpacity(0.7),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      "Next day",
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.primary.withOpacity(0.7),
+                        fontSize: 12,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
       ),
@@ -703,6 +749,7 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
         bool applyToAllDays = false;
         return StatefulBuilder(
           builder: (ctx, setStateDialog) {
+            final isOvernight = _isOvernightOperation(tempOpen, tempClose);
             return AlertDialog(
               backgroundColor: Theme.of(context).colorScheme.surface,
               title: Text(day, style: Theme.of(context).textTheme.titleMedium),
@@ -774,6 +821,7 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
                           },
                         );
                         if (picked != null) {
+                          // No validation - allow any closing time (including overnight)
                           setStateDialog(() {
                             tempClose = _formatTo12Hour(picked);
                           });
@@ -788,6 +836,38 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
                       ),
                     ),
                   ),
+                  const SizedBox(height: 8),
+                  // Show overnight indicator in dialog
+                  if (isOvernight && tempOpen.isNotEmpty && tempClose.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: AppColors.primary.withOpacity(0.3),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.nights_stay,
+                            size: 16,
+                            color: AppColors.primary,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            "Closes next day",
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: AppColors.primary,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   const SizedBox(height: 16),
                   Row(
                     children: [
@@ -823,6 +903,18 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
                 ),
                 ElevatedButton(
                   onPressed: () {
+                    // Only check if times are set, allow any time combination
+                    if (tempOpen.isEmpty || tempClose.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text(
+                            'Please set both opening and closing times.',
+                          ),
+                          backgroundColor: Theme.of(context).colorScheme.error,
+                        ),
+                      );
+                      return;
+                    }
                     Navigator.of(context).pop({
                       'tempOpen': tempOpen,
                       'tempClose': tempClose,
@@ -886,5 +978,9 @@ class _OpenHoursScreenState extends State<OpenHoursScreen> {
     final hourStr = time.hourOfPeriod.toString().padLeft(2, '0');
     final minStr = time.minute.toString().padLeft(2, '0');
     return '$hourStr:$minStr $period';
+  }
+
+  int _timeOfDayToMinutes(TimeOfDay t) {
+    return t.hour * 60 + t.minute;
   }
 }

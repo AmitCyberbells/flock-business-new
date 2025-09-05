@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:flock/constants.dart';
 import 'package:flock/location.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -12,7 +11,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class Design {
-  static const Color primaryColorOrange = Color.fromRGBO(255, 152, 0, 1);
+  static const Color primaryColorOrange = Color.fromRGBO(255, 140, 16, 1);
   static const Color black = Colors.black;
   static const Color white = Colors.white;
   static const Color lightPurple = Color(0xFFF0F0F5);
@@ -237,6 +236,7 @@ class _AddEggScreenState extends State<AddEggScreen> {
   }
 
   void validateDietaryTags() {
+    if (!_submitted) return;
     setState(() {
       if (arrOfDietaryTags.isEmpty) {
         dietaryTagsError = "Please select at least one dietary tag";
@@ -247,6 +247,7 @@ class _AddEggScreenState extends State<AddEggScreen> {
   }
 
   void validateCategory() {
+    if (!_submitted) return;
     setState(() {
       if (nameofegg.isEmpty || catId.isEmpty) {
         categoryError = "Please select a category";
@@ -269,6 +270,7 @@ class _AddEggScreenState extends State<AddEggScreen> {
   }
 
   void validateLocation() {
+    if (!_submitted) return;
     setState(() {
       if (location.isEmpty || lat == 0.0 || lng == 0.0) {
         locationError = "Please select a valid location";
@@ -281,6 +283,7 @@ class _AddEggScreenState extends State<AddEggScreen> {
   }
 
   void validateAmenities() {
+    if (!_submitted) return;
     setState(() {
       if (arrOfAmenities.isEmpty) {
         amenitiesError = "Please select at least one amenity";
@@ -305,6 +308,7 @@ class _AddEggScreenState extends State<AddEggScreen> {
   }
 
   void validatePhotos() {
+    if (!_submitted) return;
     setState(() {
       if (photos.isEmpty) {
         photosError = "Please upload at least one photo";
@@ -327,6 +331,7 @@ class _AddEggScreenState extends State<AddEggScreen> {
   }
 
   void validateTags() {
+    if (!_submitted) return;
     setState(() {
       if (selectedTags.isEmpty) {
         tagsError = "Please select at least one tag";
@@ -476,8 +481,11 @@ class _AddEggScreenState extends State<AddEggScreen> {
     final validValues = selectedValues.whereType<int>().toList();
     setState(() {
       selectedTags = validValues.map((e) => e.toString()).toList();
+      // Clear error when user makes a selection
+      if (_submitted && selectedTags.isNotEmpty) {
+        tagsError = null;
+      }
     });
-    validateTags();
   }
 
   void toggleNameOfEggStatus() {
@@ -492,8 +500,11 @@ class _AddEggScreenState extends State<AddEggScreen> {
       nameofegg = item['name'];
       catId = item['id'].toString();
       nameofeggStatus = false;
+      // Clear error when user makes a selection
+      if (_submitted) {
+        categoryError = null;
+      }
     });
-    // validateCategory();
   }
 
   void toggleReportStatus() {
@@ -508,16 +519,18 @@ class _AddEggScreenState extends State<AddEggScreen> {
     if (!arrOfAmenities.contains(id)) {
       setState(() {
         arrOfAmenities.add(id);
+        // Clear error when user makes a selection
+        if (_submitted) {
+          amenitiesError = null;
+        }
       });
     }
-    validateAmenities();
   }
 
   void removeAmenity(String item) {
     setState(() {
       arrOfAmenities.remove(item);
     });
-    validateAmenities();
   }
 
   void showImageDialog() {
@@ -532,7 +545,6 @@ class _AddEggScreenState extends State<AddEggScreen> {
       setState(() {
         photos.add(image);
       });
-      validatePhotos();
     }
     setState(() {
       dialogAlert = false;
@@ -555,7 +567,6 @@ class _AddEggScreenState extends State<AddEggScreen> {
           photosError = "Maximum $maxPhotos photos allowed";
         }
       });
-      validatePhotos();
     }
     setState(() {
       dialogAlert = false;
@@ -578,7 +589,6 @@ class _AddEggScreenState extends State<AddEggScreen> {
     setState(() {
       photos.removeAt(index);
     });
-    validatePhotos();
   }
 
   void pickLocation() async {
@@ -620,7 +630,6 @@ class _AddEggScreenState extends State<AddEggScreen> {
         lat = result['lat'] ?? 0.0;
         lng = result['lng'] ?? 0.0;
       });
-      validateLocation();
     }
   }
 
@@ -800,7 +809,6 @@ class _AddEggScreenState extends State<AddEggScreen> {
                   lat = newLat;
                   lng = newLng;
                 });
-                validateLocation();
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(
@@ -987,20 +995,29 @@ class _AddEggScreenState extends State<AddEggScreen> {
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: BorderSide(color: Design.errorRed),
+        borderSide: const BorderSide(color: Design.primaryColorOrange),
       ),
     );
   }
 
   // Common container decoration method
-  BoxDecoration getThemedContainerDecoration(bool hasError) {
+  BoxDecoration getThemedContainerDecoration(
+    bool hasError, {
+    bool isFocused = false,
+  }) {
+    Color borderColor;
+    if (hasError) {
+      borderColor = Design.errorRed;
+    } else if (isFocused) {
+      borderColor = Design.primaryColorOrange;
+    } else {
+      borderColor = Design.getBorderColor(context);
+    }
+
     return BoxDecoration(
       color: Design.getSurfaceColor(context),
       borderRadius: BorderRadius.circular(10),
-      border:
-          hasError
-              ? Border.all(color: Design.errorRed)
-              : Border.all(color: Design.getBorderColor(context)),
+      border: Border.all(color: borderColor),
       boxShadow: [
         BoxShadow(
           color:
@@ -1082,12 +1099,13 @@ class _AddEggScreenState extends State<AddEggScreen> {
                             children: [
                               Container(
                                 decoration: getThemedContainerDecoration(
-                                  nameError != null,
+                                  _submitted && nameError != null,
                                 ),
                                 child: TextField(
                                   controller: nameController,
 
                                   onChanged: (value) {
+                                    if (!_submitted) return;
                                     setState(() {
                                       if (value.trim().isEmpty) {
                                         nameError = 'Name is required';
@@ -1106,11 +1124,11 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                   ),
                                   decoration: getThemedInputDecoration(
                                     'Enter venue name',
-                                    nameError != null,
+                                    _submitted && nameError != null,
                                   ),
                                 ),
                               ),
-                              if (nameError != null)
+                              if (_submitted && nameError != null)
                                 Padding(
                                   padding: const EdgeInsets.only(
                                     top: 4,
@@ -1132,7 +1150,8 @@ class _AddEggScreenState extends State<AddEggScreen> {
                             children: [
                               Container(
                                 decoration: getThemedContainerDecoration(
-                                  categoryError != null,
+                                  _submitted && categoryError != null,
+                                  isFocused: showCategoryDropdown,
                                 ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1144,7 +1163,6 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                           showCategoryDropdown =
                                               !showCategoryDropdown;
                                         });
-                                        validateCategory();
                                       },
                                       child: Container(
                                         padding: const EdgeInsets.symmetric(
@@ -1294,7 +1312,8 @@ class _AddEggScreenState extends State<AddEggScreen> {
                             children: [
                               Container(
                                 decoration: getThemedContainerDecoration(
-                                  tagsError != null,
+                                  _submitted && tagsError != null,
+                                  isFocused: showTagsDropdown,
                                 ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1306,7 +1325,6 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                           showTagsDropdown = !showTagsDropdown;
                                           tagSearchQuery = '';
                                         });
-                                        validateTags();
                                       },
                                       child: Container(
                                         padding: const EdgeInsets.symmetric(
@@ -1510,7 +1528,6 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                                           tagsError = null;
                                                         }
                                                       });
-                                                      validateTags();
                                                     },
                                                     child: Container(
                                                       padding:
@@ -1588,7 +1605,6 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                                     setState(() {
                                                       showTagsDropdown = false;
                                                     });
-                                                    validateTags();
                                                   },
                                                   style: ElevatedButton.styleFrom(
                                                     backgroundColor:
@@ -1643,13 +1659,14 @@ class _AddEggScreenState extends State<AddEggScreen> {
                             children: [
                               Container(
                                 decoration: getThemedContainerDecoration(
-                                  suburbError != null,
+                                  _submitted && suburbError != null,
                                 ),
 
                                 child: TextField(
                                   controller: suburbController,
 
                                   onChanged: (value) {
+                                    if (!_submitted) return;
                                     setState(() {
                                       if (value.trim().isEmpty) {
                                         suburbError = 'Suburb is required';
@@ -1668,11 +1685,11 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                   ),
                                   decoration: getThemedInputDecoration(
                                     'Enter suburb',
-                                    suburbError != null,
+                                    _submitted && suburbError != null,
                                   ),
                                 ),
                               ),
-                              if (suburbError != null)
+                              if (_submitted && suburbError != null)
                                 Padding(
                                   padding: const EdgeInsets.only(
                                     top: 4,
@@ -1694,7 +1711,7 @@ class _AddEggScreenState extends State<AddEggScreen> {
                             children: [
                               Container(
                                 decoration: getThemedContainerDecoration(
-                                  locationError != null,
+                                  _submitted && locationError != null,
                                 ),
                                 child: GestureDetector(
                                   onTap: pickLocation,
@@ -1704,7 +1721,7 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                       vertical: 15,
                                     ),
                                     decoration: getThemedContainerDecoration(
-                                      locationError != null,
+                                      _submitted && locationError != null,
                                     ),
                                     child: Row(
                                       mainAxisAlignment:
@@ -1733,7 +1750,7 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                   ),
                                 ),
                               ),
-                              if (locationError != null)
+                              if (_submitted && locationError != null)
                                 Padding(
                                   padding: const EdgeInsets.only(
                                     top: 4,
@@ -1755,7 +1772,8 @@ class _AddEggScreenState extends State<AddEggScreen> {
                             children: [
                               Container(
                                 decoration: getThemedContainerDecoration(
-                                  amenitiesError != null,
+                                  _submitted && amenitiesError != null,
+                                  isFocused: showAmenityDropdown,
                                 ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1767,7 +1785,6 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                           showAmenityDropdown =
                                               !showAmenityDropdown;
                                         });
-                                        validateAmenities();
                                       },
                                       child: Container(
                                         padding: const EdgeInsets.symmetric(
@@ -1959,7 +1976,6 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                                       showAmenityDropdown =
                                                           false;
                                                     });
-                                                    validateAmenities();
                                                   },
                                                   style: ElevatedButton.styleFrom(
                                                     backgroundColor:
@@ -2014,7 +2030,8 @@ class _AddEggScreenState extends State<AddEggScreen> {
                             children: [
                               Container(
                                 decoration: getThemedContainerDecoration(
-                                  dietaryTagsError != null,
+                                  _submitted && dietaryTagsError != null,
+                                  isFocused: showDietaryDropdown,
                                 ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -2026,7 +2043,6 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                           showDietaryDropdown =
                                               !showDietaryDropdown;
                                         });
-                                        validateDietaryTags();
                                       },
                                       child: Container(
                                         padding: const EdgeInsets.symmetric(
@@ -2217,7 +2233,6 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                                       showDietaryDropdown =
                                                           false;
                                                     });
-                                                    validateDietaryTags();
                                                   },
                                                   style: ElevatedButton.styleFrom(
                                                     backgroundColor:
@@ -2250,7 +2265,7 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                   ],
                                 ),
                               ),
-                              if (dietaryTagsError != null)
+                              if (_submitted && dietaryTagsError != null)
                                 Padding(
                                   padding: const EdgeInsets.only(
                                     top: 4,
@@ -2272,12 +2287,13 @@ class _AddEggScreenState extends State<AddEggScreen> {
                             children: [
                               Container(
                                 decoration: getThemedContainerDecoration(
-                                  noticeError != null,
+                                  _submitted && noticeError != null,
                                 ),
                                 child: TextField(
                                   controller: noticeController,
 
                                   onChanged: (value) {
+                                    if (!_submitted) return;
                                     setState(() {
                                       if (value.trim().isEmpty) {
                                         noticeError = 'Notice is required';
@@ -2297,7 +2313,7 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                   ),
                                   decoration: getThemedInputDecoration(
                                     'Enter notice',
-                                    noticeError != null,
+                                    _submitted && noticeError != null,
                                   ),
                                 ),
                               ),
@@ -2320,11 +2336,12 @@ class _AddEggScreenState extends State<AddEggScreen> {
                           const SizedBox(height: 18),
                           Container(
                             decoration: getThemedContainerDecoration(
-                              descriptionError != null,
+                              _submitted && descriptionError != null,
                             ),
                             child: TextField(
                               controller: descriptionController,
                               onChanged: (value) {
+                                if (!_submitted) return;
                                 setState(() {
                                   if (value.trim().isEmpty) {
                                     descriptionError =
@@ -2345,12 +2362,12 @@ class _AddEggScreenState extends State<AddEggScreen> {
                               ),
                               decoration: getThemedInputDecoration(
                                 'Description',
-                                descriptionError != null,
+                                _submitted && descriptionError != null,
                               ),
                             ),
                           ),
 
-                          if (descriptionError != null)
+                          if (_submitted && descriptionError != null)
                             Padding(
                               padding: const EdgeInsets.only(top: 4, left: 12),
                               child: Text(
@@ -2382,7 +2399,7 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                       height: 90,
                                       margin: const EdgeInsets.only(right: 10),
                                       decoration: getThemedContainerDecoration(
-                                        photosError != null,
+                                        _submitted && photosError != null,
                                       ),
                                       child: Center(
                                         child: Image.asset(
@@ -2466,7 +2483,7 @@ class _AddEggScreenState extends State<AddEggScreen> {
                                   ),
                                 ],
                               ),
-                              if (photosError != null)
+                              if (_submitted && photosError != null)
                                 Padding(
                                   padding: const EdgeInsets.only(
                                     top: 4,

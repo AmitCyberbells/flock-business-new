@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flock/api_config.dart';
 import 'package:flock/constants.dart';
 import 'package:flock/offer_details.dart';
 import 'package:flock/venue.dart';
@@ -42,7 +43,7 @@ class _OffersScreenState extends State<OffersScreen> {
       return;
     }
 
-    final url = Uri.parse('https://api.getflock.io/api/vendor/offers');
+    final url = Uri.parse(ApiConfig.vendorOffers);
 
     try {
       final response = await http.get(
@@ -88,7 +89,7 @@ class _OffersScreenState extends State<OffersScreen> {
       return;
     }
 
-    final url = Uri.parse('https://api.getflock.io/api/vendor/offers/$offerId');
+    final url = Uri.parse(ApiConfig.getVendorOffersRemoveUrl(offerId.toString()));
 
     try {
       final response = await http.delete(

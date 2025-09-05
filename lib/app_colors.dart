@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  static const Color primary = Color.fromRGBO(255, 130, 16, 1);
+  static const Color primary = Color.fromRGBO(255, 140, 16, 1);
 
   static Color background(BuildContext context) =>
       Theme.of(context).scaffoldBackgroundColor;
